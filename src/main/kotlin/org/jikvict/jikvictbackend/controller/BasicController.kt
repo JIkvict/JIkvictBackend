@@ -1,6 +1,6 @@
 package org.jikvict.jikvictbackend.controller
 
-import org.jikvict.jikvictbackend.model.CustomResponse
+import org.jikvict.jikvictbackend.model.response.CustomResponse
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
