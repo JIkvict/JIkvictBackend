@@ -16,7 +16,7 @@ class JwtService(
 
     fun generateToken(user: User, expirationMillis: Long = 15 * 60 * 1000): String {
         return Jwts.builder()
-            .setSubject(user.email)
+            .setSubject(user.userNameField)
             .claim("roles", user.roles.map { it.name })
             .setIssuedAt(Date())
             .setExpiration(Date(System.currentTimeMillis() + expirationMillis))

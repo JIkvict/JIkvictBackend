@@ -21,7 +21,6 @@ class User : UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0
 
-    var email: String? = null
     @Column(unique = true, name = "username")
     var userNameField: String? = null
     var userPassword: String? = null

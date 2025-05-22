@@ -12,6 +12,7 @@ import org.springframework.security.config.annotation.web.invoke
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.crypto.factory.PasswordEncoderFactories
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import org.springframework.web.cors.CorsConfiguration
@@ -59,10 +60,10 @@ class SecurityConfiguration(
 
     @Bean
     @Suppress("UsePropertyAccessSyntax")
-    fun authenticationProvider(): DaoAuthenticationProvider {
+    fun authenticationProvider(passwordEncoder: PasswordEncoder): DaoAuthenticationProvider {
         val provider = DaoAuthenticationProvider()
         provider.setUserDetailsService(userDetailsService)
-        provider.setPasswordEncoder(PasswordEncoderFactories.createDelegatingPasswordEncoder())
+        provider.setPasswordEncoder(passwordEncoder)
         return provider
     }
     @Bean
@@ -70,5 +71,10 @@ class SecurityConfiguration(
         return http.getSharedObject(AuthenticationManagerBuilder::class.java)
             .authenticationProvider(authenticationProvider)
             .build()
+    }
+
+    @Bean
+    fun passwordEncoder(): PasswordEncoder {
+        return PasswordEncoderFactories.createDelegatingPasswordEncoder()
     }
 }
