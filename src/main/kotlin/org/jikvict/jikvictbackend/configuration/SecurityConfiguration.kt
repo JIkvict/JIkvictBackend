@@ -31,6 +31,8 @@ class SecurityConfiguration(
             cors { configurationSource = corsConfigurationSource }
             authorizeHttpRequests {
                 authorize("/auth/**", permitAll)
+                authorize("/v3/api-docs", permitAll)
+                authorize("/api/v1/solution-checker/**", permitAll)
                 authorize(anyRequest, authenticated)
             }
             sessionManagement {
@@ -41,7 +43,6 @@ class SecurityConfiguration(
             )
         }
         http.authenticationProvider(authenticationProvider)
-        http
         return http.build()
     }
 
@@ -61,8 +62,7 @@ class SecurityConfiguration(
     @Bean
     @Suppress("UsePropertyAccessSyntax")
     fun authenticationProvider(passwordEncoder: PasswordEncoder): DaoAuthenticationProvider {
-        val provider = DaoAuthenticationProvider()
-        provider.setUserDetailsService(userDetailsService)
+        val provider = DaoAuthenticationProvider(userDetailsService)
         provider.setPasswordEncoder(passwordEncoder)
         return provider
     }
