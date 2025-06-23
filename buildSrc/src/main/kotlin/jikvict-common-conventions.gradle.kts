@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmDefaultMode
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -21,8 +22,10 @@ java {
 
 tasks.withType<KotlinCompile> {
     compilerOptions {
-        freeCompilerArgs.set(listOf("-Xjsr305=strict"))
+        freeCompilerArgs.add("-Xjsr305=strict")
+        freeCompilerArgs.add("-Xcontext-parameters")
         jvmTarget.set(JvmTarget.JVM_21)
+        jvmDefault = JvmDefaultMode.NO_COMPATIBILITY
     }
 }
 
