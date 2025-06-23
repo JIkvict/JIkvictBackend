@@ -11,30 +11,31 @@ import org.springframework.context.annotation.Scope
 
 @Configuration
 class CljLoggingAutoConfiguration {
-
     @Bean
-    fun cljLoggerFactory(): LoggerFactory {
-        return LoggerFactory()
-    }
+    fun cljLoggerFactory(): LoggerFactory = LoggerFactory()
 
     @Bean
     @Primary
     @Scope("prototype")
     @Qualifier("logger")
-    fun logger(loggerFactory: LoggerFactory, injectionPoint: InjectionPoint): Logger {
-        return loggerFactory.createLogger(
+    fun logger(
+        loggerFactory: LoggerFactory,
+        injectionPoint: InjectionPoint,
+    ): Logger =
+        loggerFactory.createLogger(
             injectionPoint.targetingBean(),
         )
-    }
 
     @Bean
     @Scope("prototype")
     @Qualifier("cljLogger")
-    fun cljLogger(loggerFactory: LoggerFactory, injectionPoint: InjectionPoint): Logger {
-        return loggerFactory.createLogger(
+    fun cljLogger(
+        loggerFactory: LoggerFactory,
+        injectionPoint: InjectionPoint,
+    ): Logger =
+        loggerFactory.createLogger(
             injectionPoint.targetingBean(),
         )
-    }
 }
 
 private const val SETTER_PREFIX = "set"
@@ -51,7 +52,5 @@ private fun InjectionPoint.targetingBean(): Class<*> {
 }
 
 class LoggerFactory {
-    fun createLogger(clazz: Class<*>): Logger {
-        return LogManager.getLogger(clazz)
-    }
+    fun createLogger(clazz: Class<*>): Logger = LogManager.getLogger(clazz)
 }

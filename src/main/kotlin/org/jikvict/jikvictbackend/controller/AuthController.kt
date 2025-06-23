@@ -1,8 +1,5 @@
 package org.jikvict.jikvictbackend.controller
 
-import jakarta.servlet.http.Cookie
-import jakarta.servlet.http.HttpServletRequest
-import jakarta.servlet.http.HttpServletResponse
 import org.jikvict.jikvictbackend.entity.RefreshToken
 import org.jikvict.jikvictbackend.entity.User
 import org.jikvict.jikvictbackend.model.request.LoginRequest
@@ -19,6 +16,9 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import jakarta.servlet.http.Cookie
+import jakarta.servlet.http.HttpServletRequest
+import jakarta.servlet.http.HttpServletResponse
 
 @RestController
 @RequestMapping("/auth")
@@ -27,10 +27,13 @@ class AuthController(
     private val jwtService: JwtService,
     private val userRepository: UserRepository,
     private val refreshTokenService: RefreshTokenService,
-    private val passwordEncoder: PasswordEncoder
+    private val passwordEncoder: PasswordEncoder,
 ) {
     @PostMapping("/login")
-    fun login(@RequestBody request: LoginRequest, response: HttpServletResponse): ResponseEntity<TokenResponse> {
+    fun login(
+        @RequestBody request: LoginRequest,
+        response: HttpServletResponse,
+    ): ResponseEntity<TokenResponse> {
         val auth = UsernamePasswordAuthenticationToken(request.username, request.password)
         authManager.authenticate(auth)
 
@@ -46,8 +49,9 @@ class AuthController(
         request: HttpServletRequest,
         response: HttpServletResponse,
     ): ResponseEntity<TokenResponse> {
-        val refreshToken = extractRefreshTokenFromCookies(request)
-            ?: return ResponseEntity.badRequest().build()
+        val refreshToken =
+            extractRefreshTokenFromCookies(request)
+                ?: return ResponseEntity.badRequest().build()
 
         val verified = refreshTokenService.verifyExpiration(refreshToken)
         val user = verified.user
@@ -57,33 +61,42 @@ class AuthController(
         return ResponseEntity.ok(TokenResponse(access))
     }
 
-    private fun addRefreshTokenCookie(response: HttpServletResponse, refreshToken: String) {
-        val cookie = Cookie("refreshToken", refreshToken).apply {
-            isHttpOnly = true
-            secure = true
-            path = "/"
-            maxAge = 7 * 24 * 60 * 60
-        }
+    private fun addRefreshTokenCookie(
+        response: HttpServletResponse,
+        refreshToken: String,
+    ) {
+        val cookie =
+            Cookie("refreshToken", refreshToken).apply {
+                isHttpOnly = true
+                secure = true
+                path = "/"
+                maxAge = 7 * 24 * 60 * 60
+            }
         response.addCookie(cookie)
     }
 
     private fun extractRefreshTokenFromCookies(request: HttpServletRequest): RefreshToken? {
-        val token = request.cookies
-            ?.firstOrNull { it.name == "refreshToken" }
-            ?.value
-            ?: return null
+        val token =
+            request.cookies
+                ?.firstOrNull { it.name == "refreshToken" }
+                ?.value
+                ?: return null
         val refreshToken = refreshTokenService.findByToken(token) ?: return null
         return refreshTokenService.verifyExpiration(refreshToken)
     }
 
     @PostMapping("/register")
-    fun register(@RequestBody request: RegisterRequest, response: HttpServletResponse): ResponseEntity<TokenResponse> {
+    fun register(
+        @RequestBody request: RegisterRequest,
+        response: HttpServletResponse,
+    ): ResponseEntity<TokenResponse> {
         val hashedPassword = passwordEncoder.encode(request.password)
 
-        val user = User().apply {
-            userPassword = hashedPassword
-            userNameField = request.username
-        }
+        val user =
+            User().apply {
+                userPassword = hashedPassword
+                userNameField = request.username
+            }
 
         userRepository.save(user)
 
