@@ -1,5 +1,8 @@
 plugins {
-    id("kotlin-common-conventions")
+    id("jikvict-common-conventions")
+    id("jikvict-spring-conventions")
+    id("jikvict-openapi-conventions")
+    id("jikvict-ktlint-conventions")
 }
 
 dependencies {
