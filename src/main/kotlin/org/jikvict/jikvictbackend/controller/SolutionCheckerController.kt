@@ -10,14 +10,12 @@ import org.springframework.web.multipart.MultipartFile
 @RestController
 @RequestMapping("/api/v1/solution-checker")
 class SolutionCheckerController(
-    private val solutionChecker: SolutionChecker
+    private val solutionChecker: SolutionChecker,
 ) {
-
     @PostMapping("/check", consumes = ["multipart/form-data"])
     fun checkSolution(
         @RequestParam file: MultipartFile,
     ) {
         solutionChecker.executeCode(file, 10)
     }
-
 }

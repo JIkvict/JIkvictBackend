@@ -9,32 +9,47 @@ import java.util.Date
 
 @Service
 class JwtService(
-    @Value("\${jwt.secret}") private val secret: String
+    @Value("\${jwt.secret}") private val secret: String,
 ) {
     private val key = Keys.hmacShaKeyFor(secret.toByteArray())
 
-    fun generateToken(user: User, expirationMillis: Long = 15 * 60 * 1000): String {
-        return Jwts.builder()
+    fun generateToken(
+        user: User,
+        expirationMillis: Long = 15 * 60 * 1000,
+    ): String =
+        Jwts
+            .builder()
             .subject(user.userNameField)
             .claim("roles", user.roles.map { it.name })
             .issuedAt(Date())
             .expiration(Date(System.currentTimeMillis() + expirationMillis))
             .signWith(key, Jwts.SIG.HS256)
             .compact()
-    }
 
     fun extractUsername(token: String): String =
-        Jwts.parser().decryptWith(key).build()
-            .parseSignedClaims(token).payload.subject
+        Jwts
+            .parser()
+            .decryptWith(key)
+            .build()
+            .parseSignedClaims(token)
+            .payload.subject
 
-    fun isTokenValid(token: String, user: User): Boolean {
+    fun isTokenValid(
+        token: String,
+        user: User,
+    ): Boolean {
         val username = extractUsername(token)
         return username == user.userNameField && !isTokenExpired(token)
     }
 
     private fun isTokenExpired(token: String): Boolean {
-        val expiration = Jwts.parser().decryptWith(key).build()
-            .parseSignedClaims(token).payload.expiration
+        val expiration =
+            Jwts
+                .parser()
+                .decryptWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .payload.expiration
         return expiration.before(Date())
     }
 }

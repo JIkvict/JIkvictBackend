@@ -1,5 +1,8 @@
 package org.jikvict.jikvictbackend.entity
 
+import org.springframework.security.core.GrantedAuthority
+import org.springframework.security.core.authority.SimpleGrantedAuthority
+import org.springframework.security.core.userdetails.UserDetails
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
@@ -10,9 +13,6 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.JoinTable
 import jakarta.persistence.ManyToMany
 import jakarta.persistence.Table
-import org.springframework.security.core.GrantedAuthority
-import org.springframework.security.core.authority.SimpleGrantedAuthority
-import org.springframework.security.core.userdetails.UserDetails
 
 @Entity
 @Table(name = "users")
@@ -29,19 +29,21 @@ class User : UserDetails {
     @JoinTable(
         name = "user_roles",
         joinColumns = [JoinColumn(name = "user_id")],
-        inverseJoinColumns = [JoinColumn(name = "role_id")]
+        inverseJoinColumns = [JoinColumn(name = "role_id")],
     )
     val roles: MutableSet<Role> = mutableSetOf()
 
-    override fun getAuthorities(): Collection<GrantedAuthority> =
-        roles.map { SimpleGrantedAuthority(it.name) }
+    override fun getAuthorities(): Collection<GrantedAuthority> = roles.map { SimpleGrantedAuthority(it.name) }
 
     override fun getPassword(): String? = this.userPassword
 
     override fun getUsername(): String? = this.userNameField
 
     override fun isAccountNonExpired() = true
+
     override fun isAccountNonLocked() = true
+
     override fun isCredentialsNonExpired() = true
+
     override fun isEnabled() = true
 }

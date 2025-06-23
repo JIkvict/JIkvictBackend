@@ -22,10 +22,14 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 @Configuration
 class SecurityConfiguration(
     private val jwtAuthFilter: JwtAuthFilter,
-    private val userDetailsService: UserDetailsService
+    private val userDetailsService: UserDetailsService,
 ) {
     @Bean
-    fun filterChain(http: HttpSecurity, authenticationProvider: AuthenticationProvider, corsConfigurationSource: CorsConfigurationSource): SecurityFilterChain {
+    fun filterChain(
+        http: HttpSecurity,
+        authenticationProvider: AuthenticationProvider,
+        corsConfigurationSource: CorsConfigurationSource,
+    ): SecurityFilterChain {
         http {
             csrf { disable() }
             cors { configurationSource = corsConfigurationSource }
@@ -66,15 +70,17 @@ class SecurityConfiguration(
         provider.setPasswordEncoder(passwordEncoder)
         return provider
     }
-    @Bean
-    fun authenticationManager(http: HttpSecurity, authenticationProvider: DaoAuthenticationProvider): AuthenticationManager {
-        return http.getSharedObject(AuthenticationManagerBuilder::class.java)
-            .authenticationProvider(authenticationProvider)
-            .build()
-    }
 
     @Bean
-    fun passwordEncoder(): PasswordEncoder {
-        return PasswordEncoderFactories.createDelegatingPasswordEncoder()
-    }
+    fun authenticationManager(
+        http: HttpSecurity,
+        authenticationProvider: DaoAuthenticationProvider,
+    ): AuthenticationManager =
+        http
+            .getSharedObject(AuthenticationManagerBuilder::class.java)
+            .authenticationProvider(authenticationProvider)
+            .build()
+
+    @Bean
+    fun passwordEncoder(): PasswordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder()
 }

@@ -10,11 +10,8 @@ import org.springframework.web.bind.annotation.RestController
 @RestController()
 class BasicController {
     @GetMapping("/ping")
-    fun ping(): ResponseEntity<String> {
-        return ResponseEntity.ok("pong")
-    }
+    fun ping(): ResponseEntity<String> = ResponseEntity.ok("pong")
+
     @GetMapping("/hello")
-    fun hello(): ResponseEntity<CustomResponse> {
-        return ResponseEntity.ok(CustomResponse("Hello, World!"))
-    }
+    fun hello(): ResponseEntity<CustomResponse> = ResponseEntity.ok(CustomResponse("Hello, World!"))
 }

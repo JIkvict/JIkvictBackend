@@ -11,12 +11,11 @@ import jakarta.persistence.Table
 @Entity
 @Table(name = "roles")
 class Role(
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
-
     @Column(nullable = false, unique = true)
     val name: String,
-
     @ManyToMany(mappedBy = "roles")
-    val users: Set<User> = emptySet()
+    val users: Set<User> = emptySet(),
 )

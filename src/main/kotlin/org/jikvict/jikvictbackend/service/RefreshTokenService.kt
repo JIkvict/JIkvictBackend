@@ -12,9 +12,8 @@ import java.util.UUID
 @Service
 class RefreshTokenService(
     private val refreshTokenRepository: RefreshTokenRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
 ) {
-
     @Value("\${jwt.refreshExpirationMs}")
     private var refreshTokenDurationMs: Long = 86400000
 
@@ -24,18 +23,17 @@ class RefreshTokenService(
         val user = userRepository.findUserById(userId)
         requireNotNull(user) { "User is not present in the database" }
 
-        val refreshToken = RefreshToken(
-            token = token,
-            user = user,
-            expiryDate = expiryDate
-        )
+        val refreshToken =
+            RefreshToken(
+                token = token,
+                user = user,
+                expiryDate = expiryDate,
+            )
 
         return refreshTokenRepository.save(refreshToken)
     }
 
-    fun findByToken(token: String): RefreshToken? {
-        return refreshTokenRepository.findByToken(token)
-    }
+    fun findByToken(token: String): RefreshToken? = refreshTokenRepository.findByToken(token)
 
     fun verifyExpiration(token: RefreshToken): RefreshToken {
         if (token.expiryDate.isBefore(Instant.now())) {
