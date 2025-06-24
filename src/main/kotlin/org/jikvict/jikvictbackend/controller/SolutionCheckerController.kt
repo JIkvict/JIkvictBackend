@@ -1,6 +1,7 @@
 package org.jikvict.jikvictbackend.controller
 
 import org.jikvict.jikvictbackend.service.SolutionChecker
+import org.jikvict.jikvictbackend.service.ZipValidatorService
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -11,11 +12,13 @@ import org.springframework.web.multipart.MultipartFile
 @RequestMapping("/api/v1/solution-checker")
 class SolutionCheckerController(
     private val solutionChecker: SolutionChecker,
+    private val zipValidatorService: ZipValidatorService,
 ) {
     @PostMapping("/check", consumes = ["multipart/form-data"])
     fun checkSolution(
         @RequestParam file: MultipartFile,
     ) {
+        zipValidatorService.validateZipArchive(file)
         solutionChecker.executeCode(file, 10)
     }
 }
