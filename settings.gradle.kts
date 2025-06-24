@@ -1,3 +1,6 @@
 rootProject.name = "JIkvictBackend"
 
-include("problem-handling")
+
+include("problem-handling:library")
+
+include("problem-handling:starter")
