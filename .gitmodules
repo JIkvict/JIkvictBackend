@@ -1,0 +1,3 @@
+[submodule "JIkvictBackend.wiki"]
+	path = JIkvictBackend.wiki
+	url = https://github.com/ikvict07/JIkvictBackend.wiki.git
