@@ -11,10 +11,12 @@ class ProcessorsRegistry {
 
     @Suppress("UNCHECKED_CAST")
     fun <T : Throwable> getProcessor(exceptionClass: Class<T>): ExceptionProcessor<Throwable> {
-        val processor = processors[exceptionClass]
-        if (processor == null) {
-            return processors[Throwable::class.java]!! as ExceptionProcessor<Throwable>
+        val matching = processors.keys.firstOrNull {
+            it.isAssignableFrom(exceptionClass) && it != Throwable::class.java
         }
-        return processor as ExceptionProcessor<Throwable>
+        if (matching != null) {
+            return processors[matching] as ExceptionProcessor<Throwable>
+        }
+        return processors[Throwable::class.java]!! as ExceptionProcessor<Throwable>
     }
 }

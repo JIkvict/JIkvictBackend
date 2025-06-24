@@ -1,11 +1,15 @@
 package org.jikvict.jikvictbackend.exception
 
+import org.jikvict.problems.exception.contract.ServiceException
+import org.springframework.http.HttpStatus
+
 /**
  * Base exception for all ZIP validation failures
  */
 sealed class ZipValidationException(
     message: String,
-) : RuntimeException(message)
+    status: HttpStatus = HttpStatus.BAD_REQUEST,
+) : ServiceException(status, message)
 
 /**
  * Exception thrown when the file size exceeds the maximum allowed size
