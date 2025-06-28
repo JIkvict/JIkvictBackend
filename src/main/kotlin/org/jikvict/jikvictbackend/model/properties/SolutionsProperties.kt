@@ -1,4 +1,4 @@
-package org.jikvict.jikvictbackend.configuration
+package org.jikvict.jikvictbackend.model.properties
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 

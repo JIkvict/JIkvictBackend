@@ -16,6 +16,7 @@ dependencies {
     implementation(libs.kotlin.reflect)
     implementation(libs.jjwt.api)
     implementation(libs.testcontainers)
+    implementation(libs.jgit)
     runtimeOnly(libs.jjwt.impl)
     runtimeOnly(libs.jjwt.jackson)
     runtimeOnly(libs.postgresql)

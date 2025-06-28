@@ -1,7 +1,7 @@
 package org.jikvict.jikvictbackend.service
 
 import org.apache.logging.log4j.Logger
-import org.jikvict.jikvictbackend.configuration.SolutionsProperties
+import org.jikvict.jikvictbackend.model.properties.SolutionsProperties
 import org.jikvict.jikvictbackend.exception.EntrySizeExceededException
 import org.jikvict.jikvictbackend.exception.FileSizeExceededException
 import org.jikvict.jikvictbackend.exception.FileTypeNotAllowedException

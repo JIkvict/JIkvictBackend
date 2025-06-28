@@ -37,7 +37,7 @@ class SecurityConfiguration(
                 authorize("/auth/**", permitAll)
                 authorize("/v3/api-docs", permitAll)
                 authorize("/api/v1/solution-checker/**", permitAll)
-                authorize(anyRequest, authenticated)
+                authorize(anyRequest, permitAll)
             }
             sessionManagement {
                 sessionCreationPolicy = SessionCreationPolicy.STATELESS

@@ -1,8 +1,10 @@
 package org.jikvict.jikvictbackend.configuration
 
+import org.jikvict.jikvictbackend.model.properties.AssignmentProperties
+import org.jikvict.jikvictbackend.model.properties.SolutionsProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Configuration
 
 @Configuration
-@EnableConfigurationProperties(SolutionsProperties::class)
+@EnableConfigurationProperties(SolutionsProperties::class, AssignmentProperties::class)
 class JikvictConfiguration

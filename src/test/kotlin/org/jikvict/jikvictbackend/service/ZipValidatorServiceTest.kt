@@ -4,7 +4,7 @@ import io.mockk.every
 import io.mockk.mockk
 import org.apache.logging.log4j.Logger
 import org.jikvict.jikvictbackend.configuration.LoggerFactory
-import org.jikvict.jikvictbackend.configuration.SolutionsProperties
+import org.jikvict.jikvictbackend.model.properties.SolutionsProperties
 import org.jikvict.jikvictbackend.exception.FileSizeExceededException
 import org.jikvict.jikvictbackend.exception.FileTypeNotAllowedException
 import org.jikvict.jikvictbackend.exception.InvalidZipStructureException
@@ -75,7 +75,7 @@ class ZipValidatorServiceTest {
                 zipValidatorService.validateZipArchive(file)
             }
 
-        assert(exception.message!!.contains("exceeds maximum allowed size"))
+        assert(exception.message.contains("exceeds maximum allowed size"))
     }
 
     @Test
@@ -104,7 +104,7 @@ class ZipValidatorServiceTest {
                 zipValidatorService.validateZipArchive(file)
             }
 
-        assert(exception.message!!.contains("File type .zip is not allowed"))
+        assert(exception.message.contains("File type .zip is not allowed"))
     }
 
     @Test
@@ -133,7 +133,7 @@ class ZipValidatorServiceTest {
                 zipValidatorService.validateZipArchive(file)
             }
 
-        assert(exception.message!!.contains("Invalid ZIP file"))
+        assert(exception.message.contains("Invalid ZIP file"))
     }
 
     @Test
@@ -161,7 +161,7 @@ class ZipValidatorServiceTest {
                 zipValidatorService.validateZipArchive(file)
             }
 
-        assert(exception.message!!.contains("Path traversal attempt detected"))
+        assert(exception.message.contains("Path traversal attempt detected"))
     }
 
     @Test
@@ -189,7 +189,7 @@ class ZipValidatorServiceTest {
                 zipValidatorService.validateZipArchive(file)
             }
 
-        assert(exception.message!!.contains("Suspicious file extension detected"))
+        assert(exception.message.contains("Suspicious file extension detected"))
     }
 
     private fun createZipFileWithSuspiciousExtension(): ByteArray {

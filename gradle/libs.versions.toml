@@ -5,6 +5,7 @@ wiremock = "3.13.1"
 mockk = "1.14.3"
 testcontainers = "1.21.2"
 assertj = "3.27.3"
+jgit = "7.0.0.202409031743-r"
 
 [libraries]
 # Spring Boot
@@ -43,6 +44,10 @@ testcontainers = { group = "org.testcontainers", name = "testcontainers", versio
 testcontainers-junit-jupiter = { group = "org.testcontainers", name = "junit-jupiter", version.ref = "testcontainers" }
 testcontainers-postgresql = { group = "org.testcontainers", name = "postgresql", version.ref = "testcontainers" }
 assertj-core = { group = "org.assertj", name = "assertj-core", version.ref = "assertj" }
+
+# Git
+jgit = { module="org.eclipse.jgit:org.eclipse.jgit", version.ref = "jgit" }
+
 
 [bundles]
 test = [
