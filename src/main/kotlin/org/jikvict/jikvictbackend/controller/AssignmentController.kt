@@ -27,5 +27,4 @@ class AssignmentController(
             .contentLength(zipBytes.size.toLong())
             .body(zipBytes)
     }
-
 }
