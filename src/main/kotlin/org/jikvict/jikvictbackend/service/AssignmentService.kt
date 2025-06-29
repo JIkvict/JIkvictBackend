@@ -10,8 +10,11 @@ import org.eclipse.jgit.transport.URIish
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 import org.eclipse.jgit.treewalk.TreeWalk
 import org.jikvict.jikvictbackend.model.properties.AssignmentProperties
+import org.jikvict.problems.exception.contract.ServiceException
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import java.io.ByteArrayOutputStream
+import java.io.OutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -21,35 +24,31 @@ class AssignmentService(
     private val properties: AssignmentProperties,
     private val log: Logger,
 ) {
-    @Volatile
-    private var cachedCommitSha: String? = null
 
-    @Volatile
-    private var cachedZipBytes: ByteArray? = null
+    fun cloneZipBytes(include: List<Regex>): ByteArray {
+        val outputStream = ByteArrayOutputStream()
+        streamZipToOutput(
+            outputStream,
+            pathFilters = include,
+            excludePatterns = listOf(
+                ".*/hidden(/.*)?".toRegex(),
+                "\\.git/.*".toRegex(),
+                "\\.idea/.*".toRegex(),
+            ),
 
-    fun cloneZipBytes(): ByteArray {
-        val credentialsProvider = UsernamePasswordCredentialsProvider(properties.githubUsername, properties.githubToken)
-
-        val latestCommitSha = fetchLatestCommitSha(credentialsProvider)
-        log.info("Latest remote commit SHA: $latestCommitSha")
-
-        if (cachedCommitSha == latestCommitSha && cachedZipBytes != null) {
-            log.info("Returning cached zip for commit $latestCommitSha")
-            return cachedZipBytes!!
-        }
-
-        log.info("Cache miss or first fetch. Cloning repository and creating archive")
-
-        val (newSha, newZip) = cloneAndZip(credentialsProvider)
-
-        cachedCommitSha = newSha
-        cachedZipBytes = newZip
-
-        return newZip
+            )
+        return outputStream.toByteArray()
     }
 
-    private fun fetchLatestCommitSha(credentialsProvider: UsernamePasswordCredentialsProvider): String {
-        val repoDesc = DfsRepositoryDescription("tmp-check-repo")
+
+    fun streamZipToOutput(
+        outputStream: OutputStream,
+        pathFilters: List<Regex> = emptyList(),
+        excludePatterns: List<Regex> = emptyList(),
+    ) {
+        val credentialsProvider = UsernamePasswordCredentialsProvider(properties.githubUsername, properties.githubToken)
+
+        val repoDesc = DfsRepositoryDescription("streaming-repo")
         val repo = InMemoryRepository(repoDesc)
         repo.create()
 
@@ -61,59 +60,60 @@ class AssignmentService(
 
             git.fetch()
                 .setRemote("origin")
-                .setRefSpecs(RefSpec("+refs/heads/*:refs/remotes/origin/*"))
+                .setRefSpecs(RefSpec("+refs/heads/main:refs/remotes/origin/main"))
                 .setCredentialsProvider(credentialsProvider)
+                .setDepth(1)
                 .call()
 
             val ref = repo.exactRef("refs/remotes/origin/main") ?: error("Branch origin/main not found")
-
-            return ref.objectId.name
-        }
-    }
-
-    private fun cloneAndZip(credentialsProvider: UsernamePasswordCredentialsProvider): Pair<String, ByteArray> {
-        val repoDesc = DfsRepositoryDescription("in-memory-repo")
-        val inMemoryRepo = InMemoryRepository(repoDesc)
-        inMemoryRepo.create()
-
-        Git(inMemoryRepo).use { git ->
-            git.remoteAdd()
-                .setName("origin")
-                .setUri(URIish(properties.repositoryUrl))
-                .call()
-
-            git.fetch()
-                .setRemote("origin")
-                .setRefSpecs(RefSpec("+refs/heads/*:refs/remotes/origin/*"))
-                .setCredentialsProvider(credentialsProvider)
-                .call()
-
-            val ref = inMemoryRepo.exactRef("refs/remotes/origin/main") ?: error("Branch origin/main not found")
-
-            val revWalk = RevWalk(inMemoryRepo)
+            val revWalk = RevWalk(repo)
             val commit = revWalk.parseCommit(ref.objectId)
             val tree = commit.tree
+            var filesProcessed = 0
+            ZipOutputStream(outputStream).use { zipOut ->
+                val treeWalk = TreeWalk(repo)
+                treeWalk.addTree(tree)
+                treeWalk.isRecursive = true
 
-            val zipOutBytes = ByteArrayOutputStream()
-            val zipOut = ZipOutputStream(zipOutBytes)
+                while (treeWalk.next()) {
+                    val path = treeWalk.pathString
 
-            val treeWalk = TreeWalk(inMemoryRepo)
-            treeWalk.addTree(tree)
-            treeWalk.isRecursive = true
+                    val shouldExclude = excludePatterns.any { pattern ->
+                        path.matches(pattern)
+                    }
 
-            while (treeWalk.next()) {
-                val path = treeWalk.pathString
-                val objectId = treeWalk.getObjectId(0)
-                val loader = inMemoryRepo.open(objectId)
-                val content = loader.bytes
+                    if (shouldExclude) {
+                        log.info("Excluding file: $path")
+                        continue
+                    }
 
-                zipOut.putNextEntry(ZipEntry(path))
-                zipOut.write(content)
-                zipOut.closeEntry()
+                    val shouldInclude = pathFilters.isEmpty() || pathFilters.any { filter ->
+                        path.matches(filter)
+                    }
+
+                    if (!shouldInclude) {
+                        log.info("Excluding file: $path")
+                        continue
+                    }
+
+                    val objectId = treeWalk.getObjectId(0)
+                    val loader = repo.open(objectId)
+
+                    zipOut.putNextEntry(ZipEntry(path))
+                    loader.openStream().use { inputStream ->
+                        inputStream.copyTo(zipOut)
+                    }
+                    zipOut.closeEntry()
+                    filesProcessed++
+                    log.info("Processed file: $path (${loader.size} bytes)")
+                }
             }
-
-            zipOut.close()
-            return Pair(commit.name, zipOutBytes.toByteArray())
+            if (filesProcessed == 0) {
+                throw ServiceException(
+                    HttpStatus.NOT_FOUND,
+                    "No files found matching the specified filters",
+                )
+            }
         }
     }
 }
