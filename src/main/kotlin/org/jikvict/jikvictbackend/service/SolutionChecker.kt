@@ -73,7 +73,7 @@ class SolutionChecker(
                     withCreateContainerCmdModifier { cmd ->
                         cmd.hostConfig?.apply {
                             withMemory(1024 * 1024 * 1024L)
-                            withCpuQuota(100000L)
+                            withCpuQuota(1000000L)
                             withPidsLimit(500L)
                             withNetworkMode("bridge")
                             // Disable readonly filesystem to allow Gradle to write files

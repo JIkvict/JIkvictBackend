@@ -10,11 +10,13 @@ import org.eclipse.jgit.transport.URIish
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 import org.eclipse.jgit.treewalk.TreeWalk
 import org.jikvict.jikvictbackend.model.properties.AssignmentProperties
+import org.jikvict.jikvictbackend.repository.AssignmentRepository
 import org.jikvict.problems.exception.contract.ServiceException
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
+import java.nio.file.Path
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -23,7 +25,13 @@ import java.util.zip.ZipOutputStream
 class AssignmentService(
     private val properties: AssignmentProperties,
     private val log: Logger,
+    private val assignmentRepository: AssignmentRepository,
 ) {
+
+
+//    fun createAssignmentByNumber(number: Int): Assignment {
+//        properties.repositoryUrl
+//    }
 
     fun cloneZipBytes(include: List<Regex>): ByteArray {
         val outputStream = ByteArrayOutputStream()
@@ -38,6 +46,68 @@ class AssignmentService(
 
             )
         return outputStream.toByteArray()
+    }
+
+    fun getAssignmentDescription(assignmentNumber: Int): String {
+        return getFileContentFromAssignmentRepo(Path.of("DESCRIPTION.md"), assignmentNumber).toString(Charsets.UTF_8)
+    }
+
+
+    fun getFileFromAssignmentRepo(file: Path, assignmentNumber: Int): ByteArray {
+        val fileName = file.fileName.toString()
+        return cloneZipBytes(listOf("^task$assignmentNumber/.*${Regex.escape(fileName)}$".toRegex()))
+    }
+
+    fun getFileContentFromAssignmentRepo(file: Path, assignmentNumber: Int): ByteArray {
+        val fileName = file.fileName.toString()
+        val pattern = "^task$assignmentNumber/.*${Regex.escape(fileName)}$".toRegex()
+
+        val credentialsProvider = UsernamePasswordCredentialsProvider(properties.githubUsername, properties.githubToken)
+
+        val repoDesc = DfsRepositoryDescription("streaming-repo")
+        val repo = InMemoryRepository(repoDesc)
+        repo.create()
+
+        Git(repo).use { git ->
+            git.remoteAdd()
+                .setName("origin")
+                .setUri(URIish(properties.repositoryUrl))
+                .call()
+
+            git.fetch()
+                .setRemote("origin")
+                .setRefSpecs(RefSpec("+refs/heads/main:refs/remotes/origin/main"))
+                .setCredentialsProvider(credentialsProvider)
+                .setDepth(1)
+                .call()
+
+            val ref = repo.exactRef("refs/remotes/origin/main") ?: error("Branch origin/main not found")
+            val revWalk = RevWalk(repo)
+            val commit = revWalk.parseCommit(ref.objectId)
+            val tree = commit.tree
+
+            val treeWalk = TreeWalk(repo)
+            treeWalk.addTree(tree)
+            treeWalk.isRecursive = true
+
+            while (treeWalk.next()) {
+                val path = treeWalk.pathString
+
+                if (path.matches(pattern)) {
+                    val objectId = treeWalk.getObjectId(0)
+                    val loader = repo.open(objectId)
+
+                    return loader.openStream().use { inputStream ->
+                        inputStream.readBytes()
+                    }
+                }
+            }
+
+            throw ServiceException(
+                HttpStatus.NOT_FOUND,
+                "File $fileName not found in assignment $assignmentNumber",
+            )
+        }
     }
 
 

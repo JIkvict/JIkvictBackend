@@ -28,4 +28,10 @@ class AssignmentController(
             .body(zipBytes)
     }
 
+    @GetMapping("/description/{taskId}", produces = [MediaType.TEXT_PLAIN_VALUE])
+    fun getAssignmentDescription(@PathVariable taskId: Int): ResponseEntity<String> {
+        val description = assignmentService.getAssignmentDescription(taskId)
+        return ResponseEntity.ok(description)
+    }
+
 }
