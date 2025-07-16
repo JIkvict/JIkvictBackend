@@ -1,9 +1,9 @@
 package org.jikvict.jikvictbackend.service
 
 import org.jikvict.jikvictbackend.entity.RefreshToken
+import org.jikvict.jikvictbackend.model.properties.JwtProperties
 import org.jikvict.jikvictbackend.repository.RefreshTokenRepository
 import org.jikvict.jikvictbackend.repository.UserRepository
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
@@ -13,13 +13,12 @@ import java.util.UUID
 class RefreshTokenService(
     private val refreshTokenRepository: RefreshTokenRepository,
     private val userRepository: UserRepository,
+    private val jwtProperties: JwtProperties,
 ) {
-    @Value("\${jwt.refreshExpirationMs}")
-    private var refreshTokenDurationMs: Long = 86400000
 
     fun createRefreshToken(userId: Long): RefreshToken {
         val token = UUID.randomUUID().toString()
-        val expiryDate = Instant.now().plusMillis(refreshTokenDurationMs)
+        val expiryDate = Instant.now().plusMillis(jwtProperties.refreshExpirationMs)
         val user = userRepository.findUserById(userId)
         requireNotNull(user) { "User is not present in the database" }
 

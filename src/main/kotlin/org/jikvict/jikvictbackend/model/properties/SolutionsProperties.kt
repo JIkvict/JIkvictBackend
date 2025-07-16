@@ -9,7 +9,7 @@ data class SolutionsProperties(
     val maxExecutionTime: Long = 0L,
     // ZIP validation properties
     val maxEntrySize: Long = 10_000_000L,
-    val suspiciousExtensions: List<String> = listOf(".exe", ".dll", ".bat", ".cmd", ".sh", ".js"),
+    val suspiciousExtensions: List<String> = listOf(".exe", ".dll", ".cmd", ".sh", ".js"),
     val maxCompressionRatio: Double = 10.0,
     val maxUnknownCompressionEntrySize: Long = 1000L,
 )

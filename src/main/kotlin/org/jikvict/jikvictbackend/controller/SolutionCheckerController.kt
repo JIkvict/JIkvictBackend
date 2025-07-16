@@ -2,6 +2,7 @@ package org.jikvict.jikvictbackend.controller
 
 import org.jikvict.jikvictbackend.service.SolutionChecker
 import org.jikvict.jikvictbackend.service.ZipValidatorService
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -17,8 +18,9 @@ class SolutionCheckerController(
     @PostMapping("/check", consumes = ["multipart/form-data"])
     fun checkSolution(
         @RequestParam file: MultipartFile,
-    ) {
+    ): ResponseEntity<String> {
         zipValidatorService.validateZipArchive(file)
-        solutionChecker.executeCode(file, 10)
+        solutionChecker.executeCode(file, 300)
+        return ResponseEntity.ok("Everything is fine, your solution is correct!")
     }
 }

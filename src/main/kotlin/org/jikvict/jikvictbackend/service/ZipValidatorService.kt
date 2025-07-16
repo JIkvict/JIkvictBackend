@@ -74,6 +74,14 @@ class ZipValidatorService(
                     }
                 } catch (e: ZipValidationException) {
                     throw e
+                } catch (e: java.util.zip.ZipException) {
+                    val message = e.message ?: ""
+                    if (message.contains("EXT descriptor") || message.contains("DEFLATED")) {
+                        logger.warn("ZIP compatibility issue (likely from macOS): ${e.message}")
+                    } else {
+                        logger.error("ZIP format error: ${e.message}")
+                        throw InvalidZipStructureException("Invalid ZIP structure: ${e.message}")
+                    }
                 } catch (e: Exception) {
                     logger.error("Error processing ZIP entries", e)
                     throw InvalidZipStructureException("Invalid ZIP structure: ${e.message}")

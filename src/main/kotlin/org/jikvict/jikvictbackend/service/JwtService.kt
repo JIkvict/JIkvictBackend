@@ -3,15 +3,15 @@ package org.jikvict.jikvictbackend.service
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
 import org.jikvict.jikvictbackend.entity.User
-import org.springframework.beans.factory.annotation.Value
+import org.jikvict.jikvictbackend.model.properties.JwtProperties
 import org.springframework.stereotype.Service
 import java.util.Date
 
 @Service
 class JwtService(
-    @Value("\${jwt.secret}") private val secret: String,
+    jwtProperties: JwtProperties,
 ) {
-    private val key = Keys.hmacShaKeyFor(secret.toByteArray())
+    private val key = Keys.hmacShaKeyFor(jwtProperties.secret.toByteArray())
 
     fun generateToken(
         user: User,

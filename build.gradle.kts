@@ -3,6 +3,7 @@ plugins {
     id("jikvict-spring-conventions")
     id("jikvict-openapi-conventions")
     id("jikvict-ktlint-conventions")
+    id("idea")
 }
 
 dependencies {
@@ -25,4 +26,11 @@ dependencies {
     testImplementation(libs.spring.security.test)
     testRuntimeOnly(libs.junit.platform.launcher)
     testImplementation(libs.bundles.test)
+}
+
+idea {
+    module {
+        isDownloadJavadoc = true
+        isDownloadSources = true
+    }
 }
