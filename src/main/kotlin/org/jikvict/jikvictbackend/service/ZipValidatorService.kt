@@ -1,7 +1,6 @@
 package org.jikvict.jikvictbackend.service
 
 import org.apache.logging.log4j.Logger
-import org.jikvict.jikvictbackend.model.properties.SolutionsProperties
 import org.jikvict.jikvictbackend.exception.EntrySizeExceededException
 import org.jikvict.jikvictbackend.exception.FileSizeExceededException
 import org.jikvict.jikvictbackend.exception.FileTypeNotAllowedException
@@ -10,6 +9,7 @@ import org.jikvict.jikvictbackend.exception.PathTraversalAttemptException
 import org.jikvict.jikvictbackend.exception.SuspiciousCompressionRatioException
 import org.jikvict.jikvictbackend.exception.SuspiciousFileExtensionException
 import org.jikvict.jikvictbackend.exception.ZipValidationException
+import org.jikvict.jikvictbackend.model.properties.SolutionsProperties
 import org.springframework.stereotype.Service
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.multipart.MultipartFile

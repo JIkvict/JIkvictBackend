@@ -18,6 +18,7 @@ dependencies {
     implementation(libs.jjwt.api)
     implementation(libs.testcontainers)
     implementation(libs.jgit)
+    implementation(libs.spring.boot.starter.amqp)
     runtimeOnly(libs.jjwt.impl)
     runtimeOnly(libs.jjwt.jackson)
     runtimeOnly(libs.postgresql)

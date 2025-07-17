@@ -6,6 +6,7 @@ mockk = "1.14.3"
 testcontainers = "1.21.2"
 assertj = "3.27.3"
 jgit = "7.0.0.202409031743-r"
+spring-amqp = "3.1.3"
 
 [libraries]
 # Spring Boot
@@ -47,6 +48,9 @@ assertj-core = { group = "org.assertj", name = "assertj-core", version.ref = "as
 
 # Git
 jgit = { module="org.eclipse.jgit:org.eclipse.jgit", version.ref = "jgit" }
+
+# RabbitMQ
+spring-boot-starter-amqp = { group = "org.springframework.boot", name = "spring-boot-starter-amqp", version.ref = "spring-amqp" }
 
 
 [bundles]

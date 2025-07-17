@@ -9,7 +9,11 @@ import org.eclipse.jgit.transport.RefSpec
 import org.eclipse.jgit.transport.URIish
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 import org.eclipse.jgit.treewalk.TreeWalk
+import org.jikvict.jikvictbackend.entity.Assignment
 import org.jikvict.jikvictbackend.model.properties.AssignmentProperties
+import org.jikvict.jikvictbackend.model.response.PendingStatus
+import org.jikvict.jikvictbackend.model.response.PendingStatusResponse
+import org.jikvict.jikvictbackend.model.response.ResponsePayload
 import org.jikvict.jikvictbackend.repository.AssignmentRepository
 import org.jikvict.problems.exception.contract.ServiceException
 import org.springframework.http.HttpStatus
@@ -20,45 +24,66 @@ import java.nio.file.Path
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-
 @Service
 class AssignmentService(
     private val properties: AssignmentProperties,
     private val log: Logger,
     private val assignmentRepository: AssignmentRepository,
+    private val taskQueueService: TaskQueueService,
 ) {
+    /**
+     * Creates an assignment asynchronously by enqueueing a task
+     * @param number The assignment number
+     * @return A response with the task ID and pending status
+     */
+    fun createAssignmentByNumber(number: Int): PendingStatusResponse<Long> {
+        log.info("Creating assignment by number: $number")
+        val taskId = taskQueueService.enqueueAssignmentCreationTask(number)
+        return PendingStatusResponse(
+            payload = ResponsePayload(taskId),
+            status = PendingStatus.PENDING,
+        )
+    }
 
-
-//    fun createAssignmentByNumber(number: Int): Assignment {
-//        properties.repositoryUrl
-//    }
+    /**
+     * Gets an assignment by ID
+     * @param id The assignment ID
+     * @return The assignment
+     */
+    fun getAssignmentById(id: Long): Assignment =
+        assignmentRepository
+            .findById(id)
+            .orElseThrow { ServiceException(HttpStatus.NOT_FOUND, "Assignment with ID $id not found") }
 
     fun cloneZipBytes(include: List<Regex>): ByteArray {
         val outputStream = ByteArrayOutputStream()
         streamZipToOutput(
             outputStream,
             pathFilters = include,
-            excludePatterns = listOf(
-                ".*/hidden(/.*)?".toRegex(),
-                "\\.git/.*".toRegex(),
-                "\\.idea/.*".toRegex(),
-            ),
-
-            )
+            excludePatterns =
+                listOf(
+                    ".*/hidden(/.*)?".toRegex(),
+                    "\\.git/.*".toRegex(),
+                    "\\.idea/.*".toRegex(),
+                ),
+        )
         return outputStream.toByteArray()
     }
 
-    fun getAssignmentDescription(assignmentNumber: Int): String {
-        return getFileContentFromAssignmentRepo(Path.of("DESCRIPTION.md"), assignmentNumber).toString(Charsets.UTF_8)
-    }
+    fun getAssignmentDescription(assignmentNumber: Int): String = getFileContentFromAssignmentRepo(Path.of("DESCRIPTION.md"), assignmentNumber).toString(Charsets.UTF_8)
 
-
-    fun getFileFromAssignmentRepo(file: Path, assignmentNumber: Int): ByteArray {
+    fun getFileFromAssignmentRepo(
+        file: Path,
+        assignmentNumber: Int,
+    ): ByteArray {
         val fileName = file.fileName.toString()
         return cloneZipBytes(listOf("^task$assignmentNumber/.*${Regex.escape(fileName)}$".toRegex()))
     }
 
-    fun getFileContentFromAssignmentRepo(file: Path, assignmentNumber: Int): ByteArray {
+    fun getFileContentFromAssignmentRepo(
+        file: Path,
+        assignmentNumber: Int,
+    ): ByteArray {
         val fileName = file.fileName.toString()
         val pattern = "^task$assignmentNumber/.*${Regex.escape(fileName)}$".toRegex()
 
@@ -69,12 +94,14 @@ class AssignmentService(
         repo.create()
 
         Git(repo).use { git ->
-            git.remoteAdd()
+            git
+                .remoteAdd()
                 .setName("origin")
                 .setUri(URIish(properties.repositoryUrl))
                 .call()
 
-            git.fetch()
+            git
+                .fetch()
                 .setRemote("origin")
                 .setRefSpecs(RefSpec("+refs/heads/main:refs/remotes/origin/main"))
                 .setCredentialsProvider(credentialsProvider)
@@ -110,7 +137,6 @@ class AssignmentService(
         }
     }
 
-
     fun streamZipToOutput(
         outputStream: OutputStream,
         pathFilters: List<Regex> = emptyList(),
@@ -123,12 +149,14 @@ class AssignmentService(
         repo.create()
 
         Git(repo).use { git ->
-            git.remoteAdd()
+            git
+                .remoteAdd()
                 .setName("origin")
                 .setUri(URIish(properties.repositoryUrl))
                 .call()
 
-            git.fetch()
+            git
+                .fetch()
                 .setRemote("origin")
                 .setRefSpecs(RefSpec("+refs/heads/main:refs/remotes/origin/main"))
                 .setCredentialsProvider(credentialsProvider)
@@ -148,18 +176,21 @@ class AssignmentService(
                 while (treeWalk.next()) {
                     val path = treeWalk.pathString
 
-                    val shouldExclude = excludePatterns.any { pattern ->
-                        path.matches(pattern)
-                    }
+                    val shouldExclude =
+                        excludePatterns.any { pattern ->
+                            path.matches(pattern)
+                        }
 
                     if (shouldExclude) {
                         log.info("Excluding file: $path")
                         continue
                     }
 
-                    val shouldInclude = pathFilters.isEmpty() || pathFilters.any { filter ->
-                        path.matches(filter)
-                    }
+                    val shouldInclude =
+                        pathFilters.isEmpty() ||
+                            pathFilters.any { filter ->
+                                path.matches(filter)
+                            }
 
                     if (!shouldInclude) {
                         log.info("Excluding file: $path")

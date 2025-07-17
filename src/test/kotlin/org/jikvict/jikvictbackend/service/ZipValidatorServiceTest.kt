@@ -4,12 +4,12 @@ import io.mockk.every
 import io.mockk.mockk
 import org.apache.logging.log4j.Logger
 import org.jikvict.jikvictbackend.configuration.LoggerFactory
-import org.jikvict.jikvictbackend.model.properties.SolutionsProperties
 import org.jikvict.jikvictbackend.exception.FileSizeExceededException
 import org.jikvict.jikvictbackend.exception.FileTypeNotAllowedException
 import org.jikvict.jikvictbackend.exception.InvalidZipStructureException
 import org.jikvict.jikvictbackend.exception.PathTraversalAttemptException
 import org.jikvict.jikvictbackend.exception.SuspiciousFileExtensionException
+import org.jikvict.jikvictbackend.model.properties.SolutionsProperties
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows

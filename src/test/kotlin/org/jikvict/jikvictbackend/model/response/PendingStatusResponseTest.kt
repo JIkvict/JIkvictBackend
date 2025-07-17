@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import kotlin.test.Test
 
 class PendingStatusResponseTest {
-
     @Test
     fun `should return unwrapped json`() {
         // Given
@@ -23,5 +22,4 @@ class PendingStatusResponseTest {
         assertTrue(json.contains("\"data\":\"Hello\""))
         assertThat(result).isEqualTo(response)
     }
-
 }

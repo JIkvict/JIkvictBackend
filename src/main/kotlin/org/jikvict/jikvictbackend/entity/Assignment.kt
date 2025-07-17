@@ -23,5 +23,4 @@ class Assignment {
 
     @Column(name = "task_number", nullable = false)
     var taskNumber: Int = 0
-
 }

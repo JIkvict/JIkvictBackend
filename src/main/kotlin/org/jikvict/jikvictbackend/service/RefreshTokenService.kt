@@ -15,7 +15,6 @@ class RefreshTokenService(
     private val userRepository: UserRepository,
     private val jwtProperties: JwtProperties,
 ) {
-
     fun createRefreshToken(userId: Long): RefreshToken {
         val token = UUID.randomUUID().toString()
         val expiryDate = Instant.now().plusMillis(jwtProperties.refreshExpirationMs)

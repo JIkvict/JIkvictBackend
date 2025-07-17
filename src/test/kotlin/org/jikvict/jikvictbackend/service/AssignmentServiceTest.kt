@@ -7,7 +7,6 @@ import kotlin.test.Test
 class AssignmentServiceTest(
     private val assignmentService: AssignmentService,
 ) {
-
     @Test
     fun `should return description`() {
         // Given
@@ -17,5 +16,4 @@ class AssignmentServiceTest(
         // Then
         println(description)
     }
-
 }
