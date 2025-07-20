@@ -60,6 +60,7 @@ class TaskQueueService(
      */
     fun enqueueSolutionVerificationTask(
         file: MultipartFile,
+        assignmentNumber: Int,
         timeoutSeconds: Long = 300,
     ): Long {
         // Save the file to a temporary location
@@ -80,6 +81,7 @@ class TaskQueueService(
                             "filePath" to targetFile.toString(),
                             "originalFilename" to file.originalFilename,
                             "timeoutSeconds" to timeoutSeconds,
+                            "assignmentNumber" to assignmentNumber,
                         ),
                     )
             }
@@ -94,6 +96,7 @@ class TaskQueueService(
                 filePath = targetFile.toString(),
                 originalFilename = file.originalFilename!!,
                 timeoutSeconds = timeoutSeconds,
+                assignmentNumber = assignmentNumber,
             )
 
         // Send the message to the queue

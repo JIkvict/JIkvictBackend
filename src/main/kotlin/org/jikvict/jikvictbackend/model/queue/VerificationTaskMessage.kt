@@ -9,5 +9,6 @@ data class VerificationTaskMessage(
     val filePath: String,
     val originalFilename: String,
     val timeoutSeconds: Long = 300,
+    val assignmentNumber: Int,
     override val additionalParams: Map<String, Any> = emptyMap(),
 ) : TaskMessage

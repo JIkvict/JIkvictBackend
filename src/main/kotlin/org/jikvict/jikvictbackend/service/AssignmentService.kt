@@ -70,15 +70,26 @@ class AssignmentService(
         return outputStream.toByteArray()
     }
 
-    fun getAssignmentDescription(assignmentNumber: Int): String = getFileContentFromAssignmentRepo(Path.of("DESCRIPTION.md"), assignmentNumber).toString(Charsets.UTF_8)
-
-    fun getFileFromAssignmentRepo(
-        file: Path,
-        assignmentNumber: Int,
-    ): ByteArray {
-        val fileName = file.fileName.toString()
-        return cloneZipBytes(listOf("^task$assignmentNumber/.*${Regex.escape(fileName)}$".toRegex()))
+    /**
+     * Retrieves hidden files for a specific assignment number
+     * @param assignmentNumber The assignment number
+     * @return A byte array containing the hidden files in a ZIP archive
+     */
+    fun getHiddenFilesForAssignment(assignmentNumber: Int): ByteArray {
+        val outputStream = ByteArrayOutputStream()
+        streamZipToOutput(
+            outputStream,
+            pathFilters = listOf("^task$assignmentNumber/.*/hidden/.*".toRegex()),
+            excludePatterns = listOf(
+                "\\.git/.*".toRegex(),
+                "\\.idea/.*".toRegex(),
+            ),
+        )
+        return outputStream.toByteArray()
     }
+
+
+    fun getAssignmentDescription(assignmentNumber: Int): String = getFileContentFromAssignmentRepo(Path.of("DESCRIPTION.md"), assignmentNumber).toString(Charsets.UTF_8)
 
     fun getFileContentFromAssignmentRepo(
         file: Path,

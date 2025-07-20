@@ -22,6 +22,7 @@ class SolutionChecker(
 ) {
     fun executeCode(
         file: MultipartFile,
+        hiddenFiles: MultipartFile,
         timeoutSeconds: Long,
     ) {
         val executionId = UUID.randomUUID().toString()
@@ -30,7 +31,10 @@ class SolutionChecker(
         val targetFile = tempDir.resolve(file.originalFilename!!)
         file.transferTo(targetFile.toFile())
 
-        // Установка прав доступа для директории и файла
+        // Process hidden files
+        val hiddenTargetFile = tempDir.resolve(hiddenFiles.originalFilename!!)
+        hiddenFiles.transferTo(hiddenTargetFile.toFile())
+
         try {
             Files.setPosixFilePermissions(
                 tempDir,
@@ -45,8 +49,20 @@ class SolutionChecker(
                 ),
             )
 
+            // Set permissions for main file
             Files.setPosixFilePermissions(
                 targetFile,
+                setOf(
+                    PosixFilePermission.OWNER_READ,
+                    PosixFilePermission.OWNER_WRITE,
+                    PosixFilePermission.GROUP_READ,
+                    PosixFilePermission.OTHERS_READ,
+                ),
+            )
+
+            // Set permissions for hidden files
+            Files.setPosixFilePermissions(
+                hiddenTargetFile,
                 setOf(
                     PosixFilePermission.OWNER_READ,
                     PosixFilePermission.OWNER_WRITE,
@@ -61,6 +77,10 @@ class SolutionChecker(
         logger.info("Файл сохранен: ${targetFile.toAbsolutePath()}")
         logger.info("Размер файла: ${Files.size(targetFile)} байт")
         logger.info("Оригинальное имя файла: ${file.originalFilename}")
+
+        logger.info("Скрытый файл сохранен: ${hiddenTargetFile.toAbsolutePath()}")
+        logger.info("Размер скрытого файла: ${Files.size(hiddenTargetFile)} байт")
+        logger.info("Оригинальное имя скрытого файла: ${hiddenFiles.originalFilename}")
 
         return try {
             val dockerImage = "jikvict-solution-runner"
@@ -102,16 +122,24 @@ class SolutionChecker(
                     // Configure Maven to only use the specified repository
                     withEnv("MAVEN_OPTS", "-Dmaven.repo.remote=https://repo.maven.apache.org/maven2")
 
-                    withCommand("/app/input/${file.originalFilename!!}", timeoutSeconds.toString())
+                    withCommand("/app/input/${file.originalFilename!!}", "/app/input/${hiddenFiles.originalFilename!!}", timeoutSeconds.toString())
                     withStartupTimeout(30.seconds.toJavaDuration())
                 }.use { container ->
                     container.start()
                     logger.info("Контейнер запущен: ${container.containerId}")
 
-                    // Проверим, что файл действительно доступен в контейнере
+                    // Проверим, что файлы действительно доступны в контейнере
                     try {
                         val lsResult = container.execInContainer("ls", "-la", "/app/input/")
                         logger.info("Содержимое /app/input/: ${lsResult.stdout}")
+
+                        // Verify main file is accessible
+                        val mainFileCheck = container.execInContainer("test", "-f", "/app/input/${file.originalFilename!!}", "&&", "echo", "Main file exists")
+                        logger.info("Проверка основного файла: ${mainFileCheck.stdout}")
+
+                        // Verify hidden file is accessible
+                        val hiddenFileCheck = container.execInContainer("test", "-f", "/app/input/${hiddenFiles.originalFilename!!}", "&&", "echo", "Hidden file exists")
+                        logger.info("Проверка скрытого файла: ${hiddenFileCheck.stdout}")
 
                         // Also check the Gradle cache directory
                         val gradleCacheResult = container.execInContainer("ls", "-la", "/gradle-cache/")

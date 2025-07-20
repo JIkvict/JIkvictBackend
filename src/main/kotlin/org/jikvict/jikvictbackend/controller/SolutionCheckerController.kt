@@ -2,7 +2,6 @@ package org.jikvict.jikvictbackend.controller
 
 import org.jikvict.jikvictbackend.model.response.PendingStatusResponse
 import org.jikvict.jikvictbackend.model.response.ResponsePayload
-import org.jikvict.jikvictbackend.service.SolutionChecker
 import org.jikvict.jikvictbackend.service.TaskQueueService
 import org.jikvict.jikvictbackend.service.ZipValidatorService
 import org.springframework.http.ResponseEntity
@@ -17,39 +16,28 @@ import org.springframework.web.multipart.MultipartFile
 @RestController
 @RequestMapping("/api/v1/solution-checker")
 class SolutionCheckerController(
-    private val solutionChecker: SolutionChecker,
     private val zipValidatorService: ZipValidatorService,
     private val taskQueueService: TaskQueueService,
 ) {
-    /**
-     * Submit a solution for verification (synchronous)
-     * This endpoint is kept for backward compatibility
-     */
-    @PostMapping("/check", consumes = ["multipart/form-data"])
-    fun checkSolution(
-        @RequestParam file: MultipartFile,
-    ): ResponseEntity<String> {
-        zipValidatorService.validateZipArchive(file)
-        solutionChecker.executeCode(file, 300)
-        return ResponseEntity.ok("Everything is fine, your solution is correct!")
-    }
 
     /**
      * Submit a solution for verification (asynchronous)
      * @param file The solution file to verify
+     * @param assignmentNumber The assignment number
      * @param timeoutSeconds The timeout in seconds (default: 300)
      * @return A response with the task ID and pending status
      */
     @PostMapping("/submit", consumes = ["multipart/form-data"])
     fun submitSolution(
         @RequestParam file: MultipartFile,
+        @RequestParam assignmentNumber: Int,
         @RequestParam(required = false, defaultValue = "300") timeoutSeconds: Long,
     ): ResponseEntity<PendingStatusResponse<Long>> {
         // Validate the ZIP archive
         zipValidatorService.validateZipArchive(file)
 
         // Enqueue the verification task
-        val taskId = taskQueueService.enqueueSolutionVerificationTask(file, timeoutSeconds)
+        val taskId = taskQueueService.enqueueSolutionVerificationTask(file, assignmentNumber, timeoutSeconds)
 
         // Return the task ID and pending status
         return ResponseEntity.accepted().body(
