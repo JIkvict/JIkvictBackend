@@ -27,6 +27,7 @@ dependencies {
     testImplementation(libs.spring.security.test)
     testRuntimeOnly(libs.junit.platform.launcher)
     testImplementation(libs.bundles.test)
+    implementation(libs.kotlinx.coroutines.core)
 }
 
 idea {

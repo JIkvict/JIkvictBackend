@@ -7,6 +7,7 @@ import org.jikvict.jikvictbackend.service.SolutionChecker
 import org.jikvict.jikvictbackend.service.TaskQueueService
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.stereotype.Service
+import org.springframework.web.multipart.MultipartFile
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -45,7 +46,7 @@ class VerificationTaskProcessor(
 
             // Create a mock MultipartFile from the file
             val multipartFile =
-                object : org.springframework.web.multipart.MultipartFile {
+                object : MultipartFile {
                     override fun getName(): String = "file"
 
                     override fun getOriginalFilename(): String = message.originalFilename

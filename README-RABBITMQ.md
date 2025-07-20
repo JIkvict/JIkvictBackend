@@ -143,3 +143,13 @@ To add support for new types of tasks:
 5. Add endpoints to the appropriate controller to expose the functionality to clients
 
 The infrastructure is designed to be easily extensible, allowing new types of tasks to be added with minimal changes to the existing code.
+
+```bash
+docker run -d \
+  --name rabbitmq \
+  -p 5672:5672 \
+  -p 15672:15672 \
+  -e RABBITMQ_DEFAULT_USER=guest \
+  -e RABBITMQ_DEFAULT_PASS=guest \
+  rabbitmq:3-management
+```
