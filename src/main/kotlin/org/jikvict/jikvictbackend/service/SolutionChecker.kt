@@ -31,6 +31,8 @@ class SolutionChecker(
         val targetFile = tempDir.resolve(file.originalFilename!!)
         file.transferTo(targetFile.toFile())
 
+        val gradleCacheDir = Path.of("/tmp/gradle-cache", executionId)
+        Files.createDirectories(gradleCacheDir)
         // Process hidden files
         val hiddenTargetFile = tempDir.resolve(hiddenFiles.originalFilename!!)
         hiddenFiles.transferTo(hiddenTargetFile.toFile())
@@ -92,54 +94,50 @@ class SolutionChecker(
 
                     withCreateContainerCmdModifier { cmd ->
                         cmd.hostConfig?.apply {
-                            withMemory(1024 * 1024 * 1024L)
-                            withCpuQuota(1000000L)
-                            withPidsLimit(500L)
-                            withNetworkMode("bridge")
-                            // Disable readonly filesystem to allow Gradle to write files
-                            withReadonlyRootfs(false)
+                            withMemory(1024 * 1024 * 1024L) // Memory limit (1GB)
+                            withCpuQuota(1000000L) // CPU quota
+                            withPidsLimit(500L) // Process limit
+                            withNetworkMode("bridge") // Bridge network mode
+                            withReadonlyRootfs(false) // Allow write operations in the container filesystem
                             withTmpFs(
                                 mapOf(
                                     "/tmp" to "size=1g",
                                     "/root" to "size=1g",
                                     "/var/tmp" to "size=1g",
-                                ),
+                                )
                             )
-                            withExtraHosts("repo.maven.apache.org:151.101.52.209")
-                            withDns("8.8.8.8")
+                            // Remove specific "repo.maven.apache.org" host
+                            // Use default DNS as configured in container environment
                             withBinds(
                                 Bind(tempDir.toString(), Volume("/app/input")),
-                                Bind("gradle-cache", Volume("/gradle-cache")),
+                                Bind(gradleCacheDir.toString(), Volume("/gradle-cache")),
                             )
                         }
                     }
 
-                    // Set Gradle user home to the mounted volume
+                    // Set Gradle user home to use mounted cache
                     withEnv("GRADLE_USER_HOME", "/gradle-cache")
                     withEnv("GRADLE_OPTS", "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Xmx512m")
                     withEnv("JAVA_OPTS", "-Xmx256m -Xms128m")
 
-                    // Configure Maven to only use the specified repository
-                    withEnv("MAVEN_OPTS", "-Dmaven.repo.remote=https://repo.maven.apache.org/maven2")
+                    // Remove restrictive Maven repository configuration
+                    // Maven will now use default repositories configured in the build system
+                    // withEnv("MAVEN_OPTS", "-Dmaven.repo.remote=https://repo.maven.apache.org/maven2")
 
-                    withCommand("/app/input/${file.originalFilename!!}", "/app/input/${hiddenFiles.originalFilename!!}", timeoutSeconds.toString())
+                    withCommand(
+                        "/app/input/${file.originalFilename!!}",
+                        "/app/input/${hiddenFiles.originalFilename!!}",
+                        timeoutSeconds.toString()
+                    )
                     withStartupTimeout(30.seconds.toJavaDuration())
                 }.use { container ->
                     container.start()
                     logger.info("Контейнер запущен: ${container.containerId}")
 
-                    // Проверим, что файлы действительно доступны в контейнере
+                    // Проверим, что файл действительно доступен в контейнере
                     try {
                         val lsResult = container.execInContainer("ls", "-la", "/app/input/")
                         logger.info("Содержимое /app/input/: ${lsResult.stdout}")
-
-                        // Verify main file is accessible
-                        val mainFileCheck = container.execInContainer("test", "-f", "/app/input/${file.originalFilename!!}", "&&", "echo", "Main file exists")
-                        logger.info("Проверка основного файла: ${mainFileCheck.stdout}")
-
-                        // Verify hidden file is accessible
-                        val hiddenFileCheck = container.execInContainer("test", "-f", "/app/input/${hiddenFiles.originalFilename!!}", "&&", "echo", "Hidden file exists")
-                        logger.info("Проверка скрытого файла: ${hiddenFileCheck.stdout}")
 
                         // Also check the Gradle cache directory
                         val gradleCacheResult = container.execInContainer("ls", "-la", "/gradle-cache/")
@@ -183,6 +181,7 @@ class SolutionChecker(
             logger.error("Ошибка выполнения кода", e)
         } finally {
             cleanupDirectory(tempDir)
+            cleanupDirectory(gradleCacheDir)
         }
     }
 
