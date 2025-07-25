@@ -1,11 +1,13 @@
 package org.jikvict.spring.problems.advice
 
+import io.swagger.v3.oas.annotations.Hidden
 import org.apache.logging.log4j.LogManager
 import org.jikvict.spring.problems.registry.ProcessorsRegistry
 import org.springframework.http.ProblemDetail
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 
+@Hidden
 @RestControllerAdvice
 class GeneralExceptionControllerAdvice(
     private val registry: ProcessorsRegistry

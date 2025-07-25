@@ -1,8 +1,15 @@
 package org.jikvict.jikvictbackend.controller
 
 import org.jikvict.jikvictbackend.entity.Assignment
+import org.jikvict.jikvictbackend.model.dto.AssignmentDto
+import org.jikvict.jikvictbackend.model.mapper.AssignmentMapper
 import org.jikvict.jikvictbackend.model.response.PendingStatusResponse
+import org.jikvict.jikvictbackend.repository.AssignmentRepository
 import org.jikvict.jikvictbackend.service.AssignmentService
+import org.springdoc.core.annotations.ParameterObject
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
+import org.springframework.data.web.PagedModel
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -16,6 +23,8 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/assignment")
 class AssignmentController(
     private val assignmentService: AssignmentService,
+    private val assignmentRepository: AssignmentRepository,
+    private val assignmentMapper: AssignmentMapper,
 ) {
     @GetMapping("/zip/{taskId}", produces = [MediaType.APPLICATION_OCTET_STREAM_VALUE])
     fun downloadZip(
@@ -65,5 +74,12 @@ class AssignmentController(
     ): ResponseEntity<Assignment> {
         val assignment = assignmentService.getAssignmentById(id)
         return ResponseEntity.ok(assignment)
+    }
+
+    @GetMapping("/all", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getAll(@ParameterObject pageable: Pageable): PagedModel<AssignmentDto> {
+        val assignments: Page<Assignment> = assignmentRepository.findAll(pageable)
+        val assignmentDtoPage: Page<AssignmentDto> = assignments.map(assignmentMapper::toDto)
+        return PagedModel(assignmentDtoPage)
     }
 }

@@ -158,7 +158,6 @@ class AssignmentService(
         val repoDesc = DfsRepositoryDescription("streaming-repo")
         val repo = InMemoryRepository(repoDesc)
         repo.create()
-
         Git(repo).use { git ->
             git
                 .remoteAdd()

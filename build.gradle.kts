@@ -4,6 +4,7 @@ plugins {
     id("jikvict-openapi-conventions")
     id("jikvict-ktlint-conventions")
     id("idea")
+    kotlin("kapt")
 }
 
 dependencies {
@@ -28,6 +29,8 @@ dependencies {
     testRuntimeOnly(libs.junit.platform.launcher)
     testImplementation(libs.bundles.test)
     implementation(libs.kotlinx.coroutines.core)
+    kapt("org.mapstruct:mapstruct-processor:1.6.0")
+    compileOnly("org.mapstruct:mapstruct:1.6.0")
 }
 
 idea {
