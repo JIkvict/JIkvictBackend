@@ -4,8 +4,10 @@ import org.jikvict.jikvictbackend.model.queue.TaskMessage
 
 /**
  * Interface for processing different types of tasks
+ * @param T The type of additional parameters in the task message
+ * @param M The type of task message that extends TaskMessage<T>
  */
-interface TaskProcessor<T : TaskMessage> {
+interface TaskProcessor<T, M : TaskMessage<T>> {
     /**
      * The type of task this processor can handle
      */
@@ -30,5 +32,5 @@ interface TaskProcessor<T : TaskMessage> {
      * Process a task message
      * @param message The task message to process
      */
-    fun process(message: T)
+    fun process(message: M)
 }

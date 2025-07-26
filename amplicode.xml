@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AmplicodeJpaPluginProjectSettings">
+    <option name="lastSelectedLanguage" value="Kotlin" />
+  </component>
+  <component name="AmplicodePersistenceUnitSettings">
+    <persistence-units>
+      <persistence-unit moduleName="JIkvictBackend.main" name="Default">
+        <packages>
+          <package value="org.jikvict.jikvictbackend" />
+        </packages>
+      </persistence-unit>
+    </persistence-units>
+  </component>
+</project>

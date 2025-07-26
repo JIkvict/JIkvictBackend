@@ -2,9 +2,12 @@ package org.jikvict.jikvictbackend.service.processor
 
 import org.apache.logging.log4j.Logger
 import org.jikvict.jikvictbackend.entity.Assignment
+import org.jikvict.jikvictbackend.entity.Task
+import org.jikvict.jikvictbackend.model.dto.AssignmentDto
 import org.jikvict.jikvictbackend.model.queue.AssignmentTaskMessage
 import org.jikvict.jikvictbackend.model.response.PendingStatus
 import org.jikvict.jikvictbackend.repository.AssignmentRepository
+import org.jikvict.jikvictbackend.repository.TaskRepository
 import org.jikvict.jikvictbackend.service.AssignmentService
 import org.jikvict.jikvictbackend.service.TaskQueueService
 import org.springframework.amqp.rabbit.annotation.RabbitListener
@@ -14,9 +17,10 @@ import org.springframework.stereotype.Service
 class AssignmentTaskProcessor(
     private val assignmentService: AssignmentService,
     private val assignmentRepository: AssignmentRepository,
+    private val taskRepository: TaskRepository,
     private val taskQueueService: TaskQueueService,
     private val log: Logger,
-) : TaskProcessor<AssignmentTaskMessage> {
+) : TaskProcessor<AssignmentDto, AssignmentTaskMessage> {
     override val taskType: String = "ASSIGNMENT_CREATION"
     override val queueName: String = "assignment.queue"
     override val exchangeName: String = "assignment.exchange"
@@ -34,16 +38,25 @@ class AssignmentTaskProcessor(
                 "Creating assignment ${message.assignmentNumber}",
             )
 
-            // Get assignment description
-            val description = assignmentService.getAssignmentDescription(message.assignmentNumber)
+            // Get assignment description from the message or from the service if not provided
+            val description =
+                message.additionalParams.description.ifBlank {
+                    assignmentService.getAssignmentDescription(message.assignmentNumber)
+                }
+
+            // Find or create Task entity
+            val task = findOrCreateTask(message.assignmentNumber)
 
             // Create assignment entity
             val assignment =
-                Assignment().apply {
-                    title = "Assignment ${message.assignmentNumber}"
-                    this.description = description
-                    taskNumber = message.assignmentNumber
-                }
+                Assignment(
+                    title = message.additionalParams.title,
+                    description = description,
+                    task = task,
+                    maxPoints = message.additionalParams.maxPoints,
+                    startDate = message.additionalParams.startDate,
+                    endDate = message.additionalParams.endDate,
+                )
 
             // Save assignment
             val savedAssignment = assignmentRepository.save(assignment)
@@ -65,5 +78,25 @@ class AssignmentTaskProcessor(
                 "Error creating assignment: ${e.message}",
             )
         }
+    }
+
+    /**
+     * Finds an existing Task by ID or creates a new one
+     */
+    private fun findOrCreateTask(taskNumber: Int): Task {
+        // Try to find an existing task with the same ID
+        val existingTask = taskRepository.findById(taskNumber.toLong())
+
+        if (existingTask.isPresent) {
+            return existingTask.get()
+        }
+
+        // Create a new task
+        val task =
+            Task().apply {
+                id = taskNumber.toLong()
+            }
+
+        return taskRepository.save(task)
     }
 }

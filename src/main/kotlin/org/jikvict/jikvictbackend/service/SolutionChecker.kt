@@ -104,7 +104,7 @@ class SolutionChecker(
                                     "/tmp" to "size=1g",
                                     "/root" to "size=1g",
                                     "/var/tmp" to "size=1g",
-                                )
+                                ),
                             )
                             // Remove specific "repo.maven.apache.org" host
                             // Use default DNS as configured in container environment
@@ -127,7 +127,7 @@ class SolutionChecker(
                     withCommand(
                         "/app/input/${file.originalFilename!!}",
                         "/app/input/${hiddenFiles.originalFilename!!}",
-                        timeoutSeconds.toString()
+                        timeoutSeconds.toString(),
                     )
                     withStartupTimeout(30.seconds.toJavaDuration())
                 }.use { container ->

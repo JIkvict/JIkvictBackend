@@ -12,14 +12,14 @@ import org.springframework.stereotype.Service
 class DefaultTaskRegistry(
     private val log: Logger,
 ) : TaskRegistry {
-    private val processors = mutableMapOf<String, TaskProcessor<*>>()
+    private val processors = mutableMapOf<String, TaskProcessor<*, *>>()
 
-    override fun <T : TaskMessage> registerProcessor(processor: TaskProcessor<T>) {
+    override fun <T, M : TaskMessage<T>> registerProcessor(processor: TaskProcessor<T, M>) {
         log.info("Registering task processor for task type: ${processor.taskType}")
-        processors[processor.taskType] = processor
+        processors[processor.taskType]
     }
 
-    override fun getProcessorByTaskType(taskType: String): TaskProcessor<*>? = processors[taskType]
+    override fun getProcessorByTaskType(taskType: String): TaskProcessor<*, *>? = processors[taskType]
 
-    override fun getAllProcessors(): List<TaskProcessor<*>> = processors.values.toList()
+    override fun getAllProcessors(): List<TaskProcessor<*, *>> = processors.values.toList()
 }

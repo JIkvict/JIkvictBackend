@@ -3,6 +3,8 @@ package org.jikvict.jikvictbackend.service
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.apache.logging.log4j.Logger
 import org.jikvict.jikvictbackend.entity.TaskStatus
+import org.jikvict.jikvictbackend.model.dto.AssignmentDto
+import org.jikvict.jikvictbackend.model.dto.VerificationTaskDto
 import org.jikvict.jikvictbackend.model.queue.AssignmentTaskMessage
 import org.jikvict.jikvictbackend.model.queue.TaskMessage
 import org.jikvict.jikvictbackend.model.queue.VerificationTaskMessage
@@ -29,24 +31,58 @@ class TaskQueueService(
     /**
      * Enqueues an assignment creation task and returns the task ID
      */
-    fun enqueueAssignmentCreationTask(assignmentNumber: Int): Long {
+    fun enqueueAssignmentCreationTask(
+        assignmentNumber: Int,
+        title: String = "Assignment $assignmentNumber",
+        description: String = "",
+        taskId: Long = assignmentNumber.toLong(),
+        maxPoints: Int = 100,
+        startDate: LocalDateTime = LocalDateTime.now(),
+        endDate: LocalDateTime = LocalDateTime.now().plusDays(14),
+        assignmentGroupIds: List<Long> = emptyList(),
+    ): Long {
         // Create a task status record
         val taskStatus =
             TaskStatus().apply {
                 taskType = "ASSIGNMENT_CREATION"
                 status = PendingStatus.PENDING
                 createdAt = LocalDateTime.now()
-                parameters = objectMapper.writeValueAsString(mapOf("assignmentNumber" to assignmentNumber))
+                parameters =
+                    objectMapper.writeValueAsString(
+                        mapOf(
+                            "assignmentNumber" to assignmentNumber,
+                            "title" to title,
+                            "description" to description,
+                            "taskId" to taskId,
+                            "maxPoints" to maxPoints,
+                            "startDate" to startDate,
+                            "endDate" to endDate,
+                            "assignmentGroupIds" to assignmentGroupIds,
+                        ),
+                    )
             }
 
         // Save the task status to get an ID
         val savedTaskStatus = taskStatusRepository.save(taskStatus)
+
+        // Create AssignmentDto for additionalParams
+        val assignmentDto =
+            AssignmentDto(
+                title = title,
+                description = description,
+                taskId = taskId,
+                maxPoints = maxPoints,
+                startDate = startDate,
+                endDate = endDate,
+                assignmentGroupIds = assignmentGroupIds,
+            )
 
         // Create a message
         val message =
             AssignmentTaskMessage(
                 taskId = savedTaskStatus.id,
                 assignmentNumber = assignmentNumber,
+                additionalParams = assignmentDto,
             )
 
         // Send the message to the queue
@@ -89,6 +125,15 @@ class TaskQueueService(
         // Save the task status to get an ID
         val savedTaskStatus = taskStatusRepository.save(taskStatus)
 
+        // Create VerificationTaskDto for additionalParams
+        val verificationTaskDto =
+            VerificationTaskDto(
+                filePath = targetFile.toString(),
+                originalFilename = file.originalFilename!!,
+                timeoutSeconds = timeoutSeconds,
+                assignmentNumber = assignmentNumber,
+            )
+
         // Create a message
         val message =
             VerificationTaskMessage(
@@ -97,6 +142,7 @@ class TaskQueueService(
                 originalFilename = file.originalFilename!!,
                 timeoutSeconds = timeoutSeconds,
                 assignmentNumber = assignmentNumber,
+                additionalParams = verificationTaskDto,
             )
 
         // Send the message to the queue
@@ -108,7 +154,7 @@ class TaskQueueService(
     /**
      * Sends a task message to the appropriate queue
      */
-    private fun sendTaskToQueue(message: TaskMessage) {
+    private fun sendTaskToQueue(message: TaskMessage<*>) {
         val processor =
             taskRegistry.getProcessorByTaskType(message.taskType)
                 ?: throw IllegalArgumentException("No processor registered for task type: ${message.taskType}")

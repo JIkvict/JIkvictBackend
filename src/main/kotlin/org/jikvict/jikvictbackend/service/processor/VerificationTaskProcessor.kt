@@ -1,6 +1,7 @@
 package org.jikvict.jikvictbackend.service.processor
 
 import org.apache.logging.log4j.Logger
+import org.jikvict.jikvictbackend.model.dto.VerificationTaskDto
 import org.jikvict.jikvictbackend.model.queue.VerificationTaskMessage
 import org.jikvict.jikvictbackend.model.response.PendingStatus
 import org.jikvict.jikvictbackend.service.AssignmentService
@@ -21,7 +22,7 @@ class VerificationTaskProcessor(
     private val taskQueueService: TaskQueueService,
     private val assignmentService: AssignmentService,
     private val log: Logger,
-) : TaskProcessor<VerificationTaskMessage> {
+) : TaskProcessor<VerificationTaskDto, VerificationTaskMessage> {
     override val taskType: String = "SOLUTION_VERIFICATION"
     override val queueName: String = "verification.queue"
     override val exchangeName: String = "verification.exchange"

@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 import java.nio.file.Path
+import java.time.LocalDateTime
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -38,7 +39,22 @@ class AssignmentService(
      */
     fun createAssignmentByNumber(number: Int): PendingStatusResponse<Long> {
         log.info("Creating assignment by number: $number")
-        val taskId = taskQueueService.enqueueAssignmentCreationTask(number)
+
+        // Get the description from the assignment repository
+        val description = getAssignmentDescription(number)
+
+        // Create the assignment with default values
+        val taskId =
+            taskQueueService.enqueueAssignmentCreationTask(
+                assignmentNumber = number,
+                title = "Assignment $number",
+                description = description,
+                taskId = number.toLong(),
+                maxPoints = 100,
+                startDate = LocalDateTime.now(),
+                endDate = LocalDateTime.now().plusDays(14),
+            )
+
         return PendingStatusResponse(
             payload = ResponsePayload(taskId),
             status = PendingStatus.PENDING,
@@ -80,14 +96,14 @@ class AssignmentService(
         streamZipToOutput(
             outputStream,
             pathFilters = listOf("^task$assignmentNumber/.*/hidden/.*".toRegex()),
-            excludePatterns = listOf(
-                "\\.git/.*".toRegex(),
-                "\\.idea/.*".toRegex(),
-            ),
+            excludePatterns =
+                listOf(
+                    "\\.git/.*".toRegex(),
+                    "\\.idea/.*".toRegex(),
+                ),
         )
         return outputStream.toByteArray()
     }
-
 
     fun getAssignmentDescription(assignmentNumber: Int): String = getFileContentFromAssignmentRepo(Path.of("DESCRIPTION.md"), assignmentNumber).toString(Charsets.UTF_8)
 

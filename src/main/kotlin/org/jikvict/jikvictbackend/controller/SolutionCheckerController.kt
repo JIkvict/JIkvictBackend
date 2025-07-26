@@ -1,5 +1,6 @@
 package org.jikvict.jikvictbackend.controller
 
+import org.jikvict.jikvictbackend.model.response.PendingStatus
 import org.jikvict.jikvictbackend.model.response.PendingStatusResponse
 import org.jikvict.jikvictbackend.model.response.ResponsePayload
 import org.jikvict.jikvictbackend.service.TaskQueueService
@@ -19,7 +20,6 @@ class SolutionCheckerController(
     private val zipValidatorService: ZipValidatorService,
     private val taskQueueService: TaskQueueService,
 ) {
-
     /**
      * Submit a solution for verification (asynchronous)
      * @param file The solution file to verify
@@ -43,7 +43,7 @@ class SolutionCheckerController(
         return ResponseEntity.accepted().body(
             PendingStatusResponse(
                 payload = ResponsePayload(taskId),
-                status = org.jikvict.jikvictbackend.model.response.PendingStatus.PENDING,
+                status = PendingStatus.PENDING,
             ),
         )
     }

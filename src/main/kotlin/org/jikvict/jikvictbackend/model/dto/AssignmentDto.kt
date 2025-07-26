@@ -1,10 +1,16 @@
 package org.jikvict.jikvictbackend.model.dto
 
+import java.time.LocalDateTime
+
 /**
  * DTO for [org.jikvict.jikvictbackend.entity.Assignment]
  */
 data class AssignmentDto(
     val title: String,
     val description: String,
-    val taskNumber: Int,
+    val taskId: Long,
+    val maxPoints: Int,
+    val startDate: LocalDateTime,
+    val endDate: LocalDateTime,
+    val assignmentGroupIds: List<Long> = emptyList(),
 )
