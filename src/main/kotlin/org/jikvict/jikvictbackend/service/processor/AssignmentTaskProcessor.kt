@@ -48,15 +48,14 @@ class AssignmentTaskProcessor(
             val task = findOrCreateTask(message.assignmentNumber)
 
             // Create assignment entity
-            val assignment =
-                Assignment(
-                    title = message.additionalParams.title,
-                    description = description,
-                    task = task,
-                    maxPoints = message.additionalParams.maxPoints,
-                    startDate = message.additionalParams.startDate,
-                    endDate = message.additionalParams.endDate,
-                )
+            val assignment = Assignment().apply {
+                title = message.additionalParams.title
+                this.description = description
+                this.task = task
+                maxPoints = message.additionalParams.maxPoints
+                startDate = message.additionalParams.startDate
+                endDate = message.additionalParams.endDate
+            }
 
             // Save assignment
             val savedAssignment = assignmentRepository.save(assignment)

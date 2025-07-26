@@ -15,37 +15,32 @@ import jakarta.persistence.Table
 
 @Entity
 @Table(name = "assignments")
-class Assignment(
-    @Column(nullable = false)
-    var title: String,
-    @Lob
-    @Column(nullable = true)
-    var description: String?,
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "task_id", nullable = false)
-    var task: Task,
-    @Column(name = "max_points", nullable = false)
-    var maxPoints: Int,
-    @Column(name = "start_date", nullable = false)
-    var startDate: LocalDateTime,
-    @Column(name = "end_date", nullable = false)
-    var endDate: LocalDateTime,
-) {
+class Assignment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(nullable = false)
     var id: Long = 0
 
+    @Column(nullable = false)
+    var title: String = ""
+
+    @Lob
+    @Column(nullable = true)
+    var description: String? = null
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "task_id", nullable = false)
+    var task: Task = Task()
+
+    @Column(name = "max_points", nullable = false)
+    var maxPoints: Int = 0
+
+    @Column(name = "start_date", nullable = false)
+    var startDate: LocalDateTime = LocalDateTime.now()
+
+    @Column(name = "end_date", nullable = false)
+    var endDate: LocalDateTime = LocalDateTime.now()
+
     @ManyToMany(mappedBy = "assignments")
     var assignmentGroups: MutableSet<AssignmentGroup> = mutableSetOf()
-
-    // No-args constructor for JPA
-    constructor() : this(
-        title = "",
-        description = null,
-        task = Task(),
-        maxPoints = 0,
-        startDate = LocalDateTime.now(),
-        endDate = LocalDateTime.now(),
-    )
 }
