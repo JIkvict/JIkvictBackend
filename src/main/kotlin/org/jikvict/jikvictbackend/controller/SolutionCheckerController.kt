@@ -29,7 +29,7 @@ class SolutionCheckerController(
     fun submitSolution(
         @RequestParam file: MultipartFile,
         @RequestParam assignmentNumber: Int,
-        @RequestParam(required = false, defaultValue = "300") timeoutSeconds: Long,
+        @RequestParam timeoutSeconds: Long,
     ): ResponseEntity<PendingStatusResponse<Long>> {
         zipValidatorService.validateZipArchive(file)
 

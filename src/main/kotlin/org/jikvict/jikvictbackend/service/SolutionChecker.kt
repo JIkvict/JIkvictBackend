@@ -5,7 +5,6 @@ import com.github.dockerjava.api.model.Bind
 import com.github.dockerjava.api.model.Volume
 import org.apache.logging.log4j.Logger
 import org.springframework.stereotype.Service
-import org.springframework.web.multipart.MultipartFile
 import org.testcontainers.containers.BindMode
 import org.testcontainers.containers.GenericContainer
 import java.nio.file.Files
@@ -19,24 +18,37 @@ import kotlin.time.toJavaDuration
 @Service
 class SolutionChecker(
     private val logger: Logger,
+    private val assignmentService: AssignmentService,
 ) {
+    fun checkSolution(
+        taskId: Int,
+        solution: ByteArray,
+        timeoutSeconds: Long,
+    ) {
+        logger.info("Retrieving hidden files for assignment $taskId")
+        val hiddenFilesBytes = assignmentService.getHiddenFilesForTask(taskId)
+
+        logger.info("Retrieving exposed files for assignment $taskId")
+
+        executeCode(solution, hiddenFilesBytes, timeoutSeconds)
+    }
+
     fun executeCode(
-        file: MultipartFile,
-        hiddenFiles: MultipartFile,
+        solution: ByteArray,
+        hiddenFiles: ByteArray,
         timeoutSeconds: Long,
     ) {
         val executionId = UUID.randomUUID().toString()
         val tempDir = Files.createTempDirectory("code-$executionId")
 
-        val targetFile = tempDir.resolve(file.originalFilename!!)
-        file.transferTo(targetFile.toFile())
+        val targetFile = tempDir.resolve("solution")
+        Files.write(targetFile, solution)
+
+        val hiddenTargetFile = tempDir.resolve("hidden-files")
+        Files.write(hiddenTargetFile, hiddenFiles)
 
         val gradleCacheDir = Path.of("/tmp/gradle-cache", executionId)
         Files.createDirectories(gradleCacheDir)
-        // Process hidden files
-        val hiddenTargetFile = tempDir.resolve(hiddenFiles.originalFilename!!)
-        hiddenFiles.transferTo(hiddenTargetFile.toFile())
-
         try {
             Files.setPosixFilePermissions(
                 tempDir,
@@ -78,11 +90,9 @@ class SolutionChecker(
 
         logger.info("Файл сохранен: ${targetFile.toAbsolutePath()}")
         logger.info("Размер файла: ${Files.size(targetFile)} байт")
-        logger.info("Оригинальное имя файла: ${file.originalFilename}")
 
         logger.info("Скрытый файл сохранен: ${hiddenTargetFile.toAbsolutePath()}")
         logger.info("Размер скрытого файла: ${Files.size(hiddenTargetFile)} байт")
-        logger.info("Оригинальное имя скрытого файла: ${hiddenFiles.originalFilename}")
 
         return try {
             val dockerImage = "jikvict-solution-runner"
@@ -125,8 +135,8 @@ class SolutionChecker(
                     // withEnv("MAVEN_OPTS", "-Dmaven.repo.remote=https://repo.maven.apache.org/maven2")
 
                     withCommand(
-                        "/app/input/${file.originalFilename!!}",
-                        "/app/input/${hiddenFiles.originalFilename!!}",
+                        "/app/input/${targetFile.fileName}",
+                        "/app/input/${hiddenTargetFile.fileName}",
                         timeoutSeconds.toString(),
                     )
                     withStartupTimeout(30.seconds.toJavaDuration())

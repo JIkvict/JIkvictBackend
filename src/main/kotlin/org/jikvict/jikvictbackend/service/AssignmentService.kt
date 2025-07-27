@@ -83,7 +83,7 @@ class AssignmentService(
      * @param assignmentNumber The assignment number
      * @return A byte array containing the hidden files in a ZIP archive
      */
-    fun getHiddenFilesForAssignment(assignmentNumber: Int): ByteArray {
+    fun getHiddenFilesForTask(assignmentNumber: Int): ByteArray {
         val outputStream = ByteArrayOutputStream()
         streamZipToOutput(
             outputStream,

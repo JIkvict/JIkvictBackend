@@ -11,9 +11,7 @@ import org.jikvict.jikvictbackend.service.registry.TaskRegistry
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
-import java.nio.file.Files
 import java.time.LocalDateTime
-import java.util.UUID
 
 @Service
 class SolutionVerificationTaskQueueService(
@@ -26,13 +24,8 @@ class SolutionVerificationTaskQueueService(
     fun enqueueSolutionVerificationTask(
         file: MultipartFile,
         assignmentNumber: Int,
-        timeoutSeconds: Long = 300,
+        timeoutSeconds: Long,
     ): Long {
-        val executionId = UUID.randomUUID().toString()
-        val tempDir = Files.createTempDirectory("verification-$executionId")
-        val targetFile = tempDir.resolve(file.originalFilename!!)
-        file.transferTo(targetFile.toFile())
-
         val taskStatus =
             TaskStatus().apply {
                 taskType = "SOLUTION_VERIFICATION"
@@ -41,7 +34,6 @@ class SolutionVerificationTaskQueueService(
                 parameters =
                     objectMapper.writeValueAsString(
                         mapOf(
-                            "filePath" to targetFile.toString(),
                             "originalFilename" to file.originalFilename,
                             "timeoutSeconds" to timeoutSeconds,
                             "assignmentNumber" to assignmentNumber,
@@ -53,19 +45,14 @@ class SolutionVerificationTaskQueueService(
 
         val verificationTaskDto =
             VerificationTaskDto(
-                filePath = targetFile.toString(),
-                originalFilename = file.originalFilename!!,
-                timeoutSeconds = timeoutSeconds,
                 assignmentNumber = assignmentNumber,
+                timeoutSeconds = timeoutSeconds,
+                solutionBytes = file.bytes,
             )
 
         val message =
             VerificationTaskMessage(
                 taskId = savedTaskStatus.id,
-                filePath = targetFile.toString(),
-                originalFilename = file.originalFilename!!,
-                timeoutSeconds = timeoutSeconds,
-                assignmentNumber = assignmentNumber,
                 additionalParams = verificationTaskDto,
             )
 

@@ -16,7 +16,7 @@ class DefaultTaskRegistry(
 
     override fun <T, M : TaskMessage<T>> registerProcessor(processor: TaskProcessor<T, M>) {
         log.info("Registering task processor for task type: ${processor.taskType}")
-        processors[processor.taskType]
+        processors[processor.taskType] = processor
     }
 
     override fun getProcessorByTaskType(taskType: String): TaskProcessor<*, *>? = processors[taskType]

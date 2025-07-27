@@ -5,14 +5,14 @@ import org.jikvict.jikvictbackend.model.dto.AssignmentDto
 import org.jikvict.jikvictbackend.model.queue.AssignmentTaskMessage
 import org.jikvict.jikvictbackend.model.response.PendingStatus
 import org.jikvict.jikvictbackend.service.AssignmentService
-import org.jikvict.jikvictbackend.service.queue.TaskQueueService
+import org.jikvict.jikvictbackend.service.queue.AssignmentTaskQueueService
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.stereotype.Service
 
 @Service
 class AssignmentTaskProcessor(
     private val assignmentService: AssignmentService,
-    private val taskQueueService: TaskQueueService,
+    private val taskQueueService: AssignmentTaskQueueService,
     private val log: Logger,
 ) : TaskProcessor<AssignmentDto, AssignmentTaskMessage> {
     override val taskType: String = "ASSIGNMENT_CREATION"
