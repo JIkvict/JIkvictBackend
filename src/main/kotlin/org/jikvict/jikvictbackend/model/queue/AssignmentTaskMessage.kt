@@ -8,6 +8,5 @@ import org.jikvict.jikvictbackend.model.dto.AssignmentDto
 data class AssignmentTaskMessage(
     override val taskId: Long,
     override val taskType: String = "ASSIGNMENT_CREATION",
-    val assignmentNumber: Int,
     override val additionalParams: AssignmentDto,
 ) : TaskMessage<AssignmentDto>

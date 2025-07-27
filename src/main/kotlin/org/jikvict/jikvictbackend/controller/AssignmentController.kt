@@ -4,8 +4,10 @@ import org.jikvict.jikvictbackend.entity.Assignment
 import org.jikvict.jikvictbackend.model.dto.AssignmentDto
 import org.jikvict.jikvictbackend.model.mapper.AssignmentMapper
 import org.jikvict.jikvictbackend.model.response.PendingStatusResponse
+import org.jikvict.jikvictbackend.model.response.ResponsePayload
 import org.jikvict.jikvictbackend.repository.AssignmentRepository
 import org.jikvict.jikvictbackend.service.AssignmentService
+import org.jikvict.jikvictbackend.service.queue.AssignmentTaskQueueService
 import org.jikvict.problems.exception.contract.ServiceException
 import org.springdoc.core.annotations.ParameterObject
 import org.springframework.data.domain.Page
@@ -30,6 +32,7 @@ class AssignmentController(
     private val assignmentService: AssignmentService,
     private val assignmentRepository: AssignmentRepository,
     private val assignmentMapper: AssignmentMapper,
+    private val assignmentTaskQueueService: AssignmentTaskQueueService,
 ) {
     @GetMapping("/zip/{taskId}", produces = [MediaType.APPLICATION_OCTET_STREAM_VALUE])
     fun downloadZip(
@@ -53,19 +56,6 @@ class AssignmentController(
     ): ResponseEntity<String> {
         val description = assignmentService.getAssignmentDescription(taskId)
         return ResponseEntity.ok(description)
-    }
-
-    /**
-     * Creates an assignment asynchronously
-     * @param assignmentNumber The assignment number
-     * @return A response with the task ID and pending status
-     */
-    @PostMapping("/create/{assignmentNumber}")
-    fun createAssignment(
-        @PathVariable assignmentNumber: Int,
-    ): ResponseEntity<PendingStatusResponse<Long>> {
-        val response = assignmentService.createAssignmentByNumber(assignmentNumber)
-        return ResponseEntity.accepted().body(response)
     }
 
     /**
@@ -98,10 +88,14 @@ class AssignmentController(
     @PostMapping
     fun createAssignment(
         @RequestBody assignmentDto: AssignmentDto,
-    ): ResponseEntity<AssignmentDto> {
-        val assignment = assignmentMapper.toEntity(assignmentDto)
-        val savedAssignment = assignmentRepository.save(assignment)
-        return ResponseEntity.status(HttpStatus.CREATED).body(assignmentMapper.toDto(savedAssignment))
+    ): ResponseEntity<PendingStatusResponse<Long>> {
+        val result = assignmentTaskQueueService.enqueueAssignmentCreationTask(assignmentDto)
+        val response =
+            PendingStatusResponse(
+                payload = ResponsePayload(result.id),
+                status = result.status,
+            )
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(response)
     }
 
     /**
@@ -120,7 +114,6 @@ class AssignmentController(
         }
 
         val assignment = assignmentMapper.toEntity(assignmentDto)
-        // Ensure the ID is set correctly
         assignment.id = id
 
         val updatedAssignment = assignmentRepository.save(assignment)

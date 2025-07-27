@@ -6,7 +6,7 @@ import org.jikvict.jikvictbackend.model.queue.VerificationTaskMessage
 import org.jikvict.jikvictbackend.model.response.PendingStatus
 import org.jikvict.jikvictbackend.service.AssignmentService
 import org.jikvict.jikvictbackend.service.SolutionChecker
-import org.jikvict.jikvictbackend.service.TaskQueueService
+import org.jikvict.jikvictbackend.service.queue.TaskQueueService
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile

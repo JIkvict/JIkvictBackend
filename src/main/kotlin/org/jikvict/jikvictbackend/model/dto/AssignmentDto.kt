@@ -7,8 +7,8 @@ import java.time.LocalDateTime
  */
 data class AssignmentDto(
     val title: String,
-    val description: String,
-    val taskId: Long,
+    val description: String?,
+    val taskId: Int,
     val maxPoints: Int,
     val startDate: LocalDateTime,
     val endDate: LocalDateTime,

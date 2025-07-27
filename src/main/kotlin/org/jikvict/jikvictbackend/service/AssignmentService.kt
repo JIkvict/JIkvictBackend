@@ -10,10 +10,8 @@ import org.eclipse.jgit.transport.URIish
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 import org.eclipse.jgit.treewalk.TreeWalk
 import org.jikvict.jikvictbackend.entity.Assignment
+import org.jikvict.jikvictbackend.model.dto.AssignmentDto
 import org.jikvict.jikvictbackend.model.properties.AssignmentProperties
-import org.jikvict.jikvictbackend.model.response.PendingStatus
-import org.jikvict.jikvictbackend.model.response.PendingStatusResponse
-import org.jikvict.jikvictbackend.model.response.ResponsePayload
 import org.jikvict.jikvictbackend.repository.AssignmentRepository
 import org.jikvict.problems.exception.contract.ServiceException
 import org.springframework.http.HttpStatus
@@ -21,7 +19,6 @@ import org.springframework.stereotype.Service
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 import java.nio.file.Path
-import java.time.LocalDateTime
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -30,35 +27,30 @@ class AssignmentService(
     private val properties: AssignmentProperties,
     private val log: Logger,
     private val assignmentRepository: AssignmentRepository,
-    private val taskQueueService: TaskQueueService,
 ) {
-    /**
-     * Creates an assignment asynchronously by enqueueing a task
-     * @param number The assignment number
-     * @return A response with the task ID and pending status
-     */
-    fun createAssignmentByNumber(number: Int): PendingStatusResponse<Long> {
-        log.info("Creating assignment by number: $number")
+    fun createAssignment(assignmentDto: AssignmentDto): Assignment {
+        val description =
+            runCatching {
+                getAssignmentDescription(assignmentDto.taskId)
+            }.onFailure {
+                throw ServiceException(
+                    HttpStatus.NOT_FOUND,
+                    "Could not create assignment: probably there is no task${assignmentDto.taskId} in the repository",
+                )
+            }
 
-        // Get the description from the assignment repository
-        val description = getAssignmentDescription(number)
+        val assignment =
+            Assignment().apply {
+                title = assignmentDto.title
+                this.description = description.getOrNull()!!
+                this.taskId = assignmentDto.taskId
+                maxPoints = assignmentDto.maxPoints
+                startDate = assignmentDto.startDate
+                endDate = assignmentDto.endDate
+            }
 
-        // Create the assignment with default values
-        val taskId =
-            taskQueueService.enqueueAssignmentCreationTask(
-                assignmentNumber = number,
-                title = "Assignment $number",
-                description = description,
-                taskId = number.toLong(),
-                maxPoints = 100,
-                startDate = LocalDateTime.now(),
-                endDate = LocalDateTime.now().plusDays(14),
-            )
-
-        return PendingStatusResponse(
-            payload = ResponsePayload(taskId),
-            status = PendingStatus.PENDING,
-        )
+        val savedAssignment = assignmentRepository.save(assignment)
+        return savedAssignment
     }
 
     /**
