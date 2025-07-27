@@ -28,7 +28,7 @@ class VerificationTaskProcessor(
                 PendingStatus.PENDING,
                 "Verifying solution: for assignment ${message.additionalParams.assignmentNumber}",
             )
-            solutionChecker.checkSolution(message.additionalParams.assignmentNumber, message.additionalParams.solutionBytes, message.additionalParams.timeoutSeconds)
+            val result = solutionChecker.checkSolution(message.additionalParams.assignmentNumber, message.additionalParams.solutionBytes, message.additionalParams.timeoutSeconds)
 
             taskQueueService.updateTaskStatus(
                 message.taskId,
@@ -37,6 +37,7 @@ class VerificationTaskProcessor(
             )
 
             log.info("Solution verification completed: ${message.taskId}")
+            log.info("Solution verification result: $result")
         } catch (e: Exception) {
             log.error("Error verifying solution: ${e.message}", e)
             taskQueueService.updateTaskStatus(
