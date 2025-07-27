@@ -27,4 +27,6 @@ data class VerificationTaskDto(
         result = 31 * result + solutionBytes.contentHashCode()
         return result
     }
+
+    override fun toString(): String = "VerificationTaskDto(timeoutSeconds=$timeoutSeconds, assignmentNumber=$assignmentNumber, solutionBytes=${solutionBytes.size} bytes)"
 }
