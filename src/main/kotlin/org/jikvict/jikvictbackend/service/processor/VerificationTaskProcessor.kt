@@ -1,7 +1,6 @@
 package org.jikvict.jikvictbackend.service.processor
 
 import org.apache.logging.log4j.Logger
-import org.jikvict.jikvictbackend.entity.User
 import org.jikvict.jikvictbackend.model.dto.VerificationTaskDto
 import org.jikvict.jikvictbackend.model.queue.VerificationTaskMessage
 import org.jikvict.jikvictbackend.model.response.PendingStatus
@@ -11,8 +10,6 @@ import org.jikvict.jikvictbackend.service.AssignmentResultService
 import org.jikvict.jikvictbackend.service.SolutionChecker
 import org.jikvict.jikvictbackend.service.queue.SolutionVerificationTaskQueueService
 import org.springframework.amqp.rabbit.annotation.RabbitListener
-import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.stereotype.Service
 import kotlin.jvm.optionals.getOrElse
 
@@ -47,17 +44,36 @@ class VerificationTaskProcessor(
                     )
                     return
                 }!!
-
-            val result = solutionChecker.checkSolution(message.additionalParams.taskId, message.additionalParams.solutionBytes, assignmentEntity.timeOutSeconds)
-
+            val result =
+                runCatching {
+                    solutionChecker.checkSolution(assignmentEntity.taskId, message.additionalParams.solutionBytes, assignmentEntity.timeOutSeconds)
+                }.onFailure {
+                    taskQueueService.updateTaskStatus(
+                        message.taskId,
+                        PendingStatus.FAILED,
+                        "Failed to verify solution: ${it.message}",
+                    )
+                    return
+                }.getOrNull()!!
+            val user =
+                userRepository.findById(message.additionalParams.userId).getOrElse {
+                    taskQueueService.updateTaskStatus(
+                        message.taskId,
+                        PendingStatus.FAILED,
+                        "Failed to find user: ${message.additionalParams.userId}",
+                    )
+                    return
+                }!!
             runCatching {
-                assignmentResultService.handleAssignmentResult(result, 1, getCurrentUser())
+                assignmentResultService.handleAssignmentResult(result, assignmentEntity.id, user)
             }.onFailure {
                 taskQueueService.updateTaskStatus(
                     message.taskId,
                     PendingStatus.FAILED,
                     "Failed to save result: ${it.message}",
                 )
+                log.error("Failed to save result: $it")
+                it.printStackTrace()
                 return
             }
 
@@ -77,12 +93,5 @@ class VerificationTaskProcessor(
                 "Error verifying solution: ${e.message}",
             )
         }
-    }
-
-    private fun getCurrentUser(): User {
-        val authentication = SecurityContextHolder.getContext().authentication
-        val userDetails = authentication.principal as UserDetails
-        return userRepository.findUserByUserNameField(userDetails.username)
-            ?: throw IllegalStateException("User not found")
     }
 }

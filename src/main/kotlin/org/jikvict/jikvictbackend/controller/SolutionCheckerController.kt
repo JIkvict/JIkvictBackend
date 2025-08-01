@@ -21,12 +21,11 @@ class SolutionCheckerController(
     @PostMapping("/submit", consumes = ["multipart/form-data"])
     fun submitSolution(
         @RequestParam file: MultipartFile,
-        @RequestParam taskId: Int,
         @RequestParam assignmentId: Int,
     ): ResponseEntity<PendingStatusResponse<Long>> {
         zipValidatorService.validateZipArchive(file)
 
-        val taskId = solutionVerificationTaskQueueService.enqueueSolutionVerificationTask(file, assignmentId, taskId)
+        val taskId = solutionVerificationTaskQueueService.enqueueSolutionVerificationTask(file, assignmentId)
 
         return ResponseEntity.accepted().body(
             PendingStatusResponse(

@@ -1,6 +1,7 @@
 package org.jikvict.jikvictbackend.configuration
 
-import org.jikvict.jikvictbackend.service.JwtAuthFilter
+import org.jikvict.jikvictbackend.service.filter.AutoAuthenticationFilter
+import org.jikvict.jikvictbackend.service.filter.JwtAuthFilter
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.authentication.AuthenticationManager
@@ -23,6 +24,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 class SecurityConfiguration(
     private val jwtAuthFilter: JwtAuthFilter,
     private val userDetailsService: UserDetailsService,
+    private val autoAuthenticationFilter: AutoAuthenticationFilter?,
 ) {
     @Bean
     fun filterChain(
@@ -42,9 +44,16 @@ class SecurityConfiguration(
             sessionManagement {
                 sessionCreationPolicy = SessionCreationPolicy.STATELESS
             }
+
             addFilterBefore<UsernamePasswordAuthenticationFilter>(
                 jwtAuthFilter,
             )
+
+            autoAuthenticationFilter?.let {
+                addFilterBefore<JwtAuthFilter>(
+                    it,
+                )
+            }
         }
         http.authenticationProvider(authenticationProvider)
         return http.build()
@@ -64,7 +73,6 @@ class SecurityConfiguration(
     }
 
     @Bean
-    @Suppress("UsePropertyAccessSyntax")
     fun authenticationProvider(passwordEncoder: PasswordEncoder): DaoAuthenticationProvider {
         val provider = DaoAuthenticationProvider(userDetailsService)
         provider.setPasswordEncoder(passwordEncoder)
