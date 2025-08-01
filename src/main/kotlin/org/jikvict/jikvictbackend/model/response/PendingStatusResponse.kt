@@ -6,4 +6,5 @@ data class PendingStatusResponse<T>(
     @get:JsonUnwrapped
     val payload: ResponsePayload<T>,
     val status: PendingStatus,
+    val message: String? = null,
 )

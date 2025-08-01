@@ -33,6 +33,7 @@ class AssignmentService(
             runCatching {
                 getAssignmentDescription(assignmentDto.taskId)
             }.onFailure {
+                log.error("Could not create assignment: ${it.message}")
                 throw ServiceException(
                     HttpStatus.NOT_FOUND,
                     "Could not create assignment: probably there is no task${assignmentDto.taskId} in the repository",

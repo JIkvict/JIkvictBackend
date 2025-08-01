@@ -74,6 +74,7 @@ abstract class TaskQueueService(
         return PendingStatusResponse(
             payload = ResponsePayload(taskStatus.resultId),
             status = taskStatus.status,
+            message = taskStatus.message,
         )
     }
 }

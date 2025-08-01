@@ -9,6 +9,7 @@ import jakarta.persistence.Enumerated
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
+import jakarta.persistence.Lob
 import jakarta.persistence.Table
 
 @Entity
@@ -26,6 +27,7 @@ class TaskStatus {
     @Enumerated(EnumType.STRING)
     var status: PendingStatus = PendingStatus.PENDING
 
+    @Lob
     @Column(nullable = true)
     var message: String? = null
 
