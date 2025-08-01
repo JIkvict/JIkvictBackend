@@ -94,6 +94,7 @@ class AssignmentController(
             PendingStatusResponse(
                 payload = ResponsePayload(result.id),
                 status = result.status,
+                message = result.parameters,
             )
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(response)
     }

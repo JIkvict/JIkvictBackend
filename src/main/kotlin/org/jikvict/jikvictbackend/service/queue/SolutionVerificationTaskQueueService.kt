@@ -23,8 +23,8 @@ class SolutionVerificationTaskQueueService(
 ) : TaskQueueService(rabbitTemplate, taskStatusRepository, taskRegistry, log) {
     fun enqueueSolutionVerificationTask(
         file: MultipartFile,
-        assignmentNumber: Int,
-        timeoutSeconds: Long,
+        assignmentId: Int,
+        taskId: Int,
     ): Long {
         val taskStatus =
             TaskStatus().apply {
@@ -35,8 +35,8 @@ class SolutionVerificationTaskQueueService(
                     objectMapper.writeValueAsString(
                         mapOf(
                             "originalFilename" to file.originalFilename,
-                            "timeoutSeconds" to timeoutSeconds,
-                            "assignmentNumber" to assignmentNumber,
+                            "assignmentId" to assignmentId,
+                            "taskId" to taskId,
                         ),
                     )
             }
@@ -45,8 +45,8 @@ class SolutionVerificationTaskQueueService(
 
         val verificationTaskDto =
             VerificationTaskDto(
-                assignmentNumber = assignmentNumber,
-                timeoutSeconds = timeoutSeconds,
+                assignmentId = assignmentId,
+                taskId = taskId,
                 solutionBytes = file.bytes,
             )
 

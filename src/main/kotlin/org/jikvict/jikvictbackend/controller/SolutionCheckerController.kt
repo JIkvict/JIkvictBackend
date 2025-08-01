@@ -18,22 +18,15 @@ class SolutionCheckerController(
     private val zipValidatorService: ZipValidatorService,
     private val solutionVerificationTaskQueueService: SolutionVerificationTaskQueueService,
 ) {
-    /**
-     * Submit a solution for verification (asynchronous)
-     * @param file The solution file to verify
-     * @param assignmentNumber The assignment number
-     * @param timeoutSeconds The timeout in seconds (default: 300)
-     * @return A response with the task ID and pending status
-     */
     @PostMapping("/submit", consumes = ["multipart/form-data"])
     fun submitSolution(
         @RequestParam file: MultipartFile,
-        @RequestParam assignmentNumber: Int,
-        @RequestParam timeoutSeconds: Long,
+        @RequestParam taskId: Int,
+        @RequestParam assignmentId: Int,
     ): ResponseEntity<PendingStatusResponse<Long>> {
         zipValidatorService.validateZipArchive(file)
 
-        val taskId = solutionVerificationTaskQueueService.enqueueSolutionVerificationTask(file, assignmentNumber, timeoutSeconds)
+        val taskId = solutionVerificationTaskQueueService.enqueueSolutionVerificationTask(file, assignmentId, taskId)
 
         return ResponseEntity.accepted().body(
             PendingStatusResponse(

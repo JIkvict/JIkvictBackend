@@ -4,8 +4,8 @@ package org.jikvict.jikvictbackend.model.dto
  * DTO for verification tasks
  */
 data class VerificationTaskDto(
-    val timeoutSeconds: Long,
-    val assignmentNumber: Int,
+    val assignmentId: Int,
+    val taskId: Int,
     val solutionBytes: ByteArray,
 ) {
     override fun equals(other: Any?): Boolean {
@@ -14,19 +14,19 @@ data class VerificationTaskDto(
 
         other as VerificationTaskDto
 
-        if (timeoutSeconds != other.timeoutSeconds) return false
-        if (assignmentNumber != other.assignmentNumber) return false
+        if (assignmentId != other.assignmentId) return false
+        if (taskId != other.taskId) return false
         if (!solutionBytes.contentEquals(other.solutionBytes)) return false
 
         return true
     }
 
+    override fun toString(): String = "VerificationTaskDto(assignmentId=$assignmentId, taskId=$taskId, solutionBytes.size=${solutionBytes.size})"
+
     override fun hashCode(): Int {
-        var result = timeoutSeconds.hashCode()
-        result = 31 * result + assignmentNumber
+        var result = assignmentId
+        result = 31 * result + taskId
         result = 31 * result + solutionBytes.contentHashCode()
         return result
     }
-
-    override fun toString(): String = "VerificationTaskDto(timeoutSeconds=$timeoutSeconds, assignmentNumber=$assignmentNumber, solutionBytes=${solutionBytes.size} bytes)"
 }

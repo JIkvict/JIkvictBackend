@@ -13,4 +13,5 @@ data class AssignmentDto(
     val startDate: LocalDateTime,
     val endDate: LocalDateTime,
     val assignmentGroupIds: List<Long> = emptyList(),
+    val timeOutSeconds: Long,
 )

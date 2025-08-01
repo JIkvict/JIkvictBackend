@@ -36,6 +36,8 @@ class Assignment {
     @Column(name = "end_date", nullable = false)
     var endDate: LocalDateTime = LocalDateTime.now()
 
+    var timeOutSeconds: Long = 0
+
     @ManyToMany(mappedBy = "assignments")
     var assignmentGroups: MutableSet<AssignmentGroup> = mutableSetOf()
 }

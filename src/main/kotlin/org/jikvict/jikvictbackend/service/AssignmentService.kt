@@ -11,6 +11,7 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 import org.eclipse.jgit.treewalk.TreeWalk
 import org.jikvict.jikvictbackend.entity.Assignment
 import org.jikvict.jikvictbackend.model.dto.AssignmentDto
+import org.jikvict.jikvictbackend.model.mapper.AssignmentMapper
 import org.jikvict.jikvictbackend.model.properties.AssignmentProperties
 import org.jikvict.jikvictbackend.repository.AssignmentRepository
 import org.jikvict.problems.exception.contract.ServiceException
@@ -27,6 +28,7 @@ class AssignmentService(
     private val properties: AssignmentProperties,
     private val log: Logger,
     private val assignmentRepository: AssignmentRepository,
+    private val assignmentMapper: AssignmentMapper,
 ) {
     fun createAssignment(assignmentDto: AssignmentDto): Assignment {
         val description =
@@ -38,16 +40,14 @@ class AssignmentService(
                     HttpStatus.NOT_FOUND,
                     "Could not create assignment: probably there is no task${assignmentDto.taskId} in the repository",
                 )
-            }
+            }.getOrNull()!!
 
         val assignment =
-            Assignment().apply {
-                title = assignmentDto.title
-                this.description = description.getOrNull()!!
-                this.taskId = assignmentDto.taskId
-                maxPoints = assignmentDto.maxPoints
-                startDate = assignmentDto.startDate
-                endDate = assignmentDto.endDate
+            assignmentMapper.toEntity(assignmentDto).apply {
+                this.description =
+                    description.also {
+                        log.info("Assignment description: $it")
+                    }
             }
 
         val savedAssignment = assignmentRepository.save(assignment)

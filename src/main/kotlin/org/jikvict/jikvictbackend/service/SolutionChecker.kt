@@ -1,9 +1,13 @@
 package org.jikvict.jikvictbackend.service
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.dockerjava.api.command.WaitContainerResultCallback
 import com.github.dockerjava.api.model.Bind
 import com.github.dockerjava.api.model.Volume
 import org.apache.logging.log4j.Logger
+import org.jikvict.problems.exception.contract.ServiceException
+import org.jikvict.testing.model.TestSuiteResult
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.testcontainers.containers.BindMode
 import org.testcontainers.containers.GenericContainer
@@ -19,12 +23,13 @@ import kotlin.time.toJavaDuration
 class SolutionChecker(
     private val logger: Logger,
     private val assignmentService: AssignmentService,
+    private val objectMapper: ObjectMapper,
 ) {
     fun checkSolution(
         taskId: Int,
         solution: ByteArray,
         timeoutSeconds: Long,
-    ): String? {
+    ): TestSuiteResult {
         logger.info("Retrieving hidden files for assignment $taskId")
         val hiddenFilesBytes = assignmentService.getHiddenFilesForTask(taskId)
         return executeCode(solution, hiddenFilesBytes, timeoutSeconds)
@@ -34,7 +39,7 @@ class SolutionChecker(
         solution: ByteArray,
         hiddenFiles: ByteArray,
         timeoutSeconds: Long,
-    ): String? {
+    ): TestSuiteResult {
         val executionId = UUID.randomUUID().toString()
         val tempDir = Files.createTempDirectory("code-$executionId")
         val targetFile = tempDir.resolve("solution")
@@ -140,14 +145,17 @@ class SolutionChecker(
                         }
 
                     val logs = container.logs
+                    logger.info("Logs: $logs")
 
                     when (exitCode) {
                         0 -> {
                             logger.info("Code executed successfully. Exit code: $exitCode")
                         }
+
                         -1 -> {
                             logger.error("Code execution timed out. Container was forcibly stopped")
                         }
+
                         else -> {
                             logger.error("Code execution failed. Exit code: $exitCode")
                         }
@@ -190,7 +198,17 @@ class SolutionChecker(
             cleanupDirectory(gradleCacheDir)
         }
 
-        return resultsJson
+        val results =
+            runCatching {
+                objectMapper.readValue(resultsJson, TestSuiteResult::class.java)
+            }.onFailure {
+                logger.error("Failed to parse results", it)
+                throw ServiceException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to parse results")
+            }.getOrNull()!!
+
+        logger.info("Results: $results")
+
+        return results
     }
 
     fun cleanupDirectory(directory: Path) {

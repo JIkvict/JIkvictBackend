@@ -7,7 +7,7 @@ testcontainers = "1.21.2"
 assertj = "3.27.3"
 jgit = "7.0.0.202409031743-r"
 spring-amqp = "3.1.3"
-
+jikvict-testing-library = "v0.0.1"
 [libraries]
 # Spring Boot
 spring-boot-starter-actuator = { group = "org.springframework.boot", name = "spring-boot-starter-actuator" }
@@ -54,6 +54,9 @@ spring-boot-starter-amqp = { group = "org.springframework.boot", name = "spring-
 
 # Coroutines
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core" }
+
+# Jikvict
+jikvict-testing-library = { module = "com.github.JIkvict.JIkvictTestingLibrary:JIkvictTestingLibrary", version.ref = "jikvict-testing-library"}
 
 [bundles]
 test = [
