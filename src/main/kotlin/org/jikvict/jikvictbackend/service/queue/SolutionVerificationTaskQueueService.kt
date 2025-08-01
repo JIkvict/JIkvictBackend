@@ -8,6 +8,7 @@ import org.jikvict.jikvictbackend.model.queue.VerificationTaskMessage
 import org.jikvict.jikvictbackend.model.response.PendingStatus
 import org.jikvict.jikvictbackend.repository.TaskStatusRepository
 import org.jikvict.jikvictbackend.repository.UserRepository
+import org.jikvict.jikvictbackend.service.UserDetailsServiceImpl
 import org.jikvict.jikvictbackend.service.registry.TaskRegistry
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.security.core.context.SecurityContextHolder
@@ -24,7 +25,8 @@ class SolutionVerificationTaskQueueService(
     log: Logger,
     private val objectMapper: ObjectMapper,
     private val userRepository: UserRepository,
-) : TaskQueueService(rabbitTemplate, taskStatusRepository, taskRegistry, log) {
+    private val userDetailsService: UserDetailsServiceImpl,
+) : TaskQueueService(rabbitTemplate, taskStatusRepository, taskRegistry, log, userDetailsService) {
     fun enqueueSolutionVerificationTask(
         file: MultipartFile,
         assignmentId: Int,
@@ -41,6 +43,7 @@ class SolutionVerificationTaskQueueService(
                             "assignmentId" to assignmentId,
                         ),
                     )
+                user = userDetailsService.getCurrentUser()
             }
 
         val savedTaskStatus = taskStatusRepository.save(taskStatus)

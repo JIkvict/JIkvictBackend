@@ -10,6 +10,7 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Lob
+import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 
 @Entity
@@ -40,7 +41,9 @@ class TaskStatus {
     @Column(nullable = true)
     var completedAt: LocalDateTime? = null
 
-    // Additional parameters stored as JSON
+    @ManyToOne
+    var user: User = User()
+
     @Column(columnDefinition = "TEXT")
     var parameters: String? = null
 }

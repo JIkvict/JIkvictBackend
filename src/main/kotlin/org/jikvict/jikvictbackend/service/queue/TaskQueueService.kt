@@ -7,8 +7,11 @@ import org.jikvict.jikvictbackend.model.response.PendingStatus
 import org.jikvict.jikvictbackend.model.response.PendingStatusResponse
 import org.jikvict.jikvictbackend.model.response.ResponsePayload
 import org.jikvict.jikvictbackend.repository.TaskStatusRepository
+import org.jikvict.jikvictbackend.service.UserDetailsServiceImpl
 import org.jikvict.jikvictbackend.service.registry.TaskRegistry
+import org.jikvict.problems.exception.contract.ServiceException
 import org.springframework.amqp.rabbit.core.RabbitTemplate
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 
@@ -18,6 +21,7 @@ abstract class TaskQueueService(
     private val taskStatusRepository: TaskStatusRepository,
     private val taskRegistry: TaskRegistry,
     private val log: Logger,
+    private val userDetailsService: UserDetailsServiceImpl,
 ) {
     internal fun sendTaskToQueue(message: TaskMessage<*>) {
         val processor =
@@ -35,10 +39,17 @@ abstract class TaskQueueService(
     /**
      * Gets the status of a task by ID
      */
-    fun getTaskStatus(taskId: Long): TaskStatus =
-        taskStatusRepository
-            .findById(taskId)
-            .orElseThrow { IllegalArgumentException("Task with ID $taskId not found") }
+    fun getTaskStatus(taskId: Long): TaskStatus {
+        val currentUser = userDetailsService.getCurrentUser()
+        val task =
+            taskStatusRepository
+                .findById(taskId)
+                .orElseThrow { ServiceException(HttpStatus.NOT_FOUND, "Task with ID $taskId not found") }
+        if (task.user.id != currentUser.id) {
+            throw ServiceException(HttpStatus.FORBIDDEN, "You do not have permission to access this task")
+        }
+        return task
+    }
 
     /**
      * Updates the status of a task

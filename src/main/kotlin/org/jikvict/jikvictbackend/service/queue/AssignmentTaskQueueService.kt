@@ -7,6 +7,7 @@ import org.jikvict.jikvictbackend.model.dto.AssignmentDto
 import org.jikvict.jikvictbackend.model.queue.AssignmentTaskMessage
 import org.jikvict.jikvictbackend.model.response.PendingStatus
 import org.jikvict.jikvictbackend.repository.TaskStatusRepository
+import org.jikvict.jikvictbackend.service.UserDetailsServiceImpl
 import org.jikvict.jikvictbackend.service.registry.TaskRegistry
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.stereotype.Service
@@ -19,7 +20,8 @@ class AssignmentTaskQueueService(
     taskRegistry: TaskRegistry,
     log: Logger,
     private val objectMapper: ObjectMapper,
-) : TaskQueueService(rabbitTemplate, taskStatusRepository, taskRegistry, log) {
+    private val userDetailsService: UserDetailsServiceImpl,
+) : TaskQueueService(rabbitTemplate, taskStatusRepository, taskRegistry, log, userDetailsService) {
     fun enqueueAssignmentCreationTask(assignmentDto: AssignmentDto): TaskStatus {
         val taskStatus =
             TaskStatus().apply {
@@ -27,8 +29,8 @@ class AssignmentTaskQueueService(
                 status = PendingStatus.PENDING
                 createdAt = LocalDateTime.now()
                 parameters = objectMapper.writeValueAsString(assignmentDto)
+                user = userDetailsService.getCurrentUser()
             }
-
         val savedTaskStatus = taskStatusRepository.save(taskStatus)
 
         val message =
