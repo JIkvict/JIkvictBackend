@@ -30,7 +30,7 @@ jobs:
           cache: 'gradle'
 
       - name: Generate OpenAPI documentation
-        run: ./gradlew generateOpenApiDocs
+        run: ./gradlew generateOpenApiDocs -Pspring.profiles.active=local
         continue-on-error: true
 
       - name: Create docs branch if it doesn't exist
