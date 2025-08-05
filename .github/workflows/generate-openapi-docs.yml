@@ -22,6 +22,7 @@ jobs:
 
       - name: Generate OpenAPI documentation
         run: ./gradlew generateOpenApiDocs
+        continue-on-error: true
 
       - name: Create docs branch if it doesn't exist
         run: |
