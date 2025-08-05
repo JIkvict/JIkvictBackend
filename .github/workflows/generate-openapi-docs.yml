@@ -55,6 +55,11 @@ jobs:
             echo "api_version=$NEW_VERSION" >> $GITHUB_OUTPUT
           fi
 
+      - name: Configure Git
+        run: |
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "GitHub Actions"
+
       - name: Create orphan docs branch
         run: |
           if git ls-remote --heads origin docs | grep docs; then
