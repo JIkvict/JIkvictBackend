@@ -1,9 +1,7 @@
 name: Generate and Publish OpenAPI Documentation
 
 on:
-  # Run manually from the Actions tab
   workflow_dispatch:
-  # Run on schedule (once a day at midnight)
   schedule:
     - cron: '0 0 * * *'
 
@@ -13,10 +11,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up JDK
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
@@ -39,7 +37,7 @@ jobs:
       - name: Copy OpenAPI docs to docs directory
         run: |
           mkdir -p api-docs
-                    cp build/openapi/openapi.json api-docs/
+          cp build/openapi/openapi.json api-docs/
 
       - name: Commit and push OpenAPI documentation
         run: |
@@ -50,7 +48,7 @@ jobs:
           git push origin docs
 
       - name: Upload OpenAPI docs as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: openapi-docs
           path: build/openapi/openapi.json
