@@ -1,0 +1,56 @@
+name: Generate and Publish OpenAPI Documentation
+
+on:
+  # Run manually from the Actions tab
+  workflow_dispatch:
+  # Run on schedule (once a day at midnight)
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  generate-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'gradle'
+
+      - name: Generate OpenAPI documentation
+        run: ./gradlew generateOpenApiDocs
+
+      - name: Create docs branch if it doesn't exist
+        run: |
+          git fetch
+          if ! git ls-remote --heads origin docs | grep docs; then
+            git checkout -b docs
+            git push -u origin docs
+          else
+            git checkout docs
+            git pull origin docs
+          fi
+
+      - name: Copy OpenAPI docs to docs directory
+        run: |
+          mkdir -p api-docs
+                    cp build/openapi/openapi.json api-docs/
+
+      - name: Commit and push OpenAPI documentation
+        run: |
+          git config --local user.email "github-actions@github.com"
+          git config --local user.name "GitHub Actions"
+          git add api-docs/openapi.json
+          git commit -m "Update OpenAPI documentation" || echo "No changes to commit"
+          git push origin docs
+
+      - name: Upload OpenAPI docs as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: openapi-docs
+          path: build/openapi/openapi.json
