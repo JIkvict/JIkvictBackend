@@ -3,6 +3,7 @@ package org.jikvict.jikvictbackend.configuration
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.springframework.beans.factory.InjectionPoint
+import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -20,22 +21,40 @@ class CljLoggingAutoConfiguration {
     @Qualifier("logger")
     fun logger(
         loggerFactory: LoggerFactory,
-        injectionPoint: InjectionPoint,
-    ): Logger =
-        loggerFactory.createLogger(
-            injectionPoint.targetingBean(),
-        )
+        injectionPointProvider: ObjectProvider<InjectionPoint>
+    ): Logger {
+        val injectionPoint = try {
+            injectionPointProvider.ifAvailable
+        } catch (e: Exception) {
+            null
+        }
+
+        return if (injectionPoint != null) {
+            loggerFactory.createLogger(injectionPoint.targetingBean())
+        } else {
+            loggerFactory.createLogger(CljLoggingAutoConfiguration::class.java)
+        }
+    }
 
     @Bean
     @Scope("prototype")
     @Qualifier("cljLogger")
     fun cljLogger(
         loggerFactory: LoggerFactory,
-        injectionPoint: InjectionPoint,
-    ): Logger =
-        loggerFactory.createLogger(
-            injectionPoint.targetingBean(),
-        )
+        injectionPointProvider: ObjectProvider<InjectionPoint>
+    ): Logger {
+        val injectionPoint = try {
+            injectionPointProvider.ifAvailable
+        } catch (e: Exception) {
+            null
+        }
+
+        return if (injectionPoint != null) {
+            loggerFactory.createLogger(injectionPoint.targetingBean())
+        } else {
+            loggerFactory.createLogger(CljLoggingAutoConfiguration::class.java)
+        }
+    }
 }
 
 private const val SETTER_PREFIX = "set"
