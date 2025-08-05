@@ -2,8 +2,17 @@ name: Generate and Publish OpenAPI Documentation
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'API version (leave empty for auto-increment)'
+        required: false
+        type: string
   schedule:
     - cron: '0 0 * * *'
+
+permissions:
+  contents: write
+
 
 jobs:
   generate-docs:
@@ -35,21 +44,42 @@ jobs:
             git pull origin docs
           fi
 
-      - name: Copy OpenAPI docs to docs directory
+
+
+      - name: Determine API version
+        id: version
         run: |
-          mkdir -p api-docs
-          cp build/openapi/openapi.json api-docs/
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            # Use manually specified version
+            echo "Using manually specified version: ${{ github.event.inputs.version }}"
+            echo "api_version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            # Auto-increment version
+            LATEST_VERSION=$(find api-docs -maxdepth 1 -type d -name "v*" | sort -V | tail -n 1 | sed 's/api-docs\/v//' || echo "0")
+            NEW_VERSION=$((LATEST_VERSION + 1))
+            echo "Auto-incrementing to version: $NEW_VERSION"
+            echo "api_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Copy OpenAPI docs to versioned directory
+        run: |
+          VERSION_DIR="api-docs/v${{ steps.version.outputs.api_version }}"
+          mkdir -p "$VERSION_DIR"
+          cp build/openapi/openapi.json "$VERSION_DIR/"
+          # Also update the latest version
+          mkdir -p api-docs/latest
+          cp build/openapi/openapi.json api-docs/latest/
 
       - name: Commit and push OpenAPI documentation
         run: |
           git config --local user.email "github-actions@github.com"
           git config --local user.name "GitHub Actions"
-          git add api-docs/openapi.json
-          git commit -m "Update OpenAPI documentation" || echo "No changes to commit"
+          git add api-docs/
+          git commit -m "Update OpenAPI documentation to version ${{ steps.version.outputs.api_version }}" || echo "No changes to commit"
           git push origin docs
 
       - name: Upload OpenAPI docs as artifact
         uses: actions/upload-artifact@v4
         with:
           name: openapi-docs
-          path: build/openapi/openapi.json
+          path: api-docs/
