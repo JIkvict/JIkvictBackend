@@ -36,6 +36,7 @@ jjwt-jackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jjwt" }
 
 # Database
 postgresql = { group = "org.postgresql", name = "postgresql" }
+h2 = { group = "com.h2database", name = "h2" }
 
 # Documentation
 springdoc-openapi-starter-webmvc-ui = { group = "org.springdoc", name = "springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc-openapi-ui" }

@@ -23,6 +23,7 @@ dependencies {
     runtimeOnly(libs.jjwt.impl)
     runtimeOnly(libs.jjwt.jackson)
     runtimeOnly(libs.postgresql)
+    runtimeOnly(libs.h2)
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.kotlin.test.junit5)
     testImplementation(libs.spring.security.test)
