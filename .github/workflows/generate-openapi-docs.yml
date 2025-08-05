@@ -13,7 +13,6 @@ on:
 permissions:
   contents: write
 
-
 jobs:
   generate-docs:
     runs-on: ubuntu-latest
@@ -33,53 +32,70 @@ jobs:
         run: SPRING_PROFILES_ACTIVE=local ./gradlew generateOpenApiDocs
         continue-on-error: true
 
-      - name: Create docs branch if it doesn't exist
-        run: |
-          git fetch
-          if ! git ls-remote --heads origin docs | grep docs; then
-            git checkout -b docs
-            git push -u origin docs
-          else
-            git checkout docs
-            git pull origin docs
-          fi
-
-
-
       - name: Determine API version
         id: version
         run: |
+          mkdir -p /tmp/openapi-docs
+          cp build/openapi/openapi.json /tmp/openapi-docs/
+
           if [ -n "${{ github.event.inputs.version }}" ]; then
-            # Use manually specified version
             echo "Using manually specified version: ${{ github.event.inputs.version }}"
             echo "api_version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
           else
-            # Auto-increment version
-            LATEST_VERSION=$(find api-docs -maxdepth 1 -type d -name "v*" | sort -V | tail -n 1 | sed 's/api-docs\/v//' || echo "0")
+            git fetch origin docs || true
+            if git ls-remote --heads origin docs | grep docs; then
+              git worktree add --detach /tmp/docs-branch origin/docs
+              LATEST_VERSION=$(find /tmp/docs-branch -maxdepth 1 -type d -name "v*" | sort -V | tail -n 1 | sed 's/.*\/v//' || echo "0")
+              rm -rf /tmp/docs-branch
+            else
+              LATEST_VERSION="0"
+            fi
             NEW_VERSION=$((LATEST_VERSION + 1))
             echo "Auto-incrementing to version: $NEW_VERSION"
             echo "api_version=$NEW_VERSION" >> $GITHUB_OUTPUT
           fi
 
-      - name: Copy OpenAPI docs to versioned directory
+      - name: Create orphan docs branch
         run: |
-          VERSION_DIR="api-docs/v${{ steps.version.outputs.api_version }}"
+          if git ls-remote --heads origin docs | grep docs; then
+            git fetch origin docs
+            git checkout --orphan temp_docs
+            git reset --hard
+            git commit --allow-empty -m "Initial commit for docs branch"
+
+            git worktree add --detach /tmp/docs-branch origin/docs
+            mkdir -p ./
+            cp -r /tmp/docs-branch/* ./ 2>/dev/null || true
+            rm -rf /tmp/docs-branch
+          else
+            git checkout --orphan docs
+            git reset --hard
+            git commit --allow-empty -m "Initial commit for docs branch"
+          fi
+
+          VERSION_DIR="v${{ steps.version.outputs.api_version }}"
           mkdir -p "$VERSION_DIR"
-          cp build/openapi/openapi.json "$VERSION_DIR/"
-          # Also update the latest version
-          mkdir -p api-docs/latest
-          cp build/openapi/openapi.json api-docs/latest/
+          mkdir -p latest
+
+          cp /tmp/openapi-docs/openapi.json "$VERSION_DIR/"
+          cp /tmp/openapi-docs/openapi.json latest/
 
       - name: Commit and push OpenAPI documentation
         run: |
           git config --local user.email "github-actions@github.com"
           git config --local user.name "GitHub Actions"
-          git add api-docs/
+          git add .
           git commit -m "Update OpenAPI documentation to version ${{ steps.version.outputs.api_version }}" || echo "No changes to commit"
-          git push origin docs
+
+          if git rev-parse --verify temp_docs 2>/dev/null; then
+            git branch -D docs || true
+            git branch -m temp_docs docs
+          fi
+
+          git push -f origin docs
 
       - name: Upload OpenAPI docs as artifact
         uses: actions/upload-artifact@v4
         with:
           name: openapi-docs
-          path: api-docs/
+          path: ./
