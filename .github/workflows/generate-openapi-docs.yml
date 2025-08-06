@@ -121,9 +121,7 @@ jobs:
           git commit -m "Update OpenAPI documentation to version ${{ steps.version.outputs.api_version }}"
 
 
-          git remote add origin "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
-
-
+          git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
           git push -f origin HEAD:docs
 
 
