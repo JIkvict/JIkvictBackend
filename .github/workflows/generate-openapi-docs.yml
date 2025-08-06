@@ -44,13 +44,14 @@ jobs:
             echo "Using manually specified version: ${{ github.event.inputs.version }}"
             echo "api_version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
           else
+
             git fetch origin docs || true
             if git ls-remote --heads origin docs | grep docs; then
 
               mkdir -p /tmp/docs-check
               cd /tmp/docs-check
               git init
-              git remote add origin $GITHUB_SERVER_URL/$GITHUB_REPOSITORY
+              git remote add origin "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
               git fetch --depth=1 origin docs
               git checkout FETCH_HEAD
               LATEST_VERSION=$(find . -maxdepth 1 -type d -name "v*" | sort -V | tail -n 1 | sed 's/.*\/v//' || echo "0")
@@ -69,11 +70,14 @@ jobs:
         run: |
           git config --global user.email "github-actions@github.com"
           git config --global user.name "GitHub Actions"
+          git config --global init.defaultBranch main
 
       - name: Create clean orphan docs branch
         run: |
+
           mkdir -p /tmp/clean-docs
           cd /tmp/clean-docs
+
 
           git init
           git config user.email "github-actions@github.com"
@@ -89,12 +93,12 @@ jobs:
           cp /tmp/openapi-docs/openapi.json latest/
 
 
-          if git ls-remote --heads $GITHUB_SERVER_URL/$GITHUB_REPOSITORY docs | grep docs; then
+          if git ls-remote --heads "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" docs | grep docs; then
 
             mkdir -p /tmp/prev-docs
             cd /tmp/prev-docs
             git init
-            git remote add origin $GITHUB_SERVER_URL/$GITHUB_REPOSITORY
+            git remote add origin "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
             git fetch --depth=1 origin docs
             git checkout FETCH_HEAD
 
@@ -107,7 +111,7 @@ jobs:
           fi
 
 
-          echo "
+
           echo "" >> README.md
           echo "This branch contains OpenAPI specifications for the API." >> README.md
           echo "Latest version: v${{ steps.version.outputs.api_version }}" >> README.md
@@ -117,13 +121,14 @@ jobs:
           git commit -m "Update OpenAPI documentation to version ${{ steps.version.outputs.api_version }}"
 
 
-          git remote add origin $GITHUB_SERVER_URL/$GITHUB_REPOSITORY
+          git remote add origin "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
 
 
           git push -f origin HEAD:docs
 
 
-          cp -r . $GITHUB_WORKSPACE/api-docs/
+          mkdir -p "$GITHUB_WORKSPACE/api-docs"
+          cp -r . "$GITHUB_WORKSPACE/api-docs/"
 
       - name: Upload OpenAPI docs as artifact
         uses: actions/upload-artifact@v4
