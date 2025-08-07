@@ -3,7 +3,6 @@ plugins {
     id("jikvict-spring-conventions")
     id("jikvict-openapi-conventions")
     id("jikvict-ktlint-conventions")
-    id("idea")
     kotlin("kapt")
 }
 
@@ -32,13 +31,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.jikvict.testing.library)
     implementation(libs.spring.notebook)
-    kapt("org.mapstruct:mapstruct-processor:1.6.0")
-    compileOnly("org.mapstruct:mapstruct:1.6.0")
+    kapt(libs.mapstruct.processor)
+    compileOnly(libs.mapstruct)
 }
 
-idea {
-    module {
-        isDownloadJavadoc = true
-        isDownloadSources = true
-    }
-}

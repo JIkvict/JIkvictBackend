@@ -21,13 +21,14 @@ class CljLoggingAutoConfiguration {
     @Qualifier("logger")
     fun logger(
         loggerFactory: LoggerFactory,
-        injectionPointProvider: ObjectProvider<InjectionPoint>
+        injectionPointProvider: ObjectProvider<InjectionPoint>,
     ): Logger {
-        val injectionPoint = try {
-            injectionPointProvider.ifAvailable
-        } catch (e: Exception) {
-            null
-        }
+        val injectionPoint =
+            try {
+                injectionPointProvider.ifAvailable
+            } catch (e: Exception) {
+                null
+            }
 
         return if (injectionPoint != null) {
             loggerFactory.createLogger(injectionPoint.targetingBean())
@@ -41,13 +42,14 @@ class CljLoggingAutoConfiguration {
     @Qualifier("cljLogger")
     fun cljLogger(
         loggerFactory: LoggerFactory,
-        injectionPointProvider: ObjectProvider<InjectionPoint>
+        injectionPointProvider: ObjectProvider<InjectionPoint>,
     ): Logger {
-        val injectionPoint = try {
-            injectionPointProvider.ifAvailable
-        } catch (e: Exception) {
-            null
-        }
+        val injectionPoint =
+            try {
+                injectionPointProvider.ifAvailable
+            } catch (e: Exception) {
+                null
+            }
 
         return if (injectionPoint != null) {
             loggerFactory.createLogger(injectionPoint.targetingBean())
