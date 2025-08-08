@@ -27,10 +27,4 @@ interface TaskProcessor<T, M : TaskMessage<T>> {
      * The routing key for this processor
      */
     val routingKey: String
-
-    /**
-     * Process a task message
-     * @param message The task message to process
-     */
-    fun process(message: M)
 }

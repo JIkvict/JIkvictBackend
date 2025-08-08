@@ -8,6 +8,7 @@ plugins {
 
 dependencies {
     implementation(project(":problem-handling:starter"))
+    implementation(project(":docker-lib:starter"))
     implementation(libs.spring.boot.starter.actuator)
     implementation(libs.spring.boot.starter.data.jpa)
     implementation(libs.spring.boot.starter.security)
@@ -31,6 +32,8 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.jikvict.testing.library)
     implementation(libs.spring.notebook)
+    implementation(libs.project.reactor)
+    implementation(libs.project.reactor.kotlin)
     kapt(libs.mapstruct.processor)
     compileOnly(libs.mapstruct)
 }

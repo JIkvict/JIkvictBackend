@@ -21,7 +21,7 @@ class AssignmentTaskProcessor(
     override val routingKey: String = "assignment.routingkey"
 
     @RabbitListener(queues = ["assignment.queue"])
-    override fun process(message: AssignmentTaskMessage) {
+    fun process(message: AssignmentTaskMessage) {
         log.info("Processing assignment creation task: ${message.taskId}")
 
         try {

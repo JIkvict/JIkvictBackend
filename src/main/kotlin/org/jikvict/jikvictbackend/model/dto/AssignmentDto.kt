@@ -12,6 +12,8 @@ data class AssignmentDto(
     val maxPoints: Int,
     val startDate: LocalDateTime,
     val endDate: LocalDateTime,
-    val assignmentGroupIds: List<Long> = emptyList(),
     val timeOutSeconds: Long,
+    val memoryLimit: Long,
+    val cpuLimit: Long,
+    val pidsLimit: Long,
 )

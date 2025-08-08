@@ -3,10 +3,10 @@ plugins {
     id("jikvict-spring-conventions")
 }
 
-group = "org.jikvict.problem.handling"
+group = "org.jikvict.docker.starter"
 
 dependencies {
-    api(project(":problem-handling:library"))
+    api(project(":docker-lib:library"))
     implementation(libs.spring.boot.starter.web)
     implementation(libs.jackson.module.kotlin)
     implementation(libs.kotlin.reflect)

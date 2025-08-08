@@ -11,7 +11,8 @@ import org.jikvict.jikvictbackend.service.SolutionChecker
 import org.jikvict.jikvictbackend.service.queue.SolutionVerificationTaskQueueService
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.stereotype.Service
-import kotlin.jvm.optionals.getOrElse
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Service
 class VerificationTaskProcessor(
@@ -27,55 +28,54 @@ class VerificationTaskProcessor(
     override val exchangeName: String = "verification.exchange"
     override val routingKey: String = "verification.routingkey"
 
-    @RabbitListener(queues = ["verification.queue"])
-    override fun process(message: VerificationTaskMessage) {
+    @RabbitListener(queues = ["verification.queue"], containerFactory = "manualAckContainerFactory")
+    suspend fun process(message: VerificationTaskMessage) {
         try {
             taskQueueService.updateTaskStatus(
                 message.taskId,
                 PendingStatus.PENDING,
                 "Verifying solution: for assignment ${message.additionalParams.assignmentId}",
             )
+
             val assignmentEntity =
-                assignmentRepository.findById(message.additionalParams.assignmentId.toLong()).getOrElse {
+                assignmentRepository.findPropsById(message.additionalParams.assignmentId.toLong()) ?: run {
                     taskQueueService.updateTaskStatus(
                         message.taskId,
                         PendingStatus.FAILED,
                         "Failed to find assignment: ${message.additionalParams.assignmentId}",
                     )
-                    return
-                }!!
+                    throw IllegalStateException("Assignment not found")
+                }
+
             val result =
-                runCatching {
-                    solutionChecker.checkSolution(assignmentEntity.taskId, message.additionalParams.solutionBytes, assignmentEntity.timeOutSeconds)
-                }.onFailure {
+                try {
+                    withContext(Dispatchers.IO) {
+                        solutionChecker.checkSolution(
+                            assignmentEntity.taskId,
+                            message.additionalParams.solutionBytes,
+                            assignmentEntity.id,
+                        )
+                    }
+                } catch (e: Exception) {
                     taskQueueService.updateTaskStatus(
                         message.taskId,
                         PendingStatus.FAILED,
-                        "Failed to verify solution: ${it.message}",
+                        "Failed to verify solution: ${e.message}",
                     )
-                    return
-                }.getOrNull()!!
+                    throw e
+                }
+
             val user =
-                userRepository.findById(message.additionalParams.userId).getOrElse {
+                userRepository.findUserById(message.additionalParams.userId) ?: run {
                     taskQueueService.updateTaskStatus(
                         message.taskId,
                         PendingStatus.FAILED,
                         "Failed to find user: ${message.additionalParams.userId}",
                     )
-                    return
-                }!!
-            runCatching {
-                assignmentResultService.handleAssignmentResult(result, assignmentEntity.id, user)
-            }.onFailure {
-                taskQueueService.updateTaskStatus(
-                    message.taskId,
-                    PendingStatus.FAILED,
-                    "Failed to save result: ${it.message}",
-                )
-                log.error("Failed to save result: $it")
-                it.printStackTrace()
-                return
-            }
+                    throw IllegalStateException("User not found")
+                }
+
+            assignmentResultService.handleAssignmentResult(result, assignmentEntity.id, user)
 
             taskQueueService.updateTaskStatus(
                 message.taskId,

@@ -4,6 +4,11 @@ import org.apache.logging.log4j.Logger
 import org.jikvict.jikvictbackend.service.processor.AssignmentTaskProcessor
 import org.jikvict.jikvictbackend.service.processor.VerificationTaskProcessor
 import org.jikvict.jikvictbackend.service.registry.TaskRegistry
+import org.springframework.amqp.core.AcknowledgeMode
+import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory
+import org.springframework.amqp.rabbit.connection.ConnectionFactory
+import org.springframework.amqp.support.converter.MessageConverter
+import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.event.ContextRefreshedEvent
 import org.springframework.context.event.EventListener
@@ -33,4 +38,21 @@ class TaskProcessorConfiguration(
         taskRegistry.registerProcessor(verificationTaskProcessor)
         log.info("Registered verification task processor: ${verificationTaskProcessor.taskType}")
     }
+}
+
+@Configuration
+class RabbitListenerManualAckConfig {
+    @Bean(name = ["manualAckContainerFactory"])
+    fun manualAckContainerFactory(
+        connectionFactory: ConnectionFactory,
+        rabbitMessageConverter: MessageConverter,
+    ): SimpleRabbitListenerContainerFactory =
+        SimpleRabbitListenerContainerFactory().apply {
+            setConnectionFactory(connectionFactory)
+            setAcknowledgeMode(AcknowledgeMode.MANUAL)
+            setPrefetchCount(1)
+            setConcurrentConsumers(3)
+            setMaxConcurrentConsumers(10)
+            setMessageConverter(rabbitMessageConverter)
+        }
 }

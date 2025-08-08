@@ -33,8 +33,10 @@ tasks.withType<KotlinCompile> {
 
 
 
-tasks.withType<Test> {
-    useJUnitPlatform()
+plugins.withId("java") {
+    tasks.withType<Test>().configureEach {
+        useJUnitPlatform()
+    }
 }
 
 idea {

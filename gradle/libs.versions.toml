@@ -84,6 +84,10 @@ ktlint = { module = "org.jlleitschuh.gradle:ktlint-gradle", version.ref = "ktlin
 mapstruct-processor = { module = "org.mapstruct:mapstruct-processor", version.ref = "mapstruct" }
 mapstruct = { module = "org.mapstruct:mapstruct", version.ref = "mapstruct" }
 
+# Reactor
+project-reactor = { module = "io.projectreactor:reactor-core" }
+project-reactor-kotlin = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactor" }
+
 [bundles]
 test = [
     "spring-boot-starter-test",

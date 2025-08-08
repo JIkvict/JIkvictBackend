@@ -40,4 +40,13 @@ class Assignment {
 
     @ManyToMany(mappedBy = "assignments")
     var assignmentGroups: MutableSet<AssignmentGroup> = mutableSetOf()
+
+    @Column(name = "memory_limit", nullable = true)
+    var memoryLimit: Long = 0
+
+    @Column(name = "cpu_limit", nullable = true)
+    var cpuLimit: Long = 0
+
+    @Column(name = "pids_limit", nullable = true)
+    var pidsLimit: Long = 0
 }
