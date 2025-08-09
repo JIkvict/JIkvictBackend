@@ -2,6 +2,7 @@ package org.jikvict.jikvictbackend.controller
 
 import org.jikvict.jikvictbackend.entity.Assignment
 import org.jikvict.jikvictbackend.model.dto.AssignmentDto
+import org.jikvict.jikvictbackend.model.dto.CreateAssignmentDto
 import org.jikvict.jikvictbackend.model.mapper.AssignmentMapper
 import org.jikvict.jikvictbackend.model.response.PendingStatusResponse
 import org.jikvict.jikvictbackend.model.response.ResponsePayload
@@ -87,7 +88,7 @@ class AssignmentController(
      */
     @PostMapping
     fun createAssignment(
-        @RequestBody assignmentDto: AssignmentDto,
+        @RequestBody assignmentDto: CreateAssignmentDto,
     ): ResponseEntity<PendingStatusResponse<Long>> {
         val result = assignmentTaskQueueService.enqueueAssignmentCreationTask(assignmentDto)
         val response =

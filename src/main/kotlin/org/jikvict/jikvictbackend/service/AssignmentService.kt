@@ -10,7 +10,7 @@ import org.eclipse.jgit.transport.URIish
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 import org.eclipse.jgit.treewalk.TreeWalk
 import org.jikvict.jikvictbackend.entity.Assignment
-import org.jikvict.jikvictbackend.model.dto.AssignmentDto
+import org.jikvict.jikvictbackend.model.dto.CreateAssignmentDto
 import org.jikvict.jikvictbackend.model.mapper.AssignmentMapper
 import org.jikvict.jikvictbackend.model.properties.AssignmentProperties
 import org.jikvict.jikvictbackend.repository.AssignmentRepository
@@ -30,7 +30,7 @@ class AssignmentService(
     private val assignmentRepository: AssignmentRepository,
     private val assignmentMapper: AssignmentMapper,
 ) {
-    fun createAssignment(assignmentDto: AssignmentDto): Assignment {
+    fun createAssignment(assignmentDto: CreateAssignmentDto): Assignment {
         val description =
             runCatching {
                 getAssignmentDescription(assignmentDto.taskId)

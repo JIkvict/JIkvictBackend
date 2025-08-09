@@ -5,4 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 
 @Repository
-interface AssignmentGroupRepository : JpaRepository<AssignmentGroup, Long>
+interface AssignmentGroupRepository : JpaRepository<AssignmentGroup, Long> {
+    fun findAssignmentGroupById(id: Long): AssignmentGroup?
+}

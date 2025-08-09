@@ -3,7 +3,7 @@ package org.jikvict.jikvictbackend.service.queue
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.apache.logging.log4j.Logger
 import org.jikvict.jikvictbackend.entity.TaskStatus
-import org.jikvict.jikvictbackend.model.dto.AssignmentDto
+import org.jikvict.jikvictbackend.model.dto.CreateAssignmentDto
 import org.jikvict.jikvictbackend.model.queue.AssignmentTaskMessage
 import org.jikvict.jikvictbackend.model.response.PendingStatus
 import org.jikvict.jikvictbackend.repository.TaskStatusRepository
@@ -22,7 +22,7 @@ class AssignmentTaskQueueService(
     private val objectMapper: ObjectMapper,
     private val userDetailsService: UserDetailsServiceImpl,
 ) : TaskQueueService(rabbitTemplate, taskStatusRepository, taskRegistry, log, userDetailsService) {
-    fun enqueueAssignmentCreationTask(assignmentDto: AssignmentDto): TaskStatus {
+    fun enqueueAssignmentCreationTask(assignmentDto: CreateAssignmentDto): TaskStatus {
         val taskStatus =
             TaskStatus().apply {
                 taskType = "ASSIGNMENT_CREATION"
@@ -33,11 +33,10 @@ class AssignmentTaskQueueService(
             }
         val savedTaskStatus = taskStatusRepository.save(taskStatus)
 
-        val message =
-            AssignmentTaskMessage(
-                taskId = savedTaskStatus.id,
-                additionalParams = assignmentDto,
-            )
+        val message = AssignmentTaskMessage(
+            taskId = savedTaskStatus.id,
+            additionalParams = assignmentDto,
+        )
 
         sendTaskToQueue(message)
         return savedTaskStatus

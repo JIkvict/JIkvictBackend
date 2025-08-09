@@ -1,7 +1,7 @@
 package org.jikvict.jikvictbackend.service.processor
 
 import org.apache.logging.log4j.Logger
-import org.jikvict.jikvictbackend.model.dto.AssignmentDto
+import org.jikvict.jikvictbackend.model.dto.CreateAssignmentDto
 import org.jikvict.jikvictbackend.model.queue.AssignmentTaskMessage
 import org.jikvict.jikvictbackend.model.response.PendingStatus
 import org.jikvict.jikvictbackend.service.AssignmentService
@@ -14,7 +14,7 @@ class AssignmentTaskProcessor(
     private val assignmentService: AssignmentService,
     private val taskQueueService: AssignmentTaskQueueService,
     private val log: Logger,
-) : TaskProcessor<AssignmentDto, AssignmentTaskMessage> {
+) : TaskProcessor<CreateAssignmentDto, AssignmentTaskMessage> {
     override val taskType: String = "ASSIGNMENT_CREATION"
     override val queueName: String = "assignment.queue"
     override val exchangeName: String = "assignment.exchange"

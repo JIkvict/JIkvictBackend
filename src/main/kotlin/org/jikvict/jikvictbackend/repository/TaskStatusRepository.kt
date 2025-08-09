@@ -14,4 +14,7 @@ interface TaskStatusRepository : JpaRepository<TaskStatus, Long> {
     ): Optional<TaskStatus>
 
     fun findAllByStatus(status: PendingStatus): List<TaskStatus>
+
+    fun findTaskStatusById(id: Long): TaskStatus?
+    fun findTaskStatusByStatus(status: PendingStatus): MutableList<TaskStatus>
 }

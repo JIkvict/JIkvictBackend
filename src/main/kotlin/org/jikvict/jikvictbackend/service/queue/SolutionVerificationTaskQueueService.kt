@@ -45,7 +45,6 @@ class SolutionVerificationTaskQueueService(
                     )
                 user = userDetailsService.getCurrentUser()
             }
-
         val savedTaskStatus = taskStatusRepository.save(taskStatus)
 
         val verificationTaskDto =

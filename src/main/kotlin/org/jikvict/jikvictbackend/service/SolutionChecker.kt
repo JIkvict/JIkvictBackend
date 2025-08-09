@@ -38,7 +38,6 @@ class SolutionChecker(
         return e(solution, hiddenFilesBytes, assignmentDto)
     }
 
-    @Transactional
     suspend fun e(
         solution: ByteArray,
         hiddenFiles: ByteArray,

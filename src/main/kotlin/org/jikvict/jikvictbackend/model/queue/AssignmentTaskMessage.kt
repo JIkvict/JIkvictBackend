@@ -1,6 +1,6 @@
 package org.jikvict.jikvictbackend.model.queue
 
-import org.jikvict.jikvictbackend.model.dto.AssignmentDto
+import org.jikvict.jikvictbackend.model.dto.CreateAssignmentDto
 
 /**
  * Message model for assignment tasks in the queue
@@ -8,5 +8,5 @@ import org.jikvict.jikvictbackend.model.dto.AssignmentDto
 data class AssignmentTaskMessage(
     override val taskId: Long,
     override val taskType: String = "ASSIGNMENT_CREATION",
-    override val additionalParams: AssignmentDto,
-) : TaskMessage<AssignmentDto>
+    override val additionalParams: CreateAssignmentDto,
+) : TaskMessage<CreateAssignmentDto>

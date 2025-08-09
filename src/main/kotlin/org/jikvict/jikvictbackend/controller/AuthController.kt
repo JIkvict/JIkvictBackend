@@ -1,5 +1,9 @@
 package org.jikvict.jikvictbackend.controller
 
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.jikvict.jikvictbackend.entity.RefreshToken
 import org.jikvict.jikvictbackend.entity.User
 import org.jikvict.jikvictbackend.model.request.LoginRequest
@@ -8,6 +12,7 @@ import org.jikvict.jikvictbackend.model.response.TokenResponse
 import org.jikvict.jikvictbackend.repository.UserRepository
 import org.jikvict.jikvictbackend.service.JwtService
 import org.jikvict.jikvictbackend.service.RefreshTokenService
+import org.springframework.http.ProblemDetail
 import org.springframework.http.ResponseEntity
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -29,6 +34,39 @@ class AuthController(
     private val refreshTokenService: RefreshTokenService,
     private val passwordEncoder: PasswordEncoder,
 ) {
+
+    @Operation(
+        summary = "Log in",
+        description = "Logs in a user and returns an access token and a refresh token.",
+        method = "POST",
+        operationId = "login",
+        responses = [
+            ApiResponse(
+                responseCode = "200",
+                description = "Successful login",
+                content = [
+                    Content(
+                        mediaType = "application/json",
+                        schema = Schema(
+                            implementation = TokenResponse::class,
+                        ),
+                    ),
+                ],
+            ),
+            ApiResponse(
+                responseCode = "400",
+                description = "Bad request, invalid credentials",
+                content = [
+                    Content(
+                        mediaType = "application/problem+json",
+                        schema = Schema(
+                            implementation = ProblemDetail::class,
+                        ),
+                    ),
+                ],
+            ),
+        ],
+    )
     @PostMapping("/login")
     fun login(
         @RequestBody request: LoginRequest,
