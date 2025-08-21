@@ -20,6 +20,7 @@ data class AssignmentDto(
     val cpuLimit: Long,
     val pidsLimit: Long,
     val isClosed: Boolean = false,
+    val maximumAttempts: Int
 )
 
 context(service: AssignmentService) val AssignmentDto.assignmentGroups: List<AssignmentGroup>
