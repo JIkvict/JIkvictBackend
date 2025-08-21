@@ -8,6 +8,7 @@ import org.jikvict.jikvictbackend.repository.AssignmentRepository
 import org.jikvict.jikvictbackend.repository.UserRepository
 import org.jikvict.jikvictbackend.service.AssignmentResultService
 import org.jikvict.jikvictbackend.service.SolutionChecker
+import org.jikvict.jikvictbackend.service.UserSolutionCheckerService
 import org.jikvict.jikvictbackend.service.queue.SolutionVerificationTaskQueueService
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.stereotype.Service
@@ -22,6 +23,7 @@ class VerificationTaskProcessor(
     private val userRepository: UserRepository,
     private val assignmentResultService: AssignmentResultService,
     private val assignmentRepository: AssignmentRepository,
+    private val userSolutionChecker: UserSolutionCheckerService,
 ) : TaskProcessor<VerificationTaskDto, VerificationTaskMessage> {
     override val taskType: String = "SOLUTION_VERIFICATION"
     override val queueName: String = "verification.queue"
@@ -47,6 +49,38 @@ class VerificationTaskProcessor(
                     throw IllegalStateException("Assignment not found")
                 }
 
+            val user =
+                userRepository.findUserById(message.additionalParams.userId) ?: run {
+                    taskQueueService.updateTaskStatus(
+                        message.taskId,
+                        PendingStatus.FAILED,
+                        "Failed to find user: ${message.additionalParams.userId}",
+                    )
+                    throw IllegalStateException("User not found")
+                }
+
+            val rawResult = runCatching {
+                assignmentResultService.createRawSubmission(assignmentEntity.id, user)
+            }.onFailure {
+                taskQueueService.updateTaskStatus(
+                    message.taskId,
+                    PendingStatus.REJECTED,
+                    "Multiple submissions are not allowed",
+                )
+                throw it
+            }.getOrNull()!!
+
+            runCatching {
+                userSolutionChecker.checkForAttemptsLimit(assignmentEntity.id, user)
+            }.onFailure {
+                taskQueueService.updateTaskStatus(
+                    message.taskId,
+                    PendingStatus.REJECTED,
+                    "Maximum attempts reached",
+                )
+                throw it
+            }
+
             val result =
                 try {
                     withContext(Dispatchers.IO) {
@@ -65,17 +99,7 @@ class VerificationTaskProcessor(
                     throw e
                 }
 
-            val user =
-                userRepository.findUserById(message.additionalParams.userId) ?: run {
-                    taskQueueService.updateTaskStatus(
-                        message.taskId,
-                        PendingStatus.FAILED,
-                        "Failed to find user: ${message.additionalParams.userId}",
-                    )
-                    throw IllegalStateException("User not found")
-                }
-
-            assignmentResultService.handleAssignmentResult(result, assignmentEntity.id, user)
+            assignmentResultService.handleAssignmentResult(result, rawResult.id)
 
             taskQueueService.updateTaskStatus(
                 message.taskId,

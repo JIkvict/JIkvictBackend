@@ -49,4 +49,9 @@ class Assignment {
 
     @Column(name = "pids_limit", nullable = true)
     var pidsLimit: Long = 0
+
+
+    @Column(name = "maximum_attempts", nullable = false, columnDefinition = "integer default 2")
+    var maximumAttempts: Int = 2
+
 }

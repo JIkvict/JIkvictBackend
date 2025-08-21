@@ -18,9 +18,24 @@ class AssignmentResultService(
 ) {
     fun handleAssignmentResult(
         result: TestSuiteResult,
-        assignmentId: Long,
-        user: User,
+        assignmentResultId: Long
     ): AssignmentResult {
+        val assignmentResult = assignmentResultRepository.findById(assignmentResultId).orElseThrow {
+            ServiceException(
+                HttpStatus.NOT_FOUND,
+                "Assignment result with ID $assignmentResultId not found",
+            )
+        }
+        val resultEntity =
+            assignmentResult.apply {
+                this.points = result.totalEarnedPoints
+                this.testSuiteResult = result
+            }
+        assignmentResultRepository.save(resultEntity)
+        return resultEntity
+    }
+
+    fun createRawSubmission(assignmentId: Long, user: User): AssignmentResult {
         val assignment =
             assignmentRepository.findById(assignmentId).getOrElse {
                 throw ServiceException(
@@ -28,15 +43,14 @@ class AssignmentResultService(
                     "Assignment with ID $assignmentId not found",
                 )
             }!!
-        val resultEntity =
+        val assignmentResult =
             AssignmentResult().apply {
                 this.user = user
                 this.assignment = assignment
                 this.timeStamp = LocalDateTime.now()
-                this.points = result.totalEarnedPoints
-                this.testSuiteResult = result
+                this.points = 0
+                this.testSuiteResult = null
             }
-        assignmentResultRepository.save(resultEntity)
-        return resultEntity
+        return assignmentResultRepository.save(assignmentResult)
     }
 }

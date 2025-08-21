@@ -9,9 +9,7 @@ import org.jikvict.docker.env
 import org.jikvict.docker.util.grantAllPermissions
 import org.jikvict.jikvictbackend.model.dto.AssignmentDto
 import org.jikvict.jikvictbackend.model.mapper.AssignmentMapper
-import org.jikvict.problems.exception.contract.ServiceException
 import org.jikvict.testing.model.TestSuiteResult
-import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.nio.file.Files
@@ -122,7 +120,11 @@ class SolutionChecker(
                 objectMapper.readValue(resultsJson, TestSuiteResult::class.java)
             }.onFailure {
                 logger.error("Failed to parse results", it)
-                throw ServiceException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to parse results")
+                TestSuiteResult(
+                    testResults = emptyList(),
+                    totalEarnedPoints = 0,
+                    totalPossiblePoints = 0,
+                )
             }.getOrNull()!!
 
         return results

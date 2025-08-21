@@ -1,6 +1,7 @@
 package org.jikvict.jikvictbackend.repository
 
 import org.jikvict.jikvictbackend.entity.TaskStatus
+import org.jikvict.jikvictbackend.entity.User
 import org.jikvict.jikvictbackend.model.response.PendingStatus
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
@@ -17,4 +18,6 @@ interface TaskStatusRepository : JpaRepository<TaskStatus, Long> {
 
     fun findTaskStatusById(id: Long): TaskStatus?
     fun findTaskStatusByStatus(status: PendingStatus): MutableList<TaskStatus>
+
+    fun findByUser(user: User): List<TaskStatus>
 }

@@ -17,6 +17,7 @@ class GeneralExceptionControllerAdvice(
     @ExceptionHandler(Exception::class)
     fun handleException(exception: Exception): ProblemDetail {
         logger.error("An exception occurred", exception)
+        logger.error("Caused by", exception.cause)
         return registry.getProcessor(exception::class.java).convertToDetail(exception)
     }
 }
