@@ -50,8 +50,15 @@ class Assignment {
     @Column(name = "pids_limit", nullable = true)
     var pidsLimit: Long = 0
 
-
     @Column(name = "maximum_attempts", nullable = false, columnDefinition = "integer default 2")
     var maximumAttempts: Int = 2
 
+    @Column(name = "is_closed", nullable = true)
+    var isClosed: Boolean? = null
+        get() {
+            if (field == null) {
+                return false
+            }
+            return (LocalDateTime.now().isAfter(endDate))
+        }
 }

@@ -23,18 +23,15 @@ abstract class AssignmentMapper {
     @Mapping(target = "assignmentGroups", ignore = true)
     abstract fun toEntity(assignmentDto: AssignmentDto): Assignment
 
-
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "assignmentGroups", expression = "java(getAssignmentGroups(createAssignmentDto))")
     abstract fun toEntity(createAssignmentDto: CreateAssignmentDto): Assignment
 
-
-    protected fun getAssignmentGroups(createAssignmentDto: CreateAssignmentDto): Set<AssignmentGroup> {
-        return createAssignmentDto.assignmentGroupsIds.mapNotNull {
-            assignmentGroupRepository.findAssignmentGroupById(it)
-        }.toSet()
-    }
-
+    protected fun getAssignmentGroups(createAssignmentDto: CreateAssignmentDto): Set<AssignmentGroup> =
+        createAssignmentDto.assignmentGroupsIds
+            .mapNotNull {
+                assignmentGroupRepository.findAssignmentGroupById(it)
+            }.toSet()
 
     abstract fun toDto(assignment: Assignment): AssignmentDto
 }

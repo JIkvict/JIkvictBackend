@@ -19,13 +19,11 @@ data class AssignmentDto(
     val memoryLimit: Long,
     val cpuLimit: Long,
     val pidsLimit: Long,
+    val isClosed: Boolean = false,
 )
 
-context(service: AssignmentService)
-val AssignmentDto.assignmentGroups: List<AssignmentGroup>
+context(service: AssignmentService) val AssignmentDto.assignmentGroups: List<AssignmentGroup>
     get() = service.getAssignmentById(this.id).assignmentGroups.toList()
-
-
 
 data class CreateAssignmentDto(
     val title: String,

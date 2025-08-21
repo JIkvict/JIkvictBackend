@@ -11,12 +11,16 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 import org.eclipse.jgit.treewalk.TreeWalk
 import org.jikvict.jikvictbackend.entity.Assignment
 import org.jikvict.jikvictbackend.model.dto.CreateAssignmentDto
+import org.jikvict.jikvictbackend.model.dto.withHiddenInfo
 import org.jikvict.jikvictbackend.model.mapper.AssignmentMapper
+import org.jikvict.jikvictbackend.model.mapper.AssignmentResultMapper
 import org.jikvict.jikvictbackend.model.properties.AssignmentProperties
+import org.jikvict.jikvictbackend.model.response.AssignmentInfo
 import org.jikvict.jikvictbackend.repository.AssignmentRepository
 import org.jikvict.problems.exception.contract.ServiceException
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 import java.nio.file.Path
@@ -29,7 +33,54 @@ class AssignmentService(
     private val log: Logger,
     private val assignmentRepository: AssignmentRepository,
     private val assignmentMapper: AssignmentMapper,
+    private val userDetailsService: UserDetailsServiceImpl,
+    private val userSolutionChecker: UserSolutionCheckerService,
+    private val assignmentResultMapper: AssignmentResultMapper,
 ) {
+    @Transactional
+    fun getAssignmentInfoForUser(assignmentId: Long): AssignmentInfo {
+        val user = userDetailsService.getCurrentUser()
+        val assignment = getAssignmentById(assignmentId)
+        val attemptsUsed = userSolutionChecker.getUsedAttempts(assignmentId, user)
+        val results = userSolutionChecker.getResults(assignmentId, user)
+        val mappedResults =
+            if (assignment.isClosed == false) {
+                results.map {
+                    assignmentResultMapper.toDto(it).copy(
+                        result = it.testSuiteResult?.withHiddenInfo(),
+                    )
+                }
+            } else {
+                results.map {
+                    assignmentResultMapper.toDto(it)
+                }
+            }
+
+        val assignmentInfo =
+            AssignmentInfo(
+                assignmentId = assignment.id,
+                taskId = assignment.taskId,
+                maxAttempts = assignment.maximumAttempts,
+                attemptsUsed = attemptsUsed,
+                results = mappedResults,
+            )
+        return assignmentInfo
+    }
+
+    @Transactional
+    fun getAllAssignmentsForUser(): List<Assignment> {
+        val user = userDetailsService.getCurrentUser()
+        val assignments = assignmentRepository.findAllByAssignmentGroups(user.assignmentGroups)
+        return assignments
+    }
+
+    @Transactional
+    fun getZip(assignmentId: Long): ByteArray {
+        val assignment = getAssignmentById(assignmentId)
+        val taskId = assignment.taskId
+        return cloneZipBytes(listOf("task$taskId/.*".toRegex()))
+    }
+
     fun createAssignment(assignmentDto: CreateAssignmentDto): Assignment {
         val description =
             runCatching {
@@ -59,10 +110,21 @@ class AssignmentService(
      * @param id The assignment ID
      * @return The assignment
      */
-    fun getAssignmentById(id: Long): Assignment =
-        assignmentRepository
-            .findById(id)
-            .orElseThrow { ServiceException(HttpStatus.NOT_FOUND, "Assignment with ID $id not found") }
+    @Transactional
+    fun getAssignmentById(id: Long): Assignment {
+        val assignment =
+            assignmentRepository
+                .findById(id)
+                .orElseThrow { ServiceException(HttpStatus.NOT_FOUND, "Assignment with ID $id not found") }
+        val user = userDetailsService.getCurrentUser()
+        require(assignment.assignmentGroups.any { it in user.assignmentGroups }) {
+            throw ServiceException(
+                HttpStatus.FORBIDDEN,
+                "You do not have permission to access this assignment, user: ${user.id} does not have: ${assignment.assignmentGroups.map { it.id }}",
+            )
+        }
+        return assignment
+    }
 
     fun cloneZipBytes(include: List<Regex>): ByteArray {
         val outputStream = ByteArrayOutputStream()

@@ -33,10 +33,11 @@ class AssignmentTaskQueueService(
             }
         val savedTaskStatus = taskStatusRepository.save(taskStatus)
 
-        val message = AssignmentTaskMessage(
-            taskId = savedTaskStatus.id,
-            additionalParams = assignmentDto,
-        )
+        val message =
+            AssignmentTaskMessage(
+                taskId = savedTaskStatus.id,
+                additionalParams = assignmentDto,
+            )
 
         sendTaskToQueue(message)
         return savedTaskStatus

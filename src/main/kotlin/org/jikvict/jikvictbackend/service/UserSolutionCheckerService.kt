@@ -1,5 +1,6 @@
 package org.jikvict.jikvictbackend.service
 
+import org.jikvict.jikvictbackend.entity.AssignmentResult
 import org.jikvict.jikvictbackend.entity.User
 import org.jikvict.jikvictbackend.model.response.PendingStatus
 import org.jikvict.jikvictbackend.repository.AssignmentRepository
@@ -18,25 +19,59 @@ class UserSolutionCheckerService(
 ) {
     fun rejectMultipleSubmissions() {
         val currentUser = userDetailsService.getCurrentUser()
-        val task = taskStatusRepository.findByUser(currentUser).firstOrNull {
-            it.status == PendingStatus.PENDING
-        }
+        val task =
+            taskStatusRepository.findByUser(currentUser).firstOrNull {
+                it.status == PendingStatus.PENDING
+            }
         require(task == null) {
             "You already have a pending task"
         }
     }
 
-
-    fun checkForAttemptsLimit(assignmentId: Long, user: User) {
-        val assignment = assignmentRepository.findById(assignmentId).orElseThrow {
-            ServiceException(HttpStatus.NOT_FOUND, "Assignment with ID $assignmentId not found")
-        }
+    fun getResults(
+        assignmentId: Long,
+        user: User,
+    ): List<AssignmentResult> {
+        val assignment =
+            assignmentRepository.findById(assignmentId).orElseThrow {
+                ServiceException(HttpStatus.NOT_FOUND, "Assignment with ID $assignmentId not found")
+            }
         val submissions = assignmentResultRepository.findByUserAndAssignment(user, assignment)
+        return submissions
+    }
+
+    fun getUsedAttempts(
+        assignmentId: Long,
+        user: User,
+    ): Int {
+        val submissions = getResults(assignmentId, user)
         val attempts = submissions.size
-        val maxAttempts = assignment.maximumAttempts
+        return attempts
+    }
+
+    fun checkForAttemptsLimit(
+        assignmentId: Long,
+        user: User,
+    ) {
+        val attempts = getUsedAttempts(assignmentId, user)
+        val maxAttempts =
+            assignmentRepository
+                .findById(assignmentId)
+                .orElseThrow {
+                    ServiceException(HttpStatus.NOT_FOUND, "Assignment with ID $assignmentId not found")
+                }.maximumAttempts
         require(attempts < maxAttempts) {
             "You have reached the maximum number of attempts for this assignment"
         }
     }
 
+    fun checkIsNotClosed(assignmentId: Long) {
+        val assignment =
+            assignmentRepository.findById(assignmentId).orElseThrow {
+                ServiceException(HttpStatus.NOT_FOUND, "Assignment with ID $assignmentId not found")
+            }
+        require(assignment.isClosed == false) {
+            "Assignment with ID $assignmentId is closed"
+        }
+    }
 }

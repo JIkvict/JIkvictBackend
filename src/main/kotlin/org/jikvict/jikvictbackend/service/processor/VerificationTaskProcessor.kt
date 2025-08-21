@@ -59,16 +59,17 @@ class VerificationTaskProcessor(
                     throw IllegalStateException("User not found")
                 }
 
-            val rawResult = runCatching {
-                assignmentResultService.createRawSubmission(assignmentEntity.id, user)
-            }.onFailure {
-                taskQueueService.updateTaskStatus(
-                    message.taskId,
-                    PendingStatus.REJECTED,
-                    "Multiple submissions are not allowed",
-                )
-                throw it
-            }.getOrNull()!!
+            val rawResult =
+                runCatching {
+                    assignmentResultService.createRawSubmission(assignmentEntity.id, user)
+                }.onFailure {
+                    taskQueueService.updateTaskStatus(
+                        message.taskId,
+                        PendingStatus.REJECTED,
+                        "Multiple submissions are not allowed",
+                    )
+                    throw it
+                }.getOrNull()!!
 
             runCatching {
                 userSolutionChecker.checkForAttemptsLimit(assignmentEntity.id, user)
@@ -79,6 +80,16 @@ class VerificationTaskProcessor(
                     "Maximum attempts reached",
                 )
                 throw it
+            }
+
+            runCatching {
+                userSolutionChecker.checkIsNotClosed(assignmentEntity.id)
+            }.onFailure {
+                taskQueueService.updateTaskStatus(
+                    message.taskId,
+                    PendingStatus.REJECTED,
+                    "Assignment is closed",
+                )
             }
 
             val result =

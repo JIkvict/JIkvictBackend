@@ -1,6 +1,7 @@
 package org.jikvict.jikvictbackend.repository
 
 import org.jikvict.jikvictbackend.entity.Assignment
+import org.jikvict.jikvictbackend.entity.AssignmentGroup
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
@@ -15,4 +16,6 @@ interface AssignmentRepository : JpaRepository<Assignment, Long> {
     fun findPropsById(
         @Param("id") id: Long,
     ): AssignmentProps?
+
+    fun findAllByAssignmentGroups(assignmentGroups: Set<AssignmentGroup>): List<Assignment>
 }

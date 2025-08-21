@@ -14,7 +14,6 @@ import java.net.URI
 class ExceptionsConfiguration(
     private val registry: ProcessorsRegistry,
 ) {
-
     @Bean
     fun badCredentialsExceptionProcessor(): ExceptionProcessor<BadCredentialsException> {
         val processor = BadCredentialsExceptionProcessor()
@@ -31,23 +30,19 @@ class ExceptionsConfiguration(
 }
 
 class BadCredentialsExceptionProcessor : ExceptionProcessor<BadCredentialsException> {
-    override fun convertToDetail(exception: BadCredentialsException): ProblemDetail {
-        return ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED).apply {
+    override fun convertToDetail(exception: BadCredentialsException): ProblemDetail =
+        ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED).apply {
             title = "Authentication Failed"
             detail = exception.message ?: "Invalid credentials provided"
             type = URI("application:error${exception::class.java.name}")
         }
-    }
 }
 
 class AuthenticationExceptionProcessor : ExceptionProcessor<AuthenticationException> {
-    override fun convertToDetail(exception: AuthenticationException): ProblemDetail {
-        return ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED).apply {
+    override fun convertToDetail(exception: AuthenticationException): ProblemDetail =
+        ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED).apply {
             title = "Authentication Failed"
             detail = exception.message ?: "Authentication error occurred"
             type = URI("application:error${exception::class.java.name}")
         }
-    }
 }
-
-

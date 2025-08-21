@@ -34,7 +34,6 @@ class AuthController(
     private val refreshTokenService: RefreshTokenService,
     private val passwordEncoder: PasswordEncoder,
 ) {
-
     @Operation(
         summary = "Log in",
         description = "Logs in a user and returns an access token and a refresh token.",
@@ -47,9 +46,10 @@ class AuthController(
                 content = [
                     Content(
                         mediaType = "application/json",
-                        schema = Schema(
-                            implementation = TokenResponse::class,
-                        ),
+                        schema =
+                            Schema(
+                                implementation = TokenResponse::class,
+                            ),
                     ),
                 ],
             ),
@@ -59,9 +59,10 @@ class AuthController(
                 content = [
                     Content(
                         mediaType = "application/problem+json",
-                        schema = Schema(
-                            implementation = ProblemDetail::class,
-                        ),
+                        schema =
+                            Schema(
+                                implementation = ProblemDetail::class,
+                            ),
                     ),
                 ],
             ),

@@ -4,16 +4,13 @@ import org.jikvict.jikvictbackend.entity.Assignment
 import org.jikvict.jikvictbackend.model.dto.AssignmentDto
 import org.jikvict.jikvictbackend.model.dto.CreateAssignmentDto
 import org.jikvict.jikvictbackend.model.mapper.AssignmentMapper
+import org.jikvict.jikvictbackend.model.response.AssignmentInfo
 import org.jikvict.jikvictbackend.model.response.PendingStatusResponse
 import org.jikvict.jikvictbackend.model.response.ResponsePayload
 import org.jikvict.jikvictbackend.repository.AssignmentRepository
 import org.jikvict.jikvictbackend.service.AssignmentService
 import org.jikvict.jikvictbackend.service.queue.AssignmentTaskQueueService
 import org.jikvict.problems.exception.contract.ServiceException
-import org.springdoc.core.annotations.ParameterObject
-import org.springframework.data.domain.Page
-import org.springframework.data.domain.Pageable
-import org.springframework.data.web.PagedModel
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -35,13 +32,18 @@ class AssignmentController(
     private val assignmentMapper: AssignmentMapper,
     private val assignmentTaskQueueService: AssignmentTaskQueueService,
 ) {
-    @GetMapping("/zip/{taskId}", produces = [MediaType.APPLICATION_OCTET_STREAM_VALUE])
-    fun downloadZip(
-        @PathVariable taskId: String,
-    ): ResponseEntity<ByteArray> {
-        val zipBytes = assignmentService.cloneZipBytes(listOf("task$taskId/.*".toRegex()))
+    @GetMapping("/{id}/info")
+    fun getAssignmentInfoForUser(
+        @PathVariable id: Long,
+    ): ResponseEntity<AssignmentInfo> = ResponseEntity.ok(assignmentService.getAssignmentInfoForUser(id))
 
-        val filename = "assignment_$taskId.zip"
+    @GetMapping("/zip/{assignmentId}", produces = [MediaType.APPLICATION_OCTET_STREAM_VALUE])
+    fun downloadZip(
+        @PathVariable assignmentId: Long,
+    ): ResponseEntity<ByteArray> {
+        val zipBytes = assignmentService.getZip(assignmentId)
+
+        val filename = "assignment_$assignmentId.zip"
 
         return ResponseEntity
             .ok()
@@ -49,14 +51,6 @@ class AssignmentController(
             .contentType(MediaType.APPLICATION_OCTET_STREAM)
             .contentLength(zipBytes.size.toLong())
             .body(zipBytes)
-    }
-
-    @GetMapping("/description/{taskId}", produces = [MediaType.TEXT_PLAIN_VALUE])
-    fun getAssignmentDescription(
-        @PathVariable taskId: Int,
-    ): ResponseEntity<String> {
-        val description = assignmentService.getAssignmentDescription(taskId)
-        return ResponseEntity.ok(description)
     }
 
     /**
@@ -73,12 +67,10 @@ class AssignmentController(
     }
 
     @GetMapping("/all", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getAll(
-        @ParameterObject pageable: Pageable,
-    ): PagedModel<AssignmentDto> {
-        val assignments: Page<Assignment> = assignmentRepository.findAll(pageable)
-        val assignmentDtoPage: Page<AssignmentDto> = assignments.map(assignmentMapper::toDto)
-        return PagedModel(assignmentDtoPage)
+    fun getAll(): List<AssignmentDto> {
+        val assignments = assignmentService.getAllAssignmentsForUser()
+        val assignmentDtoPage = assignments.map(assignmentMapper::toDto)
+        return assignmentDtoPage
     }
 
     /**

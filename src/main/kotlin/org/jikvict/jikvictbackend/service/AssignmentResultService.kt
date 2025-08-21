@@ -18,14 +18,15 @@ class AssignmentResultService(
 ) {
     fun handleAssignmentResult(
         result: TestSuiteResult,
-        assignmentResultId: Long
+        assignmentResultId: Long,
     ): AssignmentResult {
-        val assignmentResult = assignmentResultRepository.findById(assignmentResultId).orElseThrow {
-            ServiceException(
-                HttpStatus.NOT_FOUND,
-                "Assignment result with ID $assignmentResultId not found",
-            )
-        }
+        val assignmentResult =
+            assignmentResultRepository.findById(assignmentResultId).orElseThrow {
+                ServiceException(
+                    HttpStatus.NOT_FOUND,
+                    "Assignment result with ID $assignmentResultId not found",
+                )
+            }
         val resultEntity =
             assignmentResult.apply {
                 this.points = result.totalEarnedPoints
@@ -35,7 +36,10 @@ class AssignmentResultService(
         return resultEntity
     }
 
-    fun createRawSubmission(assignmentId: Long, user: User): AssignmentResult {
+    fun createRawSubmission(
+        assignmentId: Long,
+        user: User,
+    ): AssignmentResult {
         val assignment =
             assignmentRepository.findById(assignmentId).getOrElse {
                 throw ServiceException(
