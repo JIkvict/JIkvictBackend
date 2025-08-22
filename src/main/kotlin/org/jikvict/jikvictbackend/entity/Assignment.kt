@@ -58,6 +58,10 @@ class Assignment {
         get() {
             if (field == null) {
                 return false
+            } else {
+                if (field == true) {
+                    return true
+                }
             }
             return (LocalDateTime.now().isAfter(endDate))
         }

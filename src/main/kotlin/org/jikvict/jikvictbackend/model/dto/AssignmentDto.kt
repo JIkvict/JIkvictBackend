@@ -1,7 +1,5 @@
 package org.jikvict.jikvictbackend.model.dto
 
-import org.jikvict.jikvictbackend.entity.AssignmentGroup
-import org.jikvict.jikvictbackend.service.AssignmentService
 import java.time.LocalDateTime
 
 /**
@@ -19,12 +17,10 @@ data class AssignmentDto(
     val memoryLimit: Long,
     val cpuLimit: Long,
     val pidsLimit: Long,
-    val isClosed: Boolean = false,
-    val maximumAttempts: Int
+    val isClosed: Boolean,
+    val maximumAttempts: Int,
 )
 
-context(service: AssignmentService) val AssignmentDto.assignmentGroups: List<AssignmentGroup>
-    get() = service.getAssignmentById(this.id).assignmentGroups.toList()
 
 data class CreateAssignmentDto(
     val title: String,

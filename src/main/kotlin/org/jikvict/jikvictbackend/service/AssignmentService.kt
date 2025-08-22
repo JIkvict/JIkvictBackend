@@ -26,6 +26,7 @@ import java.io.OutputStream
 import java.nio.file.Path
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
+import jakarta.persistence.EntityManager
 
 @Service
 class AssignmentService(
@@ -36,13 +37,17 @@ class AssignmentService(
     private val userDetailsService: UserDetailsServiceImpl,
     private val userSolutionChecker: UserSolutionCheckerService,
     private val assignmentResultMapper: AssignmentResultMapper,
+    private val entityManager: EntityManager,
 ) {
+
     @Transactional
     fun getAssignmentInfoForUser(assignmentId: Long): AssignmentInfo {
         val user = userDetailsService.getCurrentUser()
-        val assignment = getAssignmentById(assignmentId)
+        val assignment = getAssignmentByIdForCurrentUser(assignmentId)
         val attemptsUsed = userSolutionChecker.getUsedAttempts(assignmentId, user)
         val results = userSolutionChecker.getResults(assignmentId, user)
+        results.forEach { entityManager.detach(it) }
+
         val mappedResults =
             if (assignment.isClosed == false) {
                 results.map {
@@ -76,7 +81,7 @@ class AssignmentService(
 
     @Transactional
     fun getZip(assignmentId: Long): ByteArray {
-        val assignment = getAssignmentById(assignmentId)
+        val assignment = getAssignmentByIdForCurrentUser(assignmentId)
         val taskId = assignment.taskId
         return cloneZipBytes(listOf("task$taskId/.*".toRegex()))
     }
@@ -111,19 +116,26 @@ class AssignmentService(
      * @return The assignment
      */
     @Transactional
-    fun getAssignmentById(id: Long): Assignment {
-        val assignment =
-            assignmentRepository
-                .findById(id)
-                .orElseThrow { ServiceException(HttpStatus.NOT_FOUND, "Assignment with ID $id not found") }
+    fun getAssignmentByIdForCurrentUser(id: Long): Assignment {
+        val assignment = getAssignmentById(id)
         val user = userDetailsService.getCurrentUser()
-        require(assignment.assignmentGroups.any { it in user.assignmentGroups }) {
+        require(assignment.assignmentGroups.map { it.id }.any { it in user.assignmentGroups.map { it.id} }) {
             throw ServiceException(
                 HttpStatus.FORBIDDEN,
                 "You do not have permission to access this assignment, user: ${user.id} does not have: ${assignment.assignmentGroups.map { it.id }}",
             )
         }
         return assignment
+    }
+
+    @Transactional
+    fun getAssignmentById(id: Long): Assignment {
+        return assignmentRepository.findById(id).orElseThrow {
+            ServiceException(
+                HttpStatus.NOT_FOUND,
+                "Assignment with ID $id not found",
+            )
+        }
     }
 
     fun cloneZipBytes(include: List<Regex>): ByteArray {

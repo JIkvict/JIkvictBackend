@@ -33,5 +33,10 @@ abstract class AssignmentMapper {
                 assignmentGroupRepository.findAssignmentGroupById(it)
             }.toSet()
 
+    @Mapping(target = "isClosed", expression = "java(mapIsClosed(assignment))")
     abstract fun toDto(assignment: Assignment): AssignmentDto
+
+    fun mapIsClosed(assignment: Assignment): Boolean {
+        return assignment.isClosed == true
+    }
 }

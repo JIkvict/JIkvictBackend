@@ -38,7 +38,7 @@ class DockerRunner(
                     withCreateContainerCmdModifier { cmd ->
                         cmd.hostConfig?.apply {
                             withMemory(this@DockerRunner.memory)
-                            withCpuQuota(this@DockerRunner.cpuQuota)
+                            withNanoCPUs(this@DockerRunner.cpuQuota)
                             withPidsLimit(this@DockerRunner.pidsLimit)
                             withNetworkMode("bridge")
                             withReadonlyRootfs(false)

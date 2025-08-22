@@ -62,7 +62,7 @@ class AssignmentController(
     fun getAssignment(
         @PathVariable id: Long,
     ): ResponseEntity<Assignment> {
-        val assignment = assignmentService.getAssignmentById(id)
+        val assignment = assignmentService.getAssignmentByIdForCurrentUser(id)
         return ResponseEntity.ok(assignment)
     }
 

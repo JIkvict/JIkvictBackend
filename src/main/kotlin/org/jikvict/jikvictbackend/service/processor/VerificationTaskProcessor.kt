@@ -59,6 +59,17 @@ class VerificationTaskProcessor(
                     throw IllegalStateException("User not found")
                 }
 
+            runCatching {
+                userSolutionChecker.checkUserCanSubmit(user, assignmentEntity.id)
+            }.onFailure {
+                taskQueueService.updateTaskStatus(
+                    message.taskId,
+                    PendingStatus.REJECTED,
+                    "You do not have permission to submit this assignment",
+                )
+                throw it
+            }
+
             val rawResult =
                 runCatching {
                     assignmentResultService.createRawSubmission(assignmentEntity.id, user)
