@@ -1,5 +1,6 @@
 package org.jikvict.jikvictbackend.service
 
+import org.jikvict.jikvictbackend.service.assignment.AssignmentService
 import org.springframework.boot.test.context.SpringBootTest
 import kotlin.test.Test
 

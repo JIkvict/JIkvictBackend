@@ -1,4 +1,4 @@
-package org.jikvict.jikvictbackend.service
+package org.jikvict.jikvictbackend.service.token
 
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys

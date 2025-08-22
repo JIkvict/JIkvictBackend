@@ -1,11 +1,10 @@
-package org.jikvict.jikvictbackend.service
+package org.jikvict.jikvictbackend.service.token
 
 import org.jikvict.jikvictbackend.entity.RefreshToken
 import org.jikvict.jikvictbackend.model.properties.JwtProperties
 import org.jikvict.jikvictbackend.repository.RefreshTokenRepository
 import org.jikvict.jikvictbackend.repository.UserRepository
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
 import java.util.UUID
 
@@ -39,10 +38,5 @@ class RefreshTokenService(
             throw RuntimeException("Refresh token was expired. Please make a new signin request")
         }
         return token
-    }
-
-    @Transactional
-    fun deleteByUserId(userId: Long) {
-        refreshTokenRepository.deleteByUserId(userId)
     }
 }

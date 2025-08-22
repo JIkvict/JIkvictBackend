@@ -2,7 +2,7 @@ package org.jikvict.jikvictbackend.configuration
 
 import org.apache.logging.log4j.Logger
 import org.jikvict.jikvictbackend.service.processor.AssignmentTaskProcessor
-import org.jikvict.jikvictbackend.service.processor.VerificationTaskProcessor
+import org.jikvict.jikvictbackend.service.processor.SubmissionCheckerTaskProcessor
 import org.jikvict.jikvictbackend.service.registry.TaskRegistry
 import org.springframework.amqp.core.AcknowledgeMode
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory
@@ -20,7 +20,7 @@ import org.springframework.context.event.EventListener
 class TaskProcessorConfiguration(
     private val taskRegistry: TaskRegistry,
     private val assignmentTaskProcessor: AssignmentTaskProcessor,
-    private val verificationTaskProcessor: VerificationTaskProcessor,
+    private val verificationTaskProcessor: SubmissionCheckerTaskProcessor,
     private val log: Logger,
 ) {
     /**

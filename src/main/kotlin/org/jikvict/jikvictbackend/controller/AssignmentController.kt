@@ -8,7 +8,8 @@ import org.jikvict.jikvictbackend.model.response.AssignmentInfo
 import org.jikvict.jikvictbackend.model.response.PendingStatusResponse
 import org.jikvict.jikvictbackend.model.response.ResponsePayload
 import org.jikvict.jikvictbackend.repository.AssignmentRepository
-import org.jikvict.jikvictbackend.service.AssignmentService
+import org.jikvict.jikvictbackend.service.UserDetailsServiceImpl
+import org.jikvict.jikvictbackend.service.assignment.AssignmentInfoUserService
 import org.jikvict.jikvictbackend.service.queue.AssignmentTaskQueueService
 import org.jikvict.problems.exception.contract.ServiceException
 import org.springframework.http.HttpHeaders
@@ -27,21 +28,26 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/assignment")
 class AssignmentController(
-    private val assignmentService: AssignmentService,
     private val assignmentRepository: AssignmentRepository,
     private val assignmentMapper: AssignmentMapper,
     private val assignmentTaskQueueService: AssignmentTaskQueueService,
+    private val userDetailsService: UserDetailsServiceImpl,
+    private val assignmentInfoUserService: AssignmentInfoUserService,
 ) {
     @GetMapping("/{id}/info")
     fun getAssignmentInfoForUser(
         @PathVariable id: Long,
-    ): ResponseEntity<AssignmentInfo> = ResponseEntity.ok(assignmentService.getAssignmentInfoForUser(id))
+    ): ResponseEntity<AssignmentInfo> {
+        val user = userDetailsService.getCurrentUser()
+        return ResponseEntity.ok(assignmentInfoUserService.getAssignmentInfoForUser(id, user))
+    }
 
     @GetMapping("/zip/{assignmentId}", produces = [MediaType.APPLICATION_OCTET_STREAM_VALUE])
     fun downloadZip(
         @PathVariable assignmentId: Long,
     ): ResponseEntity<ByteArray> {
-        val zipBytes = assignmentService.getZip(assignmentId)
+        val user = userDetailsService.getCurrentUser()
+        val zipBytes = assignmentInfoUserService.getAssignmentZipForUser(assignmentId, user)
 
         val filename = "assignment_$assignmentId.zip"
 
@@ -53,31 +59,23 @@ class AssignmentController(
             .body(zipBytes)
     }
 
-    /**
-     * Gets an assignment by ID
-     * @param id The assignment ID
-     * @return The assignment
-     */
     @GetMapping("/{id}")
     fun getAssignment(
         @PathVariable id: Long,
     ): ResponseEntity<Assignment> {
-        val assignment = assignmentService.getAssignmentByIdForCurrentUser(id)
+        val user = userDetailsService.getCurrentUser()
+        val assignment = assignmentInfoUserService.getAssignmentByIdForUser(id, user)
         return ResponseEntity.ok(assignment)
     }
 
     @GetMapping("/all", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getAll(): List<AssignmentDto> {
-        val assignments = assignmentService.getAllAssignmentsForUser()
+        val user = userDetailsService.getCurrentUser()
+        val assignments = assignmentInfoUserService.getAllAssignmentsForUser(user)
         val assignmentDtoPage = assignments.map(assignmentMapper::toDto)
         return assignmentDtoPage
     }
 
-    /**
-     * Creates an assignment synchronously
-     * @param assignmentDto The assignment data
-     * @return The created assignment
-     */
     @PostMapping
     fun createAssignment(
         @RequestBody assignmentDto: CreateAssignmentDto,
@@ -92,12 +90,6 @@ class AssignmentController(
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(response)
     }
 
-    /**
-     * Updates an assignment
-     * @param id The assignment ID
-     * @param assignmentDto The updated assignment data
-     * @return The updated assignment
-     */
     @PutMapping("/{id}")
     fun updateAssignment(
         @PathVariable id: Long,
@@ -114,11 +106,6 @@ class AssignmentController(
         return ResponseEntity.ok(assignmentMapper.toDto(updatedAssignment))
     }
 
-    /**
-     * Deletes an assignment
-     * @param id The assignment ID
-     * @return No content response
-     */
     @DeleteMapping("/{id}")
     fun deleteAssignment(
         @PathVariable id: Long,

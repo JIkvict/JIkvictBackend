@@ -1,4 +1,4 @@
-package org.jikvict.jikvictbackend.service
+package org.jikvict.jikvictbackend.service.solution
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.dockerjava.api.model.Bind
@@ -7,8 +7,7 @@ import org.apache.logging.log4j.Logger
 import org.jikvict.docker.dockerRunner
 import org.jikvict.docker.env
 import org.jikvict.docker.util.grantAllPermissions
-import org.jikvict.jikvictbackend.model.dto.AssignmentDto
-import org.jikvict.jikvictbackend.model.mapper.AssignmentMapper
+import org.jikvict.jikvictbackend.entity.Assignment
 import org.jikvict.testing.model.TestSuiteResult
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -20,26 +19,19 @@ import kotlin.time.Duration.Companion.seconds
 @Service
 class SolutionChecker(
     private val logger: Logger,
-    private val assignmentService: AssignmentService,
     private val objectMapper: ObjectMapper,
-    private val assignmentMapper: AssignmentMapper,
 ) {
     @Transactional
     suspend fun checkSolution(
-        taskId: Int,
-        solution: ByteArray,
-        assignmentId: Long,
-    ): TestSuiteResult {
-        logger.info("Retrieving hidden files for assignment $taskId")
-        val hiddenFilesBytes = assignmentService.getHiddenFilesForTask(taskId)
-        val assignmentDto = assignmentMapper.toDto(assignmentService.getAssignmentById(assignmentId))
-        return e(solution, hiddenFilesBytes, assignmentDto)
-    }
-
-    suspend fun e(
         solution: ByteArray,
         hiddenFiles: ByteArray,
-        assignmentDto: AssignmentDto,
+        assignment: Assignment,
+    ): TestSuiteResult = execute(solution, hiddenFiles, assignment)
+
+    private suspend fun execute(
+        solution: ByteArray,
+        hiddenFiles: ByteArray,
+        assignmentDto: Assignment,
     ): TestSuiteResult {
         val executionId = UUID.randomUUID().toString()
         val tempDir = Files.createTempDirectory("code-$executionId")
@@ -130,7 +122,7 @@ class SolutionChecker(
         return results
     }
 
-    fun cleanupDirectory(directory: Path) {
+    private fun cleanupDirectory(directory: Path) {
         try {
             Files
                 .walk(directory)

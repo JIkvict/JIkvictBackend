@@ -10,8 +10,8 @@ import org.jikvict.jikvictbackend.model.request.LoginRequest
 import org.jikvict.jikvictbackend.model.request.RegisterRequest
 import org.jikvict.jikvictbackend.model.response.TokenResponse
 import org.jikvict.jikvictbackend.repository.UserRepository
-import org.jikvict.jikvictbackend.service.JwtService
-import org.jikvict.jikvictbackend.service.RefreshTokenService
+import org.jikvict.jikvictbackend.service.token.JwtService
+import org.jikvict.jikvictbackend.service.token.RefreshTokenService
 import org.springframework.http.ProblemDetail
 import org.springframework.http.ResponseEntity
 import org.springframework.security.authentication.AuthenticationManager

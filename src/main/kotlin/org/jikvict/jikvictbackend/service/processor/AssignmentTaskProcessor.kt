@@ -4,7 +4,7 @@ import org.apache.logging.log4j.Logger
 import org.jikvict.jikvictbackend.model.dto.CreateAssignmentDto
 import org.jikvict.jikvictbackend.model.queue.AssignmentTaskMessage
 import org.jikvict.jikvictbackend.model.response.PendingStatus
-import org.jikvict.jikvictbackend.service.AssignmentService
+import org.jikvict.jikvictbackend.service.assignment.AssignmentService
 import org.jikvict.jikvictbackend.service.queue.AssignmentTaskQueueService
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.stereotype.Service
@@ -23,25 +23,14 @@ class AssignmentTaskProcessor(
     @RabbitListener(queues = ["assignment.queue"])
     fun process(message: AssignmentTaskMessage) {
         log.info("Processing assignment creation task: ${message.taskId}")
-
         try {
             taskQueueService.updateTaskStatus(
                 message.taskId,
                 PendingStatus.PENDING,
                 "Creating assignment for task ${message.additionalParams.taskId}",
             )
+            val savedAssignment = assignmentService.createAssignment(message.additionalParams)
 
-            val savedAssignment =
-                runCatching {
-                    assignmentService.createAssignment(message.additionalParams)
-                }.onFailure {
-                    taskQueueService.updateTaskStatus(
-                        message.taskId,
-                        PendingStatus.FAILED,
-                        "Failed to create assignment: ${it.message}",
-                    )
-                    return
-                }.getOrNull()!!
             log.info("Assignment creation completed: ${savedAssignment.id}")
             taskQueueService.updateTaskStatus(
                 message.taskId,

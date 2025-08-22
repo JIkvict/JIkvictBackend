@@ -21,7 +21,6 @@ data class AssignmentDto(
     val maximumAttempts: Int,
 )
 
-
 data class CreateAssignmentDto(
     val title: String,
     val taskId: Int,

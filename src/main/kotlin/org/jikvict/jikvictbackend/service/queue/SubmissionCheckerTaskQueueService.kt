@@ -7,30 +7,27 @@ import org.jikvict.jikvictbackend.model.dto.VerificationTaskDto
 import org.jikvict.jikvictbackend.model.queue.VerificationTaskMessage
 import org.jikvict.jikvictbackend.model.response.PendingStatus
 import org.jikvict.jikvictbackend.repository.TaskStatusRepository
-import org.jikvict.jikvictbackend.repository.UserRepository
 import org.jikvict.jikvictbackend.service.UserDetailsServiceImpl
 import org.jikvict.jikvictbackend.service.registry.TaskRegistry
 import org.springframework.amqp.rabbit.core.RabbitTemplate
-import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import java.time.LocalDateTime
 
 @Service
-class SolutionVerificationTaskQueueService(
+class SubmissionCheckerTaskQueueService(
     rabbitTemplate: RabbitTemplate,
     private val taskStatusRepository: TaskStatusRepository,
     taskRegistry: TaskRegistry,
     log: Logger,
     private val objectMapper: ObjectMapper,
-    private val userRepository: UserRepository,
     private val userDetailsService: UserDetailsServiceImpl,
 ) : TaskQueueService(rabbitTemplate, taskStatusRepository, taskRegistry, log, userDetailsService) {
     fun enqueueSolutionVerificationTask(
         file: MultipartFile,
         assignmentId: Int,
     ): Long {
+        val user = userDetailsService.getCurrentUser()
         val taskStatus =
             TaskStatus().apply {
                 taskType = "SOLUTION_VERIFICATION"
@@ -43,14 +40,14 @@ class SolutionVerificationTaskQueueService(
                             "assignmentId" to assignmentId,
                         ),
                     )
-                user = userDetailsService.getCurrentUser()
+                this.user = user
             }
         val savedTaskStatus = taskStatusRepository.save(taskStatus)
 
         val verificationTaskDto =
             VerificationTaskDto(
                 assignmentId = assignmentId,
-                userId = getCurrentUserId(),
+                userId = user.id,
                 solutionBytes = file.bytes,
             )
 
@@ -63,12 +60,5 @@ class SolutionVerificationTaskQueueService(
         sendTaskToQueue(message)
 
         return savedTaskStatus.id
-    }
-
-    private fun getCurrentUserId(): Long {
-        val authentication = SecurityContextHolder.getContext().authentication
-        val userDetails = authentication.principal as UserDetails
-        return userRepository.findUserByUserNameField(userDetails.username)?.id
-            ?: throw IllegalStateException("User not found")
     }
 }

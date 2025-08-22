@@ -36,7 +36,5 @@ abstract class AssignmentMapper {
     @Mapping(target = "isClosed", expression = "java(mapIsClosed(assignment))")
     abstract fun toDto(assignment: Assignment): AssignmentDto
 
-    fun mapIsClosed(assignment: Assignment): Boolean {
-        return assignment.isClosed == true
-    }
+    fun mapIsClosed(assignment: Assignment): Boolean = assignment.isClosed == true
 }

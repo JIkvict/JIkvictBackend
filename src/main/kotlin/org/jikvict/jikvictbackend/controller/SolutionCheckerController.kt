@@ -4,7 +4,7 @@ import org.jikvict.jikvictbackend.model.response.PendingStatus
 import org.jikvict.jikvictbackend.model.response.PendingStatusResponse
 import org.jikvict.jikvictbackend.model.response.ResponsePayload
 import org.jikvict.jikvictbackend.service.ZipValidatorService
-import org.jikvict.jikvictbackend.service.queue.SolutionVerificationTaskQueueService
+import org.jikvict.jikvictbackend.service.queue.SubmissionCheckerTaskQueueService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -16,7 +16,7 @@ import org.springframework.web.multipart.MultipartFile
 @RequestMapping("/api/v1/solution-checker")
 class SolutionCheckerController(
     private val zipValidatorService: ZipValidatorService,
-    private val solutionVerificationTaskQueueService: SolutionVerificationTaskQueueService,
+    private val solutionVerificationTaskQueueService: SubmissionCheckerTaskQueueService,
 ) {
     @PostMapping("/submit", consumes = ["multipart/form-data"])
     fun submitSolution(
