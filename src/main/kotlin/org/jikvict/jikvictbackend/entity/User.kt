@@ -33,7 +33,7 @@ class User : UserDetails {
     )
     val roles: MutableSet<Role> = mutableSetOf()
 
-    @ManyToMany(mappedBy = "users")
+    @ManyToMany(mappedBy = "users", fetch = FetchType.EAGER)
     val assignmentGroups: MutableSet<AssignmentGroup> = mutableSetOf()
 
     override fun getAuthorities(): Collection<GrantedAuthority> = roles.map { SimpleGrantedAuthority("ROLE_${it.name.uppercase()}") }

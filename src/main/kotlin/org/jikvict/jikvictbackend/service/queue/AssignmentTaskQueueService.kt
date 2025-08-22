@@ -21,7 +21,7 @@ class AssignmentTaskQueueService(
     log: Logger,
     private val objectMapper: ObjectMapper,
     private val userDetailsService: UserDetailsServiceImpl,
-) : TaskQueueService(rabbitTemplate, taskStatusRepository, taskRegistry, log, userDetailsService) {
+) : TaskQueueService(rabbitTemplate, taskStatusRepository, taskRegistry, log) {
     fun enqueueAssignmentCreationTask(assignmentDto: CreateAssignmentDto): TaskStatus {
         val taskStatus =
             TaskStatus().apply {

@@ -3,6 +3,7 @@ package org.jikvict.jikvictbackend.entity
 import java.time.LocalDateTime
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
@@ -38,7 +39,7 @@ class Assignment {
 
     var timeOutSeconds: Long = 0
 
-    @ManyToMany(mappedBy = "assignments")
+    @ManyToMany(mappedBy = "assignments", fetch = FetchType.EAGER)
     var assignmentGroups: MutableSet<AssignmentGroup> = mutableSetOf()
 
     @Column(name = "memory_limit", nullable = true)

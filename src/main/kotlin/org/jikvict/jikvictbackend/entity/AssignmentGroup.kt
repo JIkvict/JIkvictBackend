@@ -22,7 +22,7 @@ class AssignmentGroup {
     @Column(nullable = false)
     var name: String = ""
 
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "user_assignment_groups",
         joinColumns = [JoinColumn(name = "assignment_group_id")],

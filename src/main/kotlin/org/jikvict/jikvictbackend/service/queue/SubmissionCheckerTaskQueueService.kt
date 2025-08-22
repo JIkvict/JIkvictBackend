@@ -22,7 +22,7 @@ class SubmissionCheckerTaskQueueService(
     log: Logger,
     private val objectMapper: ObjectMapper,
     private val userDetailsService: UserDetailsServiceImpl,
-) : TaskQueueService(rabbitTemplate, taskStatusRepository, taskRegistry, log, userDetailsService) {
+) : TaskQueueService(rabbitTemplate, taskStatusRepository, taskRegistry, log) {
     fun enqueueSolutionVerificationTask(
         file: MultipartFile,
         assignmentId: Int,
