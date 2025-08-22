@@ -16,6 +16,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -76,6 +77,7 @@ class AssignmentController(
         return assignmentDtoPage
     }
 
+    @PreAuthorize("hasRole('TEACHER')")
     @PostMapping
     fun createAssignment(
         @RequestBody assignmentDto: CreateAssignmentDto,
@@ -90,6 +92,7 @@ class AssignmentController(
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(response)
     }
 
+    @PreAuthorize("hasRole('TEACHER')")
     @PutMapping("/{id}")
     fun updateAssignment(
         @PathVariable id: Long,
@@ -106,6 +109,7 @@ class AssignmentController(
         return ResponseEntity.ok(assignmentMapper.toDto(updatedAssignment))
     }
 
+    @PreAuthorize("hasRole('TEACHER')")
     @DeleteMapping("/{id}")
     fun deleteAssignment(
         @PathVariable id: Long,

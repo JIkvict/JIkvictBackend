@@ -2,12 +2,12 @@ package org.jikvict.jikvictbackend.service.queue
 
 import org.apache.logging.log4j.Logger
 import org.jikvict.jikvictbackend.entity.TaskStatus
+import org.jikvict.jikvictbackend.entity.User
 import org.jikvict.jikvictbackend.model.queue.TaskMessage
 import org.jikvict.jikvictbackend.model.response.PendingStatus
 import org.jikvict.jikvictbackend.model.response.PendingStatusResponse
 import org.jikvict.jikvictbackend.model.response.ResponsePayload
 import org.jikvict.jikvictbackend.repository.TaskStatusRepository
-import org.jikvict.jikvictbackend.service.UserDetailsServiceImpl
 import org.jikvict.jikvictbackend.service.registry.TaskRegistry
 import org.jikvict.problems.exception.contract.ServiceException
 import org.springframework.amqp.rabbit.core.RabbitTemplate
@@ -21,7 +21,6 @@ abstract class TaskQueueService(
     private val taskStatusRepository: TaskStatusRepository,
     private val taskRegistry: TaskRegistry,
     private val log: Logger,
-    private val userDetailsService: UserDetailsServiceImpl,
 ) {
     internal fun sendTaskToQueue(message: TaskMessage<*>) {
         val processor =
@@ -39,13 +38,12 @@ abstract class TaskQueueService(
     /**
      * Gets the status of a task by ID
      */
-    fun getTaskStatus(taskId: Long): TaskStatus {
-        val currentUser = userDetailsService.getCurrentUser()
+    fun getTaskStatus(taskId: Long, user: User): TaskStatus {
         val task =
             taskStatusRepository
                 .findById(taskId)
                 .orElseThrow { ServiceException(HttpStatus.NOT_FOUND, "Task with ID $taskId not found") }
-        if (task.user.id != currentUser.id) {
+        if (task.user.id != user.id) {
             throw ServiceException(HttpStatus.FORBIDDEN, "You do not have permission to access this task")
         }
         return task
@@ -80,8 +78,8 @@ abstract class TaskQueueService(
         taskStatusRepository.save(taskStatus)
     }
 
-    fun getTaskStatusResponse(taskId: Long): PendingStatusResponse<Long?> {
-        val taskStatus = getTaskStatus(taskId)
+    fun getTaskStatusResponse(taskId: Long, user: User): PendingStatusResponse<Long?> {
+        val taskStatus = getTaskStatus(taskId, user)
         return PendingStatusResponse(
             payload = ResponsePayload(taskStatus.resultId),
             status = taskStatus.status,

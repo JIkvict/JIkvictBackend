@@ -36,7 +36,7 @@ class User : UserDetails {
     @ManyToMany(mappedBy = "users")
     val assignmentGroups: MutableSet<AssignmentGroup> = mutableSetOf()
 
-    override fun getAuthorities(): Collection<GrantedAuthority> = roles.map { SimpleGrantedAuthority(it.name) }
+    override fun getAuthorities(): Collection<GrantedAuthority> = roles.map { SimpleGrantedAuthority("ROLE_${it.name.uppercase()}") }
 
     override fun getPassword(): String? = this.userPassword
 

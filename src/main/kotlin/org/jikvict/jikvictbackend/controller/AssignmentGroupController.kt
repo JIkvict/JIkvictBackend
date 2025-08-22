@@ -1,17 +1,13 @@
 package org.jikvict.jikvictbackend.controller
 
-import org.jikvict.jikvictbackend.entity.AssignmentGroup
 import org.jikvict.jikvictbackend.model.dto.AssignmentGroupDto
 import org.jikvict.jikvictbackend.model.mapper.AssignmentGroupMapper
 import org.jikvict.jikvictbackend.repository.AssignmentGroupRepository
 import org.jikvict.problems.exception.contract.ServiceException
-import org.springdoc.core.annotations.ParameterObject
-import org.springframework.data.domain.Page
-import org.springframework.data.domain.Pageable
-import org.springframework.data.web.PagedModel
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -27,21 +23,15 @@ class AssignmentGroupController(
     private val assignmentGroupRepository: AssignmentGroupRepository,
     private val assignmentGroupMapper: AssignmentGroupMapper,
 ) {
-    /**
-     * Get all assignment groups with pagination
-     */
+    @PreAuthorize("hasRole('TEACHER')")
     @GetMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getAllAssignmentGroups(
-        @ParameterObject pageable: Pageable,
-    ): PagedModel<AssignmentGroupDto> {
-        val assignmentGroups: Page<AssignmentGroup> = assignmentGroupRepository.findAll(pageable)
-        val assignmentGroupDtoPage: Page<AssignmentGroupDto> = assignmentGroups.map(assignmentGroupMapper::toDto)
-        return PagedModel(assignmentGroupDtoPage)
+    fun getAllAssignmentGroups(): ResponseEntity<List<AssignmentGroupDto>> {
+        val assignmentGroups = assignmentGroupRepository.findAll()
+        val assignmentGroupDto = assignmentGroups.map(assignmentGroupMapper::toDto)
+        return ResponseEntity.ok(assignmentGroupDto)
     }
 
-    /**
-     * Get an assignment group by ID
-     */
+    @PreAuthorize("hasRole('TEACHER')")
     @GetMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getAssignmentGroupById(
         @PathVariable id: Long,
@@ -53,9 +43,7 @@ class AssignmentGroupController(
         return ResponseEntity.ok(assignmentGroupMapper.toDto(assignmentGroup))
     }
 
-    /**
-     * Create a new assignment group
-     */
+    @PreAuthorize("hasRole('TEACHER')")
     @PostMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
     fun createAssignmentGroup(
         @RequestBody assignmentGroupDto: AssignmentGroupDto,
@@ -65,9 +53,7 @@ class AssignmentGroupController(
         return ResponseEntity.status(HttpStatus.CREATED).body(assignmentGroupMapper.toDto(savedAssignmentGroup))
     }
 
-    /**
-     * Update an existing assignment group
-     */
+    @PreAuthorize("hasRole('TEACHER')")
     @PutMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun updateAssignmentGroup(
         @PathVariable id: Long,
@@ -84,9 +70,7 @@ class AssignmentGroupController(
         return ResponseEntity.ok(assignmentGroupMapper.toDto(updatedAssignmentGroup))
     }
 
-    /**
-     * Delete an assignment group
-     */
+    @PreAuthorize("hasRole('TEACHER')")
     @DeleteMapping("/{id}")
     fun deleteAssignmentGroup(
         @PathVariable id: Long,
