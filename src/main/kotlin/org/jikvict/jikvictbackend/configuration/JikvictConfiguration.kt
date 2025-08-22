@@ -7,5 +7,5 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Configuration
 
 @Configuration
-@EnableConfigurationProperties(SolutionsProperties::class, AssignmentProperties::class, JwtProperties::class)
+@EnableConfigurationProperties(SolutionsProperties::class, AssignmentProperties::class, JwtProperties::class, RabbitMQProperties::class)
 class JikvictConfiguration

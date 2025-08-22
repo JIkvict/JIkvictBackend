@@ -41,7 +41,9 @@ class TaskProcessorConfiguration(
 }
 
 @Configuration
-class RabbitListenerManualAckConfig {
+class RabbitListenerManualAckConfig(
+    private val rabbitMQProperties: RabbitMQProperties,
+) {
     @Bean(name = ["manualAckContainerFactory"])
     fun manualAckContainerFactory(
         connectionFactory: ConnectionFactory,
@@ -51,8 +53,8 @@ class RabbitListenerManualAckConfig {
             setConnectionFactory(connectionFactory)
             setAcknowledgeMode(AcknowledgeMode.MANUAL)
             setPrefetchCount(1)
-            setConcurrentConsumers(3)
-            setMaxConcurrentConsumers(10)
+            setConcurrentConsumers(rabbitMQProperties.defaultDockerWorkers)
+            setMaxConcurrentConsumers(rabbitMQProperties.maxDockerWorkers)
             setMessageConverter(rabbitMessageConverter)
         }
 }
