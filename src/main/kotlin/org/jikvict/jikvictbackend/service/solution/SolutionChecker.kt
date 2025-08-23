@@ -6,6 +6,7 @@ import com.github.dockerjava.api.model.Volume
 import org.apache.logging.log4j.Logger
 import org.jikvict.docker.dockerRunner
 import org.jikvict.docker.env
+import org.jikvict.docker.NetworkManager
 import org.jikvict.docker.util.grantAllPermissions
 import org.jikvict.jikvictbackend.entity.Assignment
 import org.jikvict.testing.model.TestSuiteResult
@@ -20,6 +21,7 @@ import kotlin.time.Duration.Companion.seconds
 class SolutionChecker(
     private val logger: Logger,
     private val objectMapper: ObjectMapper,
+    private val networkManager: NetworkManager,
 ) {
     @Transactional
     suspend fun checkSolution(
@@ -42,6 +44,10 @@ class SolutionChecker(
         val gradleCacheDir = Path.of("/tmp/gradle-cache", executionId)
         Files.createDirectories(gradleCacheDir)
 
+        val networkId = networkManager.createIsolatedNetwork(executionId)
+        val proxyIp = networkManager.getProxyIpAddress(executionId)
+        logger.info("Using proxy IP: $proxyIp for task: $executionId")
+
         runCatching {
             tempDir.grantAllPermissions()
             hiddenTargetFile.grantAllPermissions()
@@ -51,12 +57,19 @@ class SolutionChecker(
         var resultsJson: String? = null
         val runner =
             dockerRunner("jikvict-solution-runner") {
+                withNetwork(networkId)
+
                 withEnvs(
                     env("GRADLE_USER_HOME", "/gradle-cache"),
-                    env("GRADLE_OPTS", "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Xmx512m"),
-                    env("JAVA_OPTS", "-Xmx256m -Xms128m"),
+                    env("GRADLE_OPTS", "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Xmx512m -Dhttp.proxyHost=$proxyIp -Dhttp.proxyPort=3128 -Dhttps.proxyHost=$proxyIp -Dhttps.proxyPort=3128"),
+                    env("JAVA_OPTS", "-Xmx256m -Xms128m -Dhttp.proxyHost=$proxyIp -Dhttp.proxyPort=3128 -Dhttps.proxyHost=$proxyIp -Dhttps.proxyPort=3128"),
                     env("RESULTS_OUTPUT_DIR", "/app/input"),
+                    env("http_proxy", "http://$proxyIp:3128"),
+                    env("https_proxy", "http://$proxyIp:3128"),
+                    env("HTTP_PROXY", "http://$proxyIp:3128"),
+                    env("HTTPS_PROXY", "http://$proxyIp:3128"),
                 )
+
                 withBinds(
                     Bind(tempDir.toString(), Volume("/app/input")),
                     Bind(gradleCacheDir.toString(), Volume("/gradle-cache")),
@@ -90,7 +103,7 @@ class SolutionChecker(
                     { it.forEach(::cleanupDirectory) },
                 )
 
-                withLogsConsumers({ print(it) })
+                withLogsConsumers({ println(it.utf8String) })
 
                 withCpuQuota(assignmentDto.cpuLimit)
                 withMemory(assignmentDto.memoryLimit)
@@ -105,21 +118,31 @@ class SolutionChecker(
                 )
             }
 
-        runner.run()
+        try {
+            runner.run()
 
-        val results =
-            runCatching {
-                objectMapper.readValue(resultsJson, TestSuiteResult::class.java)
-            }.onFailure {
-                logger.error("Failed to parse results", it)
-                TestSuiteResult(
-                    testResults = emptyList(),
-                    totalEarnedPoints = 0,
-                    totalPossiblePoints = 0,
-                )
-            }.getOrNull()!!
+            val results =
+                runCatching {
+                    objectMapper.readValue(resultsJson, TestSuiteResult::class.java)
+                }.onFailure {
+                    logger.error("Failed to parse results", it)
+                    TestSuiteResult(
+                        testResults = emptyList(),
+                        totalEarnedPoints = 0,
+                        totalPossiblePoints = 0,
+                    )
+                }.getOrNull()!!
 
-        return results
+            return results
+        } finally {
+            // Cleanup network and proxy after task execution
+            try {
+                networkManager.cleanupTaskNetwork(executionId)
+                logger.info("Cleaned up network for task: $executionId")
+            } catch (e: Exception) {
+                logger.error("Failed to cleanup network for task: $executionId", e)
+            }
+        }
     }
 
     private fun cleanupDirectory(directory: Path) {

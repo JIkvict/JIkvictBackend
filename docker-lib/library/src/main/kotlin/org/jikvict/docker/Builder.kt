@@ -27,6 +27,7 @@ data class DockerRunnerBuilder(
     private var timeout: Duration? = null,
     private val binds: MutableList<Bind> = mutableListOf(),
     private val envs: MutableList<DockerEnv> = mutableListOf(),
+    private var networkName: String? = null,
 ) {
     fun runCommand(vararg parts: String) = apply { runCommand.addAll(parts) }
     fun runCommand(parts: List<String>) = apply { runCommand.addAll(parts) }
@@ -47,6 +48,8 @@ data class DockerRunnerBuilder(
     fun withEnvs(vararg envs: DockerEnv) = apply { this.envs.addAll(envs) }
     fun withEnvs(envs: List<DockerEnv>) = apply { this.envs.addAll(envs) }
 
+    fun withNetwork(networkName: String) = apply { this.networkName = networkName }
+
     fun withLogsConsumers(vararg logsConsumers: LogsConsumer) = apply { this.logsConsumers.addAll(logsConsumers) }
     fun withExitCodeConsumers(vararg exitCodeConsumer: ExitCodeConsumer) = apply { this.exitCodeConsumers.addAll(exitCodeConsumer) }
     fun withMountedFilesConsumers(vararg mountedFilesConsumer: MountedFilesConsumer) = apply { this.mountedFilesConsumers.addAll(mountedFilesConsumer) }
@@ -66,6 +69,7 @@ data class DockerRunnerBuilder(
             timeout = requireNotNull(timeout) { "Timeout must be set" },
             binds = binds.toList(),
             envs = envs.toList(),
+            networkName = networkName,
         )
     }
 }

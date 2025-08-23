@@ -28,6 +28,7 @@ class DockerRunner(
     private val timeout: Duration,
     private val binds: List<Bind> = emptyList(),
     private val envs: List<DockerEnv> = emptyList(),
+    private val networkName: String? = null,
 ) {
     suspend fun run() {
         var container: GenericContainer<*>? = null
@@ -40,7 +41,7 @@ class DockerRunner(
                             withMemory(this@DockerRunner.memory)
                             withNanoCPUs(this@DockerRunner.cpuQuota)
                             withPidsLimit(this@DockerRunner.pidsLimit)
-                            withNetworkMode("bridge")
+
                             withReadonlyRootfs(false)
                             withTmpFs(
                                 mapOf(
@@ -55,10 +56,52 @@ class DockerRunner(
                     envs.forEach { (k, v) -> withEnv(k, v) }
                     withCommand(*runCommand.toTypedArray())
                     withStartupTimeout(30.seconds.toJavaDuration())
-                }.also {
-                    it.start()
-                    it.logConsumers.addAll(logsConsumers)
+                    logsConsumers.forEach { withLogConsumer(it) }
+                }.also { container ->
+                    container.start()
+
+                    if (!this@DockerRunner.networkName.isNullOrBlank()) {
+                        try {
+                            println("Connecting container ${container.containerId} to network ${this@DockerRunner.networkName}")
+                            container.dockerClient.connectToNetworkCmd()
+                                .withContainerId(container.containerId)
+                                .withNetworkId(this@DockerRunner.networkName)
+                                .exec()
+
+                            // Проверим подключение
+                            Thread.sleep(2000) // Дадим время на подключение
+                            val containerInfo = container.dockerClient.inspectContainerCmd(container.containerId).exec()
+                            val networks = containerInfo.networkSettings.networks
+                            println("Solution container networks: ${networks.keys}")
+
+                            // Попробуем пинговать прокси
+                            val networkName = networks.keys.find { it.startsWith("jikvict-task-") }
+                            if (networkName != null) {
+                                val proxyName = "$networkName-proxy"
+                                println("Attempting to resolve proxy: $proxyName")
+
+                                // Выполним nslookup внутри контейнера для проверки DNS
+                                try {
+                                    val execResult = container.dockerClient.execCreateCmd(container.containerId)
+                                        .withCmd("nslookup", proxyName)
+                                        .withAttachStdout(true)
+                                        .withAttachStderr(true)
+                                        .exec()
+
+                                    println("DNS lookup result for $proxyName: $execResult")
+                                } catch (e: Exception) {
+                                    println("DNS lookup failed: ${e.message}")
+                                }
+                            }
+
+                            println("Successfully connected to network ${this@DockerRunner.networkName}")
+                        } catch (e: Exception) {
+                            println("Failed to connect to network ${this@DockerRunner.networkName}: ${e.message}")
+                            throw e
+                        }
+                    }
                 }
+
             }
 
             val exitCode = withTimeout(timeout) {
