@@ -10,6 +10,7 @@ import org.jikvict.jikvictbackend.model.response.ResponsePayload
 import org.jikvict.jikvictbackend.repository.AssignmentRepository
 import org.jikvict.jikvictbackend.service.UserDetailsServiceImpl
 import org.jikvict.jikvictbackend.service.assignment.AssignmentInfoUserService
+import org.jikvict.jikvictbackend.service.assignment.AssignmentService
 import org.jikvict.jikvictbackend.service.queue.AssignmentTaskQueueService
 import org.jikvict.problems.exception.contract.ServiceException
 import org.springframework.http.HttpHeaders
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
@@ -34,6 +36,7 @@ class AssignmentController(
     private val assignmentTaskQueueService: AssignmentTaskQueueService,
     private val userDetailsService: UserDetailsServiceImpl,
     private val assignmentInfoUserService: AssignmentInfoUserService,
+    private val assignmentService: AssignmentService,
 ) {
     @GetMapping("/{id}/info")
     fun getAssignmentInfoForUser(
@@ -75,6 +78,30 @@ class AssignmentController(
         val assignments = assignmentInfoUserService.getAllAssignmentsForUser(user)
         val assignmentDtoPage = assignments.map(assignmentMapper::toDto)
         return assignmentDtoPage
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/all-admin", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getAllAdmin(): List<AssignmentDto> {
+        val assignments = assignmentRepository.findAll()
+        val assignmentDtoPage = assignments.map(assignmentMapper::toDto)
+        return assignmentDtoPage
+    }
+
+    @PreAuthorize("hasRole('TEACHER')")
+    @GetMapping("/{assignmentGroup/all}")
+    fun getAllForAssignmentGroup(@PathVariable assignmentGroup: String): ResponseEntity<List<AssignmentDto>> {
+        val assignments = assignmentService.getAssignmentsForGroup(assignmentGroup.toLong())
+        val assignmentDtos = assignments.map(assignmentMapper::toDto)
+        return ResponseEntity.ok(assignmentDtos)
+    }
+
+    @PreAuthorize("hasRole('TEACHER')")
+    @GetMapping("/all-for-groups")
+    fun getAssignmentsForGroups(@RequestParam("groupIds") groupIds: List<Long>): ResponseEntity<List<AssignmentDto>> {
+        val assignments = assignmentService.getAssignmentsForGroups(groupIds.toSet())
+        val assignmentDtos = assignments.map(assignmentMapper::toDto)
+        return ResponseEntity.ok(assignmentDtos)
     }
 
     @PreAuthorize("hasRole('TEACHER')")

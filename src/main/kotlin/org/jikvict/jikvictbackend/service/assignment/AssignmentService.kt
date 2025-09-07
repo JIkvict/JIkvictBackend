@@ -4,6 +4,7 @@ import org.apache.logging.log4j.Logger
 import org.jikvict.jikvictbackend.entity.Assignment
 import org.jikvict.jikvictbackend.model.dto.CreateAssignmentDto
 import org.jikvict.jikvictbackend.model.mapper.AssignmentMapper
+import org.jikvict.jikvictbackend.repository.AssignmentGroupRepository
 import org.jikvict.jikvictbackend.repository.AssignmentRepository
 import org.jikvict.jikvictbackend.service.GitService
 import org.jikvict.problems.exception.contract.ServiceException
@@ -19,7 +20,20 @@ class AssignmentService(
     private val assignmentRepository: AssignmentRepository,
     private val assignmentMapper: AssignmentMapper,
     private val gitService: GitService,
+    private val assignmentGroupRepository: AssignmentGroupRepository
 ) {
+    fun getAssignmentsForGroup(groupId: Long): List<Assignment> {
+        val group = assignmentGroupRepository.findById(groupId).orElseThrow {
+            ServiceException(HttpStatus.NOT_FOUND, "Assignment group not found")
+        }
+        return assignmentRepository.findAllByAssignmentGroups(setOf(group))
+    }
+
+    fun getAssignmentsForGroups(groupIds: Set<Long>): List<Assignment> {
+        val groups = assignmentGroupRepository.findAllById(groupIds).toSet()
+        return assignmentRepository.findAllByAssignmentGroups(groups)
+    }
+
     fun createAssignment(assignmentDto: CreateAssignmentDto): Assignment {
         val description =
             runCatching {
