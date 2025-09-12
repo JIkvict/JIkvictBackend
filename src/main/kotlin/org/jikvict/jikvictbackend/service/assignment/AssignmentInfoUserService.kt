@@ -4,8 +4,11 @@ import org.jikvict.jikvictbackend.entity.Assignment
 import org.jikvict.jikvictbackend.entity.User
 import org.jikvict.jikvictbackend.model.dto.withHiddenInfo
 import org.jikvict.jikvictbackend.model.mapper.AssignmentResultMapper
-import org.jikvict.jikvictbackend.model.response.AssignmentInfo
+import org.jikvict.jikvictbackend.model.domain.AssignmentInfo
+import org.jikvict.jikvictbackend.model.domain.UnacceptedSubmission
+import org.jikvict.jikvictbackend.model.mapper.TaskStatusMapper
 import org.jikvict.jikvictbackend.repository.AssignmentRepository
+import org.jikvict.jikvictbackend.service.task.TaskStatusService
 import org.jikvict.problems.exception.contract.ServiceException
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
@@ -19,6 +22,8 @@ class AssignmentInfoUserService(
     private val assignmentResultService: AssignmentResultService,
     private val assignmentService: AssignmentService,
     private val assignmentRepository: AssignmentRepository,
+    private val taskStatusService: TaskStatusService,
+    private val taskStatusMapper: TaskStatusMapper
 ) {
     @Transactional
     fun getAssignmentInfoForUser(
@@ -42,7 +47,8 @@ class AssignmentInfoUserService(
                     assignmentResultMapper.toDto(it)
                 }
             }
-
+        val unacceptedSubmission = taskStatusService.getUnsuccessfulSubmissionsForUser(user, assignmentId)
+        val mappedUnacceptedSubmission: List<UnacceptedSubmission> = unacceptedSubmission.map(taskStatusMapper::toUnacceptedSubmission)
         val assignmentInfo =
             AssignmentInfo(
                 assignmentId = assignment.id,
@@ -50,6 +56,7 @@ class AssignmentInfoUserService(
                 maxAttempts = assignment.maximumAttempts,
                 attemptsUsed = attemptsUsed,
                 results = mappedResults,
+                unacceptedSubmissions = mappedUnacceptedSubmission,
             )
         return assignmentInfo
     }

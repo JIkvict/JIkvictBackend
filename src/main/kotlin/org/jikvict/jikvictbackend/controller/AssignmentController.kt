@@ -4,7 +4,7 @@ import org.jikvict.jikvictbackend.entity.Assignment
 import org.jikvict.jikvictbackend.model.dto.AssignmentDto
 import org.jikvict.jikvictbackend.model.dto.CreateAssignmentDto
 import org.jikvict.jikvictbackend.model.mapper.AssignmentMapper
-import org.jikvict.jikvictbackend.model.response.AssignmentInfo
+import org.jikvict.jikvictbackend.model.domain.AssignmentInfo
 import org.jikvict.jikvictbackend.model.response.PendingStatusResponse
 import org.jikvict.jikvictbackend.model.response.ResponsePayload
 import org.jikvict.jikvictbackend.repository.AssignmentRepository
@@ -89,7 +89,7 @@ class AssignmentController(
     }
 
     @PreAuthorize("hasRole('TEACHER')")
-    @GetMapping("/{assignmentGroup/all}")
+    @GetMapping("/{assignmentGroup}/all")
     fun getAllForAssignmentGroup(@PathVariable assignmentGroup: String): ResponseEntity<List<AssignmentDto>> {
         val assignments = assignmentService.getAssignmentsForGroup(assignmentGroup.toLong())
         val assignmentDtos = assignments.map(assignmentMapper::toDto)

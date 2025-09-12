@@ -4,12 +4,14 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.dockerjava.api.model.Bind
 import com.github.dockerjava.api.model.Volume
 import org.apache.logging.log4j.Logger
+import org.jikvict.docker.NetworkManager
 import org.jikvict.docker.dockerRunner
 import org.jikvict.docker.env
-import org.jikvict.docker.NetworkManager
 import org.jikvict.docker.util.grantAllPermissions
 import org.jikvict.jikvictbackend.entity.Assignment
+import org.jikvict.problems.exception.contract.ServiceException
 import org.jikvict.testing.model.TestSuiteResult
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.nio.file.Files
@@ -61,7 +63,10 @@ class SolutionChecker(
 
                 withEnvs(
                     env("GRADLE_USER_HOME", "/gradle-cache"),
-                    env("GRADLE_OPTS", "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Xmx512m -Dhttp.proxyHost=$proxyIp -Dhttp.proxyPort=3128 -Dhttps.proxyHost=$proxyIp -Dhttps.proxyPort=3128"),
+                    env(
+                        "GRADLE_OPTS",
+                        "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Xmx512m -Dhttp.proxyHost=$proxyIp -Dhttp.proxyPort=3128 -Dhttps.proxyHost=$proxyIp -Dhttps.proxyPort=3128",
+                    ),
                     env("JAVA_OPTS", "-Xmx256m -Xms128m -Dhttp.proxyHost=$proxyIp -Dhttp.proxyPort=3128 -Dhttps.proxyHost=$proxyIp -Dhttps.proxyPort=3128"),
                     env("RESULTS_OUTPUT_DIR", "/app/input"),
                     env("http_proxy", "http://$proxyIp:3128"),
@@ -83,20 +88,22 @@ class SolutionChecker(
                                 .filter { name -> name.fileName.toString() == "jikvict-results.json" }
                                 .toList()
 
-                        if (resultFiles.isNotEmpty()) {
-                            val resultsFile = resultFiles.first()
-                            resultsJson = Files.readString(resultsFile)
-                        } else {
-                            val jsonFiles =
-                                Files
-                                    .walk(tempDir)
-                                    .filter { Files.isRegularFile(it) }
-                                    .filter { it.fileName.toString().endsWith(".json") }
-                                    .toList()
-
-                            if (jsonFiles.isNotEmpty()) {
-                                val resultsFile = jsonFiles.first()
+                        runCatching {
+                            if (resultFiles.isNotEmpty()) {
+                                val resultsFile = resultFiles.first()
                                 resultsJson = Files.readString(resultsFile)
+                            } else {
+                                val jsonFiles =
+                                    Files
+                                        .walk(tempDir)
+                                        .filter { Files.isRegularFile(it) }
+                                        .filter { it.fileName.toString().endsWith(".json") }
+                                        .toList()
+
+                                if (jsonFiles.isNotEmpty()) {
+                                    val resultsFile = jsonFiles.first()
+                                    resultsJson = Files.readString(resultsFile)
+                                }
                             }
                         }
                     },
@@ -125,11 +132,9 @@ class SolutionChecker(
                 runCatching {
                     objectMapper.readValue(resultsJson, TestSuiteResult::class.java)
                 }.onFailure {
-                    logger.error("Failed to parse results", it)
-                    TestSuiteResult(
-                        testResults = emptyList(),
-                        totalEarnedPoints = 0,
-                        totalPossiblePoints = 0,
+                    throw ServiceException(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Failed to parse test results, probably the solution is invalid and no tests were executed",
                     )
                 }.getOrNull()!!
 

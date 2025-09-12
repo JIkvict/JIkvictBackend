@@ -1,4 +1,4 @@
-package org.jikvict.jikvictbackend.model.response
+package org.jikvict.jikvictbackend.model.domain
 
 import org.jikvict.jikvictbackend.model.dto.AssignmentResultDto
 
@@ -8,4 +8,5 @@ data class AssignmentInfo(
     val maxAttempts: Int,
     val attemptsUsed: Int,
     val results: List<AssignmentResultDto> = emptyList(),
+    val unacceptedSubmissions: List<UnacceptedSubmission>
 )

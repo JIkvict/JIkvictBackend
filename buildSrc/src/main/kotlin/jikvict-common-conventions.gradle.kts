@@ -32,6 +32,12 @@ tasks.withType<KotlinCompile> {
 }
 
 
+kotlin {
+    compilerOptions {
+        freeCompilerArgs.add("-Xannotation-default-target=param-property")
+    }
+}
+
 
 plugins.withId("java") {
     tasks.withType<Test>().configureEach {
