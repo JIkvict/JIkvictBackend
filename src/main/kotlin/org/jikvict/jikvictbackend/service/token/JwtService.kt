@@ -29,7 +29,7 @@ class JwtService(
     fun extractUsername(token: String): String =
         Jwts
             .parser()
-            .decryptWith(key)
+            .verifyWith(key)
             .build()
             .parseSignedClaims(token)
             .payload.subject
