@@ -106,8 +106,7 @@ class AuthController(
     ) {
         val cookie =
             Cookie("refreshToken", refreshToken).apply {
-                isHttpOnly = true
-                secure = true
+                isHttpOnly = false
                 path = "/"
                 maxAge = 7 * 24 * 60 * 60
             }

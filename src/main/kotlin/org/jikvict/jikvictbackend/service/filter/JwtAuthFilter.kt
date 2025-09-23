@@ -22,27 +22,32 @@ class JwtAuthFilter(
         response: HttpServletResponse,
         chain: FilterChain,
     ) {
-        val authHeader = request.getHeader("Authorization")
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            chain.doFilter(request, response)
-            return
-        }
-
-        val token = authHeader.substring(7)
-        val username = jwtService.extractUsername(token)
-
-        if (SecurityContextHolder.getContext().authentication == null) {
-            val userDetails = userDetailsService.loadUserByUsername(username)
-            if (jwtService.isTokenValid(token, userDetails as User)) {
-                val authToken =
-                    UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.authorities,
-                    )
-                authToken.details = WebAuthenticationDetailsSource().buildDetails(request)
-                SecurityContextHolder.getContext().authentication = authToken
+        runCatching {
+            val authHeader = request.getHeader("Authorization")
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                chain.doFilter(request, response)
+                return
             }
+
+            val token = authHeader.substring(7)
+            val username = jwtService.extractUsername(token)
+
+            if (SecurityContextHolder.getContext().authentication == null) {
+                val userDetails = userDetailsService.loadUserByUsername(username)
+                if (jwtService.isTokenValid(token, userDetails as User)) {
+                    val authToken =
+                        UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.authorities,
+                        )
+                    authToken.details = WebAuthenticationDetailsSource().buildDetails(request)
+                    SecurityContextHolder.getContext().authentication = authToken
+                }
+            }
+        }.onFailure {
+            logger.error("Failed to set user authentication: ${it.message}")
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid token")
         }
 
         chain.doFilter(request, response)
