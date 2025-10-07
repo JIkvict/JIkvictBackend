@@ -6,14 +6,17 @@ import org.jikvict.jikvictbackend.model.queue.AssignmentTaskMessage
 import org.jikvict.jikvictbackend.model.response.PendingStatus
 import org.jikvict.jikvictbackend.service.assignment.AssignmentService
 import org.jikvict.jikvictbackend.service.queue.AssignmentTaskQueueService
+import org.jikvict.jikvictbackend.service.registry.TaskRegistry
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.stereotype.Service
+import javax.annotation.PostConstruct
 
 @Service
 class AssignmentTaskProcessor(
     private val assignmentService: AssignmentService,
     private val taskQueueService: AssignmentTaskQueueService,
     private val log: Logger,
+    private val taskRegistry: TaskRegistry,
 ) : TaskProcessor<CreateAssignmentDto, AssignmentTaskMessage> {
     override val taskType: String = "ASSIGNMENT_CREATION"
     override val queueName: String = "assignment.queue"
@@ -45,5 +48,10 @@ class AssignmentTaskProcessor(
                 "Error creating assignment: ${e.message}",
             )
         }
+    }
+
+    @PostConstruct
+    fun init() {
+        taskRegistry.registerProcessor(this)
     }
 }

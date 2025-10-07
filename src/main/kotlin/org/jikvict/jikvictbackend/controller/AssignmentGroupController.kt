@@ -1,9 +1,7 @@
 package org.jikvict.jikvictbackend.controller
 
 import org.jikvict.jikvictbackend.model.dto.AssignmentGroupDto
-import org.jikvict.jikvictbackend.model.mapper.AssignmentGroupMapper
-import org.jikvict.jikvictbackend.repository.AssignmentGroupRepository
-import org.jikvict.problems.exception.contract.ServiceException
+import org.jikvict.jikvictbackend.service.assignment.AssignmentGroupService
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -20,14 +18,12 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/assignment-groups")
 class AssignmentGroupController(
-    private val assignmentGroupRepository: AssignmentGroupRepository,
-    private val assignmentGroupMapper: AssignmentGroupMapper,
+    private val assignmentGroupService: AssignmentGroupService,
 ) {
     @PreAuthorize("hasRole('TEACHER')")
     @GetMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getAllAssignmentGroups(): ResponseEntity<List<AssignmentGroupDto>> {
-        val assignmentGroups = assignmentGroupRepository.findAll()
-        val assignmentGroupDto = assignmentGroups.map(assignmentGroupMapper::toDto)
+        val assignmentGroupDto = assignmentGroupService.getAll()
         return ResponseEntity.ok(assignmentGroupDto)
     }
 
@@ -36,11 +32,8 @@ class AssignmentGroupController(
     fun getAssignmentGroupById(
         @PathVariable id: Long,
     ): ResponseEntity<AssignmentGroupDto> {
-        val assignmentGroup =
-            assignmentGroupRepository
-                .findById(id)
-                .orElseThrow { ServiceException(HttpStatus.NOT_FOUND, "Assignment group with ID $id not found") }
-        return ResponseEntity.ok(assignmentGroupMapper.toDto(assignmentGroup))
+        val dto = assignmentGroupService.getById(id)
+        return ResponseEntity.ok(dto)
     }
 
     @PreAuthorize("hasRole('TEACHER')")
@@ -48,9 +41,8 @@ class AssignmentGroupController(
     fun createAssignmentGroup(
         @RequestBody assignmentGroupDto: AssignmentGroupDto,
     ): ResponseEntity<AssignmentGroupDto> {
-        val assignmentGroup = assignmentGroupMapper.toEntity(assignmentGroupDto)
-        val savedAssignmentGroup = assignmentGroupRepository.save(assignmentGroup)
-        return ResponseEntity.status(HttpStatus.CREATED).body(assignmentGroupMapper.toDto(savedAssignmentGroup))
+        val created = assignmentGroupService.create(assignmentGroupDto)
+        return ResponseEntity.status(HttpStatus.CREATED).body(created)
     }
 
     @PreAuthorize("hasRole('TEACHER')")
@@ -59,15 +51,8 @@ class AssignmentGroupController(
         @PathVariable id: Long,
         @RequestBody assignmentGroupDto: AssignmentGroupDto,
     ): ResponseEntity<AssignmentGroupDto> {
-        if (!assignmentGroupRepository.existsById(id)) {
-            throw ServiceException(HttpStatus.NOT_FOUND, "Assignment group with ID $id not found")
-        }
-
-        val assignmentGroup = assignmentGroupMapper.toEntity(assignmentGroupDto)
-        assignmentGroup.id = id
-
-        val updatedAssignmentGroup = assignmentGroupRepository.save(assignmentGroup)
-        return ResponseEntity.ok(assignmentGroupMapper.toDto(updatedAssignmentGroup))
+        val updated = assignmentGroupService.update(id, assignmentGroupDto)
+        return ResponseEntity.ok(updated)
     }
 
     @PreAuthorize("hasRole('TEACHER')")
@@ -75,11 +60,7 @@ class AssignmentGroupController(
     fun deleteAssignmentGroup(
         @PathVariable id: Long,
     ): ResponseEntity<Unit> {
-        if (!assignmentGroupRepository.existsById(id)) {
-            throw ServiceException(HttpStatus.NOT_FOUND, "Assignment group with ID $id not found")
-        }
-
-        assignmentGroupRepository.deleteById(id)
+        assignmentGroupService.delete(id)
         return ResponseEntity.noContent().build()
     }
 }

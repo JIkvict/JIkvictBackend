@@ -8,11 +8,13 @@ import org.jikvict.jikvictbackend.repository.AssignmentRepository
 import org.jikvict.jikvictbackend.repository.UserRepository
 import org.jikvict.jikvictbackend.service.assignment.AssignmentResultService
 import org.jikvict.jikvictbackend.service.queue.SubmissionCheckerTaskQueueService
+import org.jikvict.jikvictbackend.service.registry.TaskRegistry
 import org.jikvict.jikvictbackend.service.solution.SubmissionCheckerUserService
 import org.jikvict.problems.exception.contract.ServiceException
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
+import javax.annotation.PostConstruct
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -24,6 +26,7 @@ class SubmissionCheckerTaskProcessor(
     private val assignmentResultService: AssignmentResultService,
     private val assignmentRepository: AssignmentRepository,
     private val userSolutionChecker: SubmissionCheckerUserService,
+    private val taskRegistry: TaskRegistry,
 ) : TaskProcessor<VerificationTaskDto, VerificationTaskMessage> {
     override val taskType: String = "SOLUTION_VERIFICATION"
     override val queueName: String = "verification.queue"
@@ -96,5 +99,10 @@ class SubmissionCheckerTaskProcessor(
                 )
             }
         }
+    }
+
+    @PostConstruct
+    fun init() {
+        taskRegistry.registerProcessor(this)
     }
 }

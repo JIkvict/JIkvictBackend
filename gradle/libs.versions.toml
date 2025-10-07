@@ -28,7 +28,7 @@ spring-notebook = { module = "org.jetbrains.kotlinx:kotlin-jupyter-spring-starte
 spring-boot-gradle-plugin = { module = "org.springframework.boot:spring-boot-gradle-plugin", version.ref = "spring-boot" }
 spring-gradle-dependency-management = { module = "io.spring.gradle:dependency-management-plugin", version.ref = "dependency-management" }
 spring-openapi-gradle-plugin = { module = "org.springdoc:springdoc-openapi-gradle-plugin", version.ref = "springdoc-openapi-gradle" }
-
+spring-boot-starter-validation = { group = "org.springframework.boot", name = "spring-boot-starter-validation" }
 
 # Spring Security
 spring-security-test = { group = "org.springframework.security", name = "spring-security-test" }
