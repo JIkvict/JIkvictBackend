@@ -74,7 +74,7 @@ class AssignmentGroupController(
     @DeleteMapping("/{id}")
     fun deleteAssignmentGroup(
         @PathVariable id: Long,
-    ): ResponseEntity<Void> {
+    ): ResponseEntity<Unit> {
         if (!assignmentGroupRepository.existsById(id)) {
             throw ServiceException(HttpStatus.NOT_FOUND, "Assignment group with ID $id not found")
         }

@@ -10,4 +10,6 @@ interface AssignmentResultRepository : JpaRepository<AssignmentResult, Long> {
         user: User,
         assignment: Assignment,
     ): List<AssignmentResult>
+
+    fun findAllByUser(user: User): List<AssignmentResult>
 }
