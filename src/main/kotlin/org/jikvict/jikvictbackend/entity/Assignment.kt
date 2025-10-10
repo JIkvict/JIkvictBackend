@@ -57,13 +57,10 @@ class Assignment {
     @Column(name = "is_closed", nullable = true)
     var isClosed: Boolean? = null
         get() {
-            if (field == null) {
-                return false
+            return if (field == null) {
+                (LocalDateTime.now().isAfter(endDate) || LocalDateTime.now().isBefore(startDate))
             } else {
-                if (field == true) {
-                    return true
-                }
+                field
             }
-            return (LocalDateTime.now().isAfter(endDate))
         }
 }
