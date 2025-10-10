@@ -2,6 +2,7 @@ package org.jikvict.jikvictbackend.service.assignment
 
 import org.jikvict.jikvictbackend.entity.Assignment
 import org.jikvict.jikvictbackend.entity.User
+import org.jikvict.jikvictbackend.entity.isClosed
 import org.jikvict.jikvictbackend.model.dto.withHiddenInfo
 import org.jikvict.jikvictbackend.model.mapper.AssignmentResultMapper
 import org.jikvict.jikvictbackend.model.domain.AssignmentInfo
@@ -36,7 +37,7 @@ class AssignmentInfoUserService(
         results.forEach { entityManager.detach(it) }
 
         val mappedResults =
-            if (assignment.isClosed == false) {
+            if (!assignment.isClosed) {
                 results.map {
                     assignmentResultMapper.toDto(it).copy(
                         result = it.testSuiteResult?.withHiddenInfo(),

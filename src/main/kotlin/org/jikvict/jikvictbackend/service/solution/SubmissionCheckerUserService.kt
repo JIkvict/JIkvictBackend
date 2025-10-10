@@ -1,6 +1,7 @@
 package org.jikvict.jikvictbackend.service.solution
 
 import org.jikvict.jikvictbackend.entity.User
+import org.jikvict.jikvictbackend.entity.isClosed
 import org.jikvict.jikvictbackend.repository.AssignmentRepository
 import org.jikvict.jikvictbackend.service.assignment.AssignmentInfoUserService
 import org.jikvict.jikvictbackend.service.assignment.AssignmentResultService
@@ -51,7 +52,7 @@ class SubmissionCheckerUserService(
             assignmentRepository.findById(assignmentId).orElseThrow {
                 ServiceException(HttpStatus.NOT_FOUND, "Assignment with ID $assignmentId not found")
             }
-        require(assignment.isClosed == false) {
+        require(!assignment.isClosed) {
             throw ServiceException(HttpStatus.FORBIDDEN, "Assignment with ID $assignmentId is closed")
         }
     }

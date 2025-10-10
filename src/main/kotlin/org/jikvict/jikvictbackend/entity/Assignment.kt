@@ -3,6 +3,8 @@ package org.jikvict.jikvictbackend.entity
 import java.time.LocalDateTime
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
@@ -54,13 +56,23 @@ class Assignment {
     @Column(name = "maximum_attempts", nullable = false, columnDefinition = "integer default 2")
     var maximumAttempts: Int = 2
 
-    @Column(name = "is_closed", nullable = true)
-    var isClosed: Boolean? = null
-        get() {
-            return if (field == null) {
-                (LocalDateTime.now().isAfter(endDate) || LocalDateTime.now().isBefore(startDate))
-            } else {
-                field
-            }
+
+    @Column(name = "status_override", nullable = false)
+    @Enumerated(EnumType.STRING)
+    var statusOverride: AssignmentStatusOverride = AssignmentStatusOverride.AUTO
+}
+
+val Assignment.isClosed: Boolean
+    get() = when (statusOverride) {
+        AssignmentStatusOverride.CLOSED -> true
+        AssignmentStatusOverride.OPEN -> false
+        AssignmentStatusOverride.AUTO -> {
+            LocalDateTime.now().isAfter(endDate) || LocalDateTime.now().isBefore(startDate)
         }
+    }
+
+enum class AssignmentStatusOverride {
+    OPEN,
+    CLOSED,
+    AUTO
 }

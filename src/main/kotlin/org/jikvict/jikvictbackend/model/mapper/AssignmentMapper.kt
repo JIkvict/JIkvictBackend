@@ -2,6 +2,7 @@ package org.jikvict.jikvictbackend.model.mapper
 
 import org.jikvict.jikvictbackend.entity.Assignment
 import org.jikvict.jikvictbackend.entity.AssignmentGroup
+import org.jikvict.jikvictbackend.entity.isClosed
 import org.jikvict.jikvictbackend.model.dto.AssignmentDto
 import org.jikvict.jikvictbackend.model.dto.CreateAssignmentDto
 import org.jikvict.jikvictbackend.repository.AssignmentGroupRepository
@@ -36,5 +37,5 @@ abstract class AssignmentMapper {
     @Mapping(target = "isClosed", expression = "java(mapIsClosed(assignment))")
     abstract fun toDto(assignment: Assignment): AssignmentDto
 
-    fun mapIsClosed(assignment: Assignment): Boolean = assignment.isClosed == true
+    fun mapIsClosed(assignment: Assignment): Boolean = assignment.isClosed
 }
