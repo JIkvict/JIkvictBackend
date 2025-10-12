@@ -33,7 +33,6 @@ class LdapAuthenticationService {
 
         return try {
             val context = InitialDirContext(env)
-            println("Context is $context")
             context.close()
             true
         } catch (e: Exception) {
