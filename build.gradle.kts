@@ -26,6 +26,7 @@ dependencies {
     implementation(libs.spring.notebook)
     implementation(libs.project.reactor)
     implementation(libs.project.reactor.kotlin)
+    implementation(libs.bundles.ldap)
     runtimeOnly(libs.jjwt.impl)
     runtimeOnly(libs.jjwt.jackson)
     runtimeOnly(libs.postgresql)
@@ -33,8 +34,8 @@ dependencies {
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.kotlin.test.junit5)
     testImplementation(libs.spring.security.test)
-    testRuntimeOnly(libs.junit.platform.launcher)
     testImplementation(libs.bundles.test)
+    testRuntimeOnly(libs.junit.platform.launcher)
     kapt(libs.mapstruct.processor)
     compileOnly(libs.mapstruct)
 }

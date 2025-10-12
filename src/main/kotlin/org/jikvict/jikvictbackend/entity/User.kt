@@ -23,7 +23,12 @@ class User : UserDetails {
 
     @Column(unique = true, name = "username")
     var userNameField: String? = null
-    var userPassword: String? = null
+
+    @Column(name = "email")
+    var email: String? = null
+
+    @Column(name = "ais_id")
+    var aisId: String? = null
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -38,7 +43,7 @@ class User : UserDetails {
 
     override fun getAuthorities(): Collection<GrantedAuthority> = roles.map { SimpleGrantedAuthority("ROLE_${it.name.uppercase()}") }
 
-    override fun getPassword(): String? = this.userPassword
+    override fun getPassword(): String? = null
 
     override fun getUsername(): String? = this.userNameField
 

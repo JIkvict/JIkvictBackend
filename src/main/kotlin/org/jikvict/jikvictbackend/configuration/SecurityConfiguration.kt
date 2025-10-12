@@ -1,19 +1,16 @@
 package org.jikvict.jikvictbackend.configuration
 
+import org.jikvict.jikvictbackend.service.auth.LdapAuthenticationProvider
 import org.jikvict.jikvictbackend.service.filter.AutoAuthenticationFilter
 import org.jikvict.jikvictbackend.service.filter.JwtAuthFilter
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.AuthenticationProvider
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.invoke
 import org.springframework.security.config.http.SessionCreationPolicy
-import org.springframework.security.core.userdetails.UserDetailsService
-import org.springframework.security.crypto.factory.PasswordEncoderFactories
-import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import org.springframework.web.cors.CorsConfiguration
@@ -23,7 +20,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 @Configuration
 class SecurityConfiguration(
     private val jwtAuthFilter: JwtAuthFilter,
-    private val userDetailsService: UserDetailsService,
+    private val ldapAuthenticationProvider: LdapAuthenticationProvider,
     private val autoAuthenticationFilter: AutoAuthenticationFilter?,
 ) {
     @Bean
@@ -72,22 +69,11 @@ class SecurityConfiguration(
     }
 
     @Bean
-    fun authenticationProvider(passwordEncoder: PasswordEncoder): DaoAuthenticationProvider {
-        val provider = DaoAuthenticationProvider(userDetailsService)
-        provider.setPasswordEncoder(passwordEncoder)
-        return provider
-    }
-
-    @Bean
     fun authenticationManager(
         http: HttpSecurity,
-        authenticationProvider: DaoAuthenticationProvider,
     ): AuthenticationManager =
         http
             .getSharedObject(AuthenticationManagerBuilder::class.java)
-            .authenticationProvider(authenticationProvider)
+            .authenticationProvider(ldapAuthenticationProvider)
             .build()
-
-    @Bean
-    fun passwordEncoder(): PasswordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder()
 }

@@ -89,6 +89,11 @@ mapstruct = { module = "org.mapstruct:mapstruct", version.ref = "mapstruct" }
 project-reactor = { module = "io.projectreactor:reactor-core" }
 project-reactor-kotlin = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactor" }
 
+# Ldap
+spring-ldap = { module = "org.springframework.ldap:spring-ldap-core" }
+spring-security-ldap = { module = "org.springframework.security:spring-security-ldap" }
+ldap = { module = "com.unboundid:unboundid-ldapsdk" }
+
 [bundles]
 test = [
     "spring-boot-starter-test",
@@ -102,4 +107,9 @@ test = [
     "testcontainers-postgresql",
     "assertj-core",
     "spring-mockk",
+]
+ldap = [
+    "spring-ldap",
+    "spring-security-ldap",
+    "ldap",
 ]

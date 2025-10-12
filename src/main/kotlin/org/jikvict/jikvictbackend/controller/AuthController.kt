@@ -5,9 +5,7 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.jikvict.jikvictbackend.entity.RefreshToken
-import org.jikvict.jikvictbackend.entity.User
 import org.jikvict.jikvictbackend.model.request.LoginRequest
-import org.jikvict.jikvictbackend.model.request.RegisterRequest
 import org.jikvict.jikvictbackend.model.response.TokenResponse
 import org.jikvict.jikvictbackend.repository.UserRepository
 import org.jikvict.jikvictbackend.service.token.JwtService
@@ -16,7 +14,6 @@ import org.springframework.http.ProblemDetail
 import org.springframework.http.ResponseEntity
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
-import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -32,7 +29,6 @@ class AuthController(
     private val jwtService: JwtService,
     private val userRepository: UserRepository,
     private val refreshTokenService: RefreshTokenService,
-    private val passwordEncoder: PasswordEncoder,
 ) {
     @Operation(
         summary = "Log in",
@@ -123,24 +119,4 @@ class AuthController(
         return refreshTokenService.verifyExpiration(refreshToken)
     }
 
-    @PostMapping("/register")
-    fun register(
-        @RequestBody request: RegisterRequest,
-        response: HttpServletResponse,
-    ): ResponseEntity<TokenResponse> {
-        val hashedPassword = passwordEncoder.encode(request.password)
-
-        val user =
-            User().apply {
-                userPassword = hashedPassword
-                userNameField = request.username
-            }
-
-        userRepository.save(user)
-
-        val access = jwtService.generateToken(user)
-        val refresh = refreshTokenService.createRefreshToken(user.id)
-        addRefreshTokenCookie(response, refresh.token)
-        return ResponseEntity.ok(TokenResponse(access))
-    }
 }
