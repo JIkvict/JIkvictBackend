@@ -30,6 +30,7 @@ spring-boot-gradle-plugin = { module = "org.springframework.boot:spring-boot-gra
 spring-gradle-dependency-management = { module = "io.spring.gradle:dependency-management-plugin", version.ref = "dependency-management" }
 spring-openapi-gradle-plugin = { module = "org.springdoc:springdoc-openapi-gradle-plugin", version.ref = "springdoc-openapi-gradle" }
 spring-boot-starter-validation = { group = "org.springframework.boot", name = "spring-boot-starter-validation" }
+spring-liquibase = { module = "org.liquibase:liquibase-core" }
 
 # Spring Security
 spring-security-test = { group = "org.springframework.security", name = "spring-security-test" }

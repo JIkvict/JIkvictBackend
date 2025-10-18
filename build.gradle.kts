@@ -27,6 +27,7 @@ dependencies {
     implementation(libs.project.reactor)
     implementation(libs.project.reactor.kotlin)
     implementation(libs.bundles.ldap)
+    implementation(libs.spring.liquibase)
     runtimeOnly(libs.jjwt.impl)
     runtimeOnly(libs.jjwt.jackson)
     runtimeOnly(libs.postgresql)

@@ -9,7 +9,6 @@ import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
-import jakarta.persistence.Lob
 import jakarta.persistence.ManyToMany
 import jakarta.persistence.Table
 
@@ -24,8 +23,7 @@ class Assignment {
     @Column(nullable = false)
     var title: String = ""
 
-    @Lob
-    @Column(nullable = true)
+    @Column(nullable = true, columnDefinition = "TEXT")
     var description: String? = null
 
     var taskId: Int = 0
