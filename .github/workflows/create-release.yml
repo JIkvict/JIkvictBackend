@@ -41,4 +41,5 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Push image
-        run: docker push ikvict/jikvict-backend:$VERSION
+        run: |
+          VERSION=$(./gradlew -q :printVersion | tr -d '\n') && docker push ikvict/jikvict-backend:$VERSION
