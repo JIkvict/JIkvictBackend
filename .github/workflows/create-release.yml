@@ -16,7 +16,7 @@ jobs:
         uses: actions/setup-java@v5
         with:
           java-version: 21
-          distribution: 'openjdk'
+          distribution: 'temurin'
       - uses: gradle/actions/setup-gradle@v5
         name: Setup Gradle
       - name: Create release
