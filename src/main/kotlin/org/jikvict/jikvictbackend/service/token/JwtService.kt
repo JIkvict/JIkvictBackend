@@ -46,7 +46,7 @@ class JwtService(
         val expiration =
             Jwts
                 .parser()
-                .decryptWith(key)
+                .verifyWith(key)
                 .build()
                 .parseSignedClaims(token)
                 .payload.expiration
