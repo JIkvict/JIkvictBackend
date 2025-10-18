@@ -7,6 +7,8 @@ on:
         required: false
 
 jobs:
+  generate-open-api:
+    uses: ./.github/workflows/generate-openapi-docs.yml
   create-release:
     runs-on: ubuntu-latest
     steps:

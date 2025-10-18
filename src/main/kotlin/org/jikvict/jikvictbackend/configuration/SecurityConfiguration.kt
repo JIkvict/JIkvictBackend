@@ -27,14 +27,14 @@ class SecurityConfiguration(
     fun filterChain(
         http: HttpSecurity,
         authenticationProvider: AuthenticationProvider,
-        corsConfigurationSource: CorsConfigurationSource,
     ): SecurityFilterChain {
         http {
             csrf { disable() }
-            cors { configurationSource = corsConfigurationSource }
+            cors { disable() }
             authorizeHttpRequests {
                 authorize("/auth/**", permitAll)
                 authorize("/v3/api-docs", permitAll)
+                authorize("/api/v1/**", permitAll)
                 authorize(anyRequest, authenticated)
             }
             sessionManagement {
@@ -55,18 +55,6 @@ class SecurityConfiguration(
         return http.build()
     }
 
-    @Bean
-    fun corsConfigurationSource(): CorsConfigurationSource {
-        val configuration = CorsConfiguration()
-        configuration.allowedOriginPatterns = listOf("*")
-        configuration.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
-        configuration.allowedHeaders = listOf("*")
-        configuration.allowCredentials = true
-
-        val source = UrlBasedCorsConfigurationSource()
-        source.registerCorsConfiguration("/**", configuration)
-        return source
-    }
 
     @Bean
     fun authenticationManager(
