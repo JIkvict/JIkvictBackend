@@ -17,6 +17,11 @@ jobs:
         with:
           java-version: 21
           distribution: 'temurin'
+
+      - name: Set remote URL with token
+        run: |
+          git remote set-url origin https://$GITHUB_ACTOR:${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/JIkvict/JIkvictBackend.git
+
       - uses: gradle/actions/setup-gradle@v5
         name: Setup Gradle
       - name: Create release
