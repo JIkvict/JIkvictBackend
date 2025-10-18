@@ -52,4 +52,9 @@ idea {
         isDownloadSources = true
     }
 }
+tasks.register("printVersion") {
+    doLast {
+        println(project.version)
+    }
+}
 

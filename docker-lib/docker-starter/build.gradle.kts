@@ -1,3 +1,5 @@
+import org.springframework.boot.gradle.tasks.bundling.BootJar
+
 plugins {
     id("jikvict-common-conventions")
     id("jikvict-spring-conventions")
@@ -6,10 +8,13 @@ plugins {
 group = "org.jikvict.docker.starter"
 
 dependencies {
-    api(project(":docker-lib:library"))
+    api(project(":docker-lib:docker-library"))
     implementation(libs.spring.boot.starter.web)
     implementation(libs.jackson.module.kotlin)
     implementation(libs.kotlin.reflect)
     implementation(libs.springdoc.openapi.starter.webmvc.ui)
     testImplementation(libs.bundles.test)
+}
+tasks.named<BootJar>("bootJar") {
+    enabled = false
 }

@@ -1,4 +1,39 @@
 name: create-release.yml
 on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number for the release (empty for auto-increment)'
+        required: false
 
 jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          java-version: 21
+          distribution: 'openjdk'
+      - uses: gradle/actions/setup-gradle@v5
+        name: Setup Gradle
+      - name: Create release
+        run: |
+          ./gradlew release ${{ github.event.inputs.version != '' && format('-Pversion={0}', github.event.inputs.version) || '' }}
+      - name: Build jar
+        run: ./gradlew :bootJar
+      - name: Build docker image
+        run: docker build -t jikvict-backend:$(./gradlew -q :printVersion | tr -d '\n') .
+      - name: Add tag
+        run: |
+          VERSION=$(./gradlew -q :printVersion | tr -d '\n') && docker tag jikvict-backend:$VERSION ikvict/jikvict-backend:$VERSION
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Push image
+        run: docker push ikvict/jikvict-backend:$VERSION
