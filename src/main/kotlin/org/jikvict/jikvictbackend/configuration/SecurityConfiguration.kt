@@ -32,7 +32,7 @@ class SecurityConfiguration(
             csrf { disable() }
             cors { disable() }
             authorizeHttpRequests {
-                authorize("/auth/**", permitAll)
+                authorize("/api/auth/**", permitAll)
                 authorize("/v3/api-docs", permitAll)
                 authorize("/api/v1/**", permitAll)
                 authorize(anyRequest, authenticated)
