@@ -22,7 +22,7 @@ class JwtAuthFilter(
         response: HttpServletResponse,
         chain: FilterChain,
     ) {
-        runCatching {
+        try {
             val authHeader = request.getHeader("Authorization")
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
                 chain.doFilter(request, response)
@@ -43,13 +43,17 @@ class JwtAuthFilter(
                         )
                     authToken.details = WebAuthenticationDetailsSource().buildDetails(request)
                     SecurityContextHolder.getContext().authentication = authToken
+                } else {
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid token")
+                    return
                 }
             }
-        }.onFailure {
-            logger.error("Failed to set user authentication: ${it.message}")
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid token")
-        }
 
-        chain.doFilter(request, response)
+            chain.doFilter(request, response)
+        } catch (ex: Exception) {
+            logger.error("Failed to set user authentication: ${ex.message}")
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid token")
+            return
+        }
     }
 }
