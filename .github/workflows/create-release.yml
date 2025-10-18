@@ -5,7 +5,7 @@ on:
       version:
         description: 'Version number for the release (empty for auto-increment)'
         required: false
-
+permissions: write-all
 jobs:
   generate-open-api:
     uses: ./.github/workflows/generate-openapi-docs.yml
