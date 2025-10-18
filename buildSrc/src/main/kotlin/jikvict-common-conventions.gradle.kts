@@ -5,11 +5,12 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     id("org.jetbrains.kotlin.jvm")
     id("idea")
+    id("pl.allegro.tech.build.axion-release")
 }
 
 
 group = "org.jikvict"
-version = "0.0.1-SNAPSHOT"
+version = scmVersion.version
 
 repositories {
     mavenCentral()

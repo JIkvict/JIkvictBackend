@@ -22,4 +22,5 @@ dependencies {
     implementation(libs.spring.gradle.dependency.management)
     implementation(libs.spring.openapi.gradle.plugin)
     implementation(libs.ktlint)
+    implementation(libs.axion.release)
 }
