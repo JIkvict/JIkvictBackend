@@ -30,11 +30,9 @@ class AssignmentGroup {
     )
     var users: MutableSet<User> = mutableSetOf()
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-        name = "assignment_group_assignments",
-        joinColumns = [JoinColumn(name = "group_id")],
-        inverseJoinColumns = [JoinColumn(name = "assignment_id")],
-    )
-    var assignments: MutableSet<Assignment> = mutableSetOf()
+    override fun toString(): String {
+        return "AssignmentGroup(name='$name', id=$id)"
+    }
+
+
 }

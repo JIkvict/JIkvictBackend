@@ -20,7 +20,7 @@ class AssignmentService(
     private val assignmentRepository: AssignmentRepository,
     private val assignmentMapper: AssignmentMapper,
     private val gitService: GitService,
-    private val assignmentGroupRepository: AssignmentGroupRepository
+    private val assignmentGroupRepository: AssignmentGroupRepository,
 ) {
     fun getAssignmentsForGroup(groupId: Long): List<Assignment> {
         val group = assignmentGroupRepository.findById(groupId).orElseThrow {
@@ -48,10 +48,7 @@ class AssignmentService(
 
         val assignment =
             assignmentMapper.toEntity(assignmentDto).apply {
-                this.description =
-                    description.also {
-                        log.info("Assignment description: $it")
-                    }
+                this.description = description
             }
 
         val savedAssignment = assignmentRepository.save(assignment)

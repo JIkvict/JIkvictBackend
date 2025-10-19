@@ -1,0 +1,28 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0002-unidirectional-assignment-index
+      author: jikvict
+      preConditions:
+        - onFail: MARK_RAN
+        - tableExists:
+            tableName: assignment_group_assignments
+        - columnExists:
+            tableName: assignment_group_assignments
+            columnName: assignment_id
+        - columnExists:
+            tableName: assignment_group_assignments
+            columnName: group_id
+      changes:
+        - createIndex:
+            tableName: assignment_group_assignments
+            indexName: idx_aga_assignment_id_group_id
+            unique: false
+            columns:
+              - column:
+                  name: assignment_id
+              - column:
+                  name: group_id
+      rollback:
+        - dropIndex:
+            tableName: assignment_group_assignments
+            indexName: idx_aga_assignment_id_group_id

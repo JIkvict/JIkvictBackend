@@ -9,6 +9,8 @@ import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.JoinTable
 import jakarta.persistence.ManyToMany
 import jakarta.persistence.Table
 
@@ -39,7 +41,12 @@ class Assignment {
 
     var timeOutSeconds: Long = 0
 
-    @ManyToMany(mappedBy = "assignments", fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "assignment_group_assignments",
+        joinColumns = [JoinColumn(name = "assignment_id")],
+        inverseJoinColumns = [JoinColumn(name = "group_id")],
+    )
     var assignmentGroups: MutableSet<AssignmentGroup> = mutableSetOf()
 
     @Column(name = "memory_limit", nullable = true)

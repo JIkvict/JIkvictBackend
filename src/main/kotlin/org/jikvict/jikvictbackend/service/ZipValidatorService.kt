@@ -161,10 +161,6 @@ class ZipValidatorService(
     private fun parseSize(
         @NotBlank @NotEmpty sizeStr: String,
     ): Long {
-        // Handle special cases
-        if (sizeStr == "1B") return 1L
-        if (sizeStr == "0B") return 0L
-
         val units =
             mapOf(
                 "B" to 1L,

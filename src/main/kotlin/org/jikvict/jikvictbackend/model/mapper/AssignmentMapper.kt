@@ -11,6 +11,7 @@ import org.mapstruct.Mapping
 import org.mapstruct.MappingConstants
 import org.mapstruct.ReportingPolicy
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.transaction.annotation.Transactional
 
 @Mapper(
     unmappedTargetPolicy = ReportingPolicy.IGNORE,
@@ -26,6 +27,7 @@ abstract class AssignmentMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "assignmentGroups", expression = "java(getAssignmentGroups(createAssignmentDto))")
+    @Transactional
     abstract fun toEntity(createAssignmentDto: CreateAssignmentDto): Assignment
 
     protected fun getAssignmentGroups(createAssignmentDto: CreateAssignmentDto): Set<AssignmentGroup> =

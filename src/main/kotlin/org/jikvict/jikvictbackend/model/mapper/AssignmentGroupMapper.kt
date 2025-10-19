@@ -24,11 +24,10 @@ abstract class AssignmentGroupMapper {
     private lateinit var assignmentRepository: AssignmentRepository
 
     @Mapping(target = "users", ignore = true)
-    @Mapping(target = "assignments", ignore = true)
     abstract fun toEntity(assignmentGroupDto: AssignmentGroupDto): AssignmentGroup
 
     @AfterMapping
-    fun mapUsersAndAssignments(
+    fun mapUsers(
         assignmentGroupDto: AssignmentGroupDto,
         @MappingTarget assignmentGroup: AssignmentGroup,
     ) {
@@ -36,11 +35,6 @@ abstract class AssignmentGroupMapper {
         val users = userRepository.findAllById(assignmentGroupDto.userIds)
         assignmentGroup.users.clear()
         assignmentGroup.users.addAll(users)
-
-        // Map Assignments
-        val assignments = assignmentRepository.findAllById(assignmentGroupDto.assignmentIds)
-        assignmentGroup.assignments.clear()
-        assignmentGroup.assignments.addAll(assignments)
     }
 
     @Mapping(target = "userIds", expression = "java(mapUsersToIds(assignmentGroup))")
@@ -49,5 +43,5 @@ abstract class AssignmentGroupMapper {
 
     protected fun mapUsersToIds(assignmentGroup: AssignmentGroup): List<Long> = assignmentGroup.users.map { it.id }
 
-    protected fun mapAssignmentsToIds(assignmentGroup: AssignmentGroup): List<Long> = assignmentGroup.assignments.map { it.id }
+    protected fun mapAssignmentsToIds(assignmentGroup: AssignmentGroup): List<Long> = assignmentRepository.findAllByAssignmentGroups(java.util.Set.of(assignmentGroup)).stream().map { it.id }.toList()
 }
