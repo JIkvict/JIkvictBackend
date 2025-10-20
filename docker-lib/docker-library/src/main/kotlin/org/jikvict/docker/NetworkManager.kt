@@ -7,8 +7,6 @@ import com.github.dockerjava.api.model.Frame
 import org.apache.logging.log4j.Logger
 import org.testcontainers.DockerClientFactory
 import java.io.Closeable
-import java.nio.file.Files
-import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 
 class NetworkManager(
@@ -19,49 +17,6 @@ class NetworkManager(
     private val proxyContainers = ConcurrentHashMap<String, String>()
     private val ips = ConcurrentHashMap<String, String>()
     private val squidImage = "ubuntu/squid:5.2-22.04_beta"
-
-    private val squidConfig = """
-    http_port 0.0.0.0:3128
-
-
-    acl localnet src 172.0.0.0/8
-    acl localnet src 10.0.0.0/8
-    acl localnet src 192.168.0.0/16
-
-
-    acl allowed_sites dstdomain .jitpack.io
-    acl allowed_sites dstdomain .repo1.maven.org
-    acl allowed_sites dstdomain .repo.maven.apache.org
-    acl allowed_sites dstdomain .central.maven.org
-    acl allowed_sites dstdomain .plugins.gradle.org
-
-
-    acl SSL_ports port 443
-    acl Safe_ports port 80
-    acl Safe_ports port 443
-    acl CONNECT method CONNECT
-
-
-    http_access allow localnet CONNECT SSL_ports allowed_sites
-    http_access allow localnet Safe_ports allowed_sites
-    http_access deny all
-
-
-    cache deny all
-
-
-    dns_nameservers 8.8.8.8 8.8.4.4
-
-
-    access_log none
-    cache_store_log none
-    cache_log /dev/null
-
-
-    shutdown_lifetime 3 seconds
-    forwarded_for off
-    via off
-""".trimIndent()
 
 
     fun createIsolatedNetwork(taskId: String): String {
@@ -88,16 +43,19 @@ class NetworkManager(
     private fun startProxy(networkName: String, networkId: String): String {
         val containerName = "${networkName}-proxy"
 
-        val configDir: Path = Files.createTempDirectory("squid-conf-")
-        val configFile = configDir.resolve("squid.conf")
-        Files.writeString(configFile, squidConfig)
 
         logger.info("Starting Squid proxy $containerName")
 
 
         val container: CreateContainerResponse = docker.createContainerCmd(squidImage)
             .withName(containerName)
-            .withCmd("sh", "-c", "echo '$squidConfig' > /etc/squid/squid.conf && squid -N -f /etc/squid/squid.conf")
+            .withBinds(
+                com.github.dockerjava.api.model.Bind(
+                    "/etc/squid/squid.conf",
+                    com.github.dockerjava.api.model.Volume("/etc/squid/squid.conf"),
+                ),
+            )
+            .withCmd("squid", "-N", "-f", "/etc/squid/squid.conf")
             .exec()
 
 
