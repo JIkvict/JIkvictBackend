@@ -97,13 +97,7 @@ class NetworkManager(
 
         val container: CreateContainerResponse = docker.createContainerCmd(squidImage)
             .withName(containerName)
-            .withBinds(
-                com.github.dockerjava.api.model.Bind(
-                    configFile.toAbsolutePath().toString(),
-                    com.github.dockerjava.api.model.Volume("/etc/squid/squid.conf"),
-                ),
-            )
-            .withCmd("squid", "-N", "-f", "/etc/squid/squid.conf")
+            .withCmd("sh", "-c", "echo '$squidConfig' > /etc/squid/squid.conf && squid -N -f /etc/squid/squid.conf")
             .exec()
 
 
