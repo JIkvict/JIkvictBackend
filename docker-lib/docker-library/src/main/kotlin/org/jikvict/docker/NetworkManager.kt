@@ -3,9 +3,7 @@ package org.jikvict.docker
 import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.api.async.ResultCallback
 import com.github.dockerjava.api.command.CreateContainerResponse
-import com.github.dockerjava.api.model.Bind
 import com.github.dockerjava.api.model.Frame
-import com.github.dockerjava.api.model.Volume
 import org.apache.logging.log4j.Logger
 import org.testcontainers.DockerClientFactory
 import java.io.Closeable
@@ -100,10 +98,10 @@ class NetworkManager(
         val container: CreateContainerResponse = docker.createContainerCmd(squidImage)
             .withName(containerName)
             .withBinds(
-                Bind(
-                    configDir.toAbsolutePath().toString(),
-                    Volume("/etc/squid")
-                )
+                com.github.dockerjava.api.model.Bind(
+                    configFile.toAbsolutePath().toString(),
+                    com.github.dockerjava.api.model.Volume("/etc/squid/squid.conf"),
+                ),
             )
             .withCmd("squid", "-N", "-f", "/etc/squid/squid.conf")
             .exec()
