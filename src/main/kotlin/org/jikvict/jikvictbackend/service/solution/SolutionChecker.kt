@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.UUID
+import kotlin.streams.asSequence
 import kotlin.time.Duration.Companion.seconds
 
 @Service
@@ -96,6 +97,7 @@ class SolutionChecker(
                                 val jsonFiles =
                                     Files
                                         .walk(tempDir)
+                                        .asSequence()
                                         .filter { Files.isRegularFile(it) }
                                         .filter { it.fileName.toString().endsWith(".json") }
                                         .toList()
@@ -140,7 +142,6 @@ class SolutionChecker(
 
             return results
         } finally {
-            // Cleanup network and proxy after task execution
             try {
                 networkManager.cleanupTaskNetwork(executionId)
                 logger.info("Cleaned up network for task: $executionId")

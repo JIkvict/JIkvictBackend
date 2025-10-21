@@ -11,7 +11,9 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.invoke
 import org.springframework.security.config.http.SessionCreationPolicy
+import org.springframework.security.web.AuthenticationEntryPoint
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.access.AccessDeniedHandler
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 
 @Configuration
@@ -36,6 +38,15 @@ class SecurityConfiguration(
             }
             sessionManagement {
                 sessionCreationPolicy = SessionCreationPolicy.STATELESS
+            }
+
+            exceptionHandling {
+                authenticationEntryPoint = AuthenticationEntryPoint { _, response, _ ->
+                    response.sendError(401)
+                }
+                accessDeniedHandler = AccessDeniedHandler { _, response, _ ->
+                    response.sendError(403)
+                }
             }
 
             addFilterBefore<UsernamePasswordAuthenticationFilter>(

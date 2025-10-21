@@ -22,13 +22,13 @@ class JwtAuthFilter(
         response: HttpServletResponse,
         chain: FilterChain,
     ) {
-        try {
-            val authHeader = request.getHeader("Authorization")
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                chain.doFilter(request, response)
-                return
-            }
+        val authHeader = request.getHeader("Authorization")
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            chain.doFilter(request, response)
+            return
+        }
 
+        try {
             val token = authHeader.substring(7)
             val username = jwtService.extractUsername(token)
 
@@ -43,17 +43,13 @@ class JwtAuthFilter(
                         )
                     authToken.details = WebAuthenticationDetailsSource().buildDetails(request)
                     SecurityContextHolder.getContext().authentication = authToken
-                } else {
-                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid token")
-                    return
                 }
             }
-
-            chain.doFilter(request, response)
         } catch (ex: Exception) {
             logger.error("Failed to set user authentication: ${ex.message}")
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid token")
-            return
+            SecurityContextHolder.clearContext()
         }
+
+        chain.doFilter(request, response)
     }
 }

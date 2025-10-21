@@ -42,3 +42,4 @@ out/
 compose.yaml
 nginx/**
 /.run/**
+/squid.conf

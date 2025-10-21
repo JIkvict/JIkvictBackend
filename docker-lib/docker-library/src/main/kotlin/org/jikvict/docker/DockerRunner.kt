@@ -68,19 +68,19 @@ class DockerRunner(
                                 .withNetworkId(this@DockerRunner.networkName)
                                 .exec()
 
-                            // Проверим подключение
-                            Thread.sleep(2000) // Дадим время на подключение
+
+                            Thread.sleep(2000)
                             val containerInfo = container.dockerClient.inspectContainerCmd(container.containerId).exec()
                             val networks = containerInfo.networkSettings.networks
                             println("Solution container networks: ${networks.keys}")
 
-                            // Попробуем пинговать прокси
+
                             val networkName = networks.keys.find { it.startsWith("jikvict-task-") }
                             if (networkName != null) {
                                 val proxyName = "$networkName-proxy"
                                 println("Attempting to resolve proxy: $proxyName")
 
-                                // Выполним nslookup внутри контейнера для проверки DNS
+
                                 try {
                                     val execResult = container.dockerClient.execCreateCmd(container.containerId)
                                         .withCmd("nslookup", proxyName)
