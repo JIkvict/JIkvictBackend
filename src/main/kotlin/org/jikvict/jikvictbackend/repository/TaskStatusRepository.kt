@@ -22,6 +22,9 @@ interface TaskStatusRepository : JpaRepository<TaskStatus, Long> {
 
     fun findByUser(user: User): List<TaskStatus>
 
-
-    fun findAllByUserAndTaskTypeAndStatus(user: User, taskType: String, status: PendingStatus): List<TaskStatus>
+    fun findAllByUserAndTaskTypeAndStatus(
+        user: User,
+        taskType: String,
+        status: PendingStatus,
+    ): List<TaskStatus>
 }

@@ -1,10 +1,10 @@
 package org.jikvict.jikvictbackend.controller
 
 import org.jikvict.jikvictbackend.entity.Assignment
+import org.jikvict.jikvictbackend.model.domain.AssignmentInfo
 import org.jikvict.jikvictbackend.model.dto.AssignmentDto
 import org.jikvict.jikvictbackend.model.dto.CreateAssignmentDto
 import org.jikvict.jikvictbackend.model.mapper.AssignmentMapper
-import org.jikvict.jikvictbackend.model.domain.AssignmentInfo
 import org.jikvict.jikvictbackend.model.response.PendingStatusResponse
 import org.jikvict.jikvictbackend.model.response.ResponsePayload
 import org.jikvict.jikvictbackend.repository.AssignmentRepository
@@ -83,14 +83,16 @@ class AssignmentController(
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/all-admin", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getAllAdmin(): List<AssignmentDto> {
-        val assignments = assignmentRepository.findAll()
+        val assignments = assignmentRepository.findAll().asSequence()
         val assignmentDtoPage = assignments.map(assignmentMapper::toDto)
-        return assignmentDtoPage
+        return assignmentDtoPage.toList()
     }
 
     @PreAuthorize("hasRole('TEACHER')")
     @GetMapping("/{assignmentGroup}/all")
-    fun getAllForAssignmentGroup(@PathVariable assignmentGroup: String): ResponseEntity<List<AssignmentDto>> {
+    fun getAllForAssignmentGroup(
+        @PathVariable assignmentGroup: String,
+    ): ResponseEntity<List<AssignmentDto>> {
         val assignments = assignmentService.getAssignmentsForGroup(assignmentGroup.toLong())
         val assignmentDtos = assignments.map(assignmentMapper::toDto)
         return ResponseEntity.ok(assignmentDtos)
@@ -98,7 +100,9 @@ class AssignmentController(
 
     @PreAuthorize("hasRole('TEACHER')")
     @GetMapping("/all-for-groups")
-    fun getAssignmentsForGroups(@RequestParam("groupIds") groupIds: List<Long>): ResponseEntity<List<AssignmentDto>> {
+    fun getAssignmentsForGroups(
+        @RequestParam("groupIds") groupIds: List<Long>,
+    ): ResponseEntity<List<AssignmentDto>> {
         val assignments = assignmentService.getAssignmentsForGroups(groupIds.toSet())
         val assignmentDtos = assignments.map(assignmentMapper::toDto)
         return ResponseEntity.ok(assignmentDtos)
@@ -140,7 +144,7 @@ class AssignmentController(
     @DeleteMapping("/{id}")
     fun deleteAssignment(
         @PathVariable id: Long,
-    ): ResponseEntity<Void> {
+    ): ResponseEntity<Unit> {
         if (!assignmentRepository.existsById(id)) {
             throw ServiceException(HttpStatus.NOT_FOUND, "Assignment with ID $id not found")
         }

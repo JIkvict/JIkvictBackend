@@ -16,9 +16,7 @@ import org.springframework.context.annotation.Configuration
 class TaskProcessorConfiguration(
     private val taskRegistry: TaskRegistry,
     private val log: Logger,
-) {
-
-}
+)
 
 @Configuration
 class RabbitListenerManualAckConfig(

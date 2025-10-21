@@ -17,5 +17,7 @@ interface AssignmentRepository : JpaRepository<Assignment, Long> {
     ): AssignmentProps?
 
     @Query("select a from Assignment a join a.assignmentGroups g where g.id in :groupIds")
-    fun findAllByGroupIds(@Param("groupIds") groupIds: Collection<Long>): List<Assignment>
+    fun findAllByGroupIds(
+        @Param("groupIds") groupIds: Collection<Long>,
+    ): List<Assignment>
 }

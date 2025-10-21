@@ -17,13 +17,11 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.event.ContextRefreshedEvent
 import org.springframework.context.event.EventListener
 
-
 @Configuration
 class RabbitMQConfiguration(
     private val taskRegistry: TaskRegistry,
     private val log: Logger,
 ) {
-
     @EventListener(ContextRefreshedEvent::class)
     fun logTaskRegistry() {
         val processors = taskRegistry.getAllProcessors()
@@ -62,7 +60,6 @@ class RabbitMQConfiguration(
 
     @Bean
     fun messageConverter(): MessageConverter = Jackson2JsonMessageConverter()
-
 }
 
 @ConfigurationProperties("rabbitmq")

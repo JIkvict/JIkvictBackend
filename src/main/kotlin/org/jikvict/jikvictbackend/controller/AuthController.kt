@@ -118,5 +118,4 @@ class AuthController(
         val refreshToken = refreshTokenService.findByToken(token) ?: return null
         return refreshTokenService.verifyExpiration(refreshToken)
     }
-
 }

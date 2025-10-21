@@ -24,7 +24,7 @@ class TaskStatusController(
     fun getTaskStatus(
         @PathVariable taskId: Long,
     ): ResponseEntity<PendingStatusResponse<Long?>> {
-        val response = taskQueueService.getTaskStatusResponse(taskId,userDetailsService.getCurrentUser())
+        val response = taskQueueService.getTaskStatusResponse(taskId, userDetailsService.getCurrentUser())
         return ResponseEntity.ok(response)
     }
 }

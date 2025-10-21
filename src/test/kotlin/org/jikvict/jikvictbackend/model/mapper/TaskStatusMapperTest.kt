@@ -11,22 +11,21 @@ class TaskStatusMapperTest(
     val taskStatusMapper: TaskStatusMapper,
     val objectMapper: ObjectMapper,
 ) {
-
     @Test
     fun test() {
         // Given
         val message = "Hello"
         val assignmentId = 123L
-        val ts = TaskStatus().apply {
-            id = 1
-            this.message = message
-            this.parameters = objectMapper.createObjectNode().put("assignmentId", assignmentId).toString()
-        }
+        val ts =
+            TaskStatus().apply {
+                id = 1
+                this.message = message
+                this.parameters = objectMapper.createObjectNode().put("assignmentId", assignmentId).toString()
+            }
         // When
         val result = taskStatusMapper.toUnacceptedSubmission(ts)
         // Then
         assertThat(result.message).isEqualTo(message)
         assertThat(result.assignmentId).isEqualTo(assignmentId)
     }
-
 }

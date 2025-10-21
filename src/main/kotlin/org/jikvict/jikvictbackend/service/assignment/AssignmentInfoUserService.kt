@@ -3,10 +3,10 @@ package org.jikvict.jikvictbackend.service.assignment
 import org.jikvict.jikvictbackend.entity.Assignment
 import org.jikvict.jikvictbackend.entity.User
 import org.jikvict.jikvictbackend.entity.isClosed
-import org.jikvict.jikvictbackend.model.dto.withHiddenInfo
-import org.jikvict.jikvictbackend.model.mapper.AssignmentResultMapper
 import org.jikvict.jikvictbackend.model.domain.AssignmentInfo
 import org.jikvict.jikvictbackend.model.domain.UnacceptedSubmission
+import org.jikvict.jikvictbackend.model.dto.withHiddenInfo
+import org.jikvict.jikvictbackend.model.mapper.AssignmentResultMapper
 import org.jikvict.jikvictbackend.model.mapper.TaskStatusMapper
 import org.jikvict.jikvictbackend.repository.AssignmentRepository
 import org.jikvict.jikvictbackend.service.task.TaskStatusService
@@ -24,7 +24,7 @@ class AssignmentInfoUserService(
     private val assignmentService: AssignmentService,
     private val assignmentRepository: AssignmentRepository,
     private val taskStatusService: TaskStatusService,
-    private val taskStatusMapper: TaskStatusMapper
+    private val taskStatusMapper: TaskStatusMapper,
 ) {
     @Transactional
     fun getAssignmentInfoForUser(

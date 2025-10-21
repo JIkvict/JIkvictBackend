@@ -9,13 +9,11 @@ import org.mapstruct.MappingConstants
 import org.mapstruct.ReportingPolicy
 import org.springframework.beans.factory.annotation.Autowired
 
-
 @Mapper(
     unmappedTargetPolicy = ReportingPolicy.IGNORE,
     componentModel = MappingConstants.ComponentModel.SPRING,
 )
-abstract class TaskStatusMapper(
-) {
+abstract class TaskStatusMapper {
     @Autowired
     private lateinit var objectMapper: ObjectMapper
 

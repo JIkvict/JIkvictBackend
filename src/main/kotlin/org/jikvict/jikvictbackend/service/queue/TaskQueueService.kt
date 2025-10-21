@@ -38,7 +38,10 @@ abstract class TaskQueueService(
     /**
      * Gets the status of a task by ID
      */
-    fun getTaskStatus(taskId: Long, user: User): TaskStatus {
+    fun getTaskStatus(
+        taskId: Long,
+        user: User,
+    ): TaskStatus {
         val task =
             taskStatusRepository
                 .findById(taskId)
@@ -78,7 +81,10 @@ abstract class TaskQueueService(
         taskStatusRepository.save(taskStatus)
     }
 
-    fun getTaskStatusResponse(taskId: Long, user: User): PendingStatusResponse<Long?> {
+    fun getTaskStatusResponse(
+        taskId: Long,
+        user: User,
+    ): PendingStatusResponse<Long?> {
         val taskStatus = getTaskStatus(taskId, user)
         return PendingStatusResponse(
             payload = ResponsePayload(taskStatus.resultId),

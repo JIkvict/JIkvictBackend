@@ -12,7 +12,13 @@ import org.jikvict.problems.exception.contract.ServiceException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api")
@@ -22,40 +28,46 @@ class TeacherStudentController(
     private val assignmentResultRepository: AssignmentResultRepository,
     private val objectMapper: ObjectMapper,
 ) {
-
-    data class UpdatePointsRequest(val points: Int)
+    data class UpdatePointsRequest(
+        val points: Int,
+    )
 
     @PreAuthorize("hasRole('TEACHER')")
     @GetMapping("/teacher/students/{userId}/overview")
     fun getStudentOverview(
         @PathVariable userId: Long,
     ): ResponseEntity<StudentOverviewDto> {
-        val user = userRepository.findById(userId).orElseThrow {
-            ServiceException(HttpStatus.NOT_FOUND, "User with ID $userId not found")
-        }
+        val user =
+            userRepository.findById(userId).orElseThrow {
+                ServiceException(HttpStatus.NOT_FOUND, "User with ID $userId not found")
+            }
 
-        val submissions = taskStatusRepository.findByUser(user).filter {
-            it.taskType == "SOLUTION_VERIFICATION"
-        }.map { ts ->
-            SubmissionDto(
-                id = ts.id,
-                taskType = ts.taskType,
-                status = ts.status,
-                message = ts.message,
-                createdAt = ts.createdAt,
-                completedAt = ts.completedAt,
-                assignmentId = extractAssignmentId(ts.parameters)
-            )
-        }
+        val submissions =
+            taskStatusRepository
+                .findByUser(user)
+                .filter {
+                    it.taskType == "SOLUTION_VERIFICATION"
+                }.map { ts ->
+                    SubmissionDto(
+                        id = ts.id,
+                        taskType = ts.taskType,
+                        status = ts.status,
+                        message = ts.message,
+                        createdAt = ts.createdAt,
+                        completedAt = ts.completedAt,
+                        assignmentId = extractAssignmentId(ts.parameters),
+                    )
+                }
 
         val results = assignmentResultRepository.findAllByUser(user).map { it.toAdminDto() }
 
-        val payload = StudentOverviewDto(
-            userId = user.id,
-            userName = user.userNameField ?: "",
-            submissions = submissions,
-            results = results,
-        )
+        val payload =
+            StudentOverviewDto(
+                userId = user.id,
+                userName = user.userNameField ?: "",
+                submissions = submissions,
+                results = results,
+            )
         return ResponseEntity.ok(payload)
     }
 
@@ -81,22 +93,22 @@ class TeacherStudentController(
         if (request.points < 0) {
             throw ServiceException(HttpStatus.BAD_REQUEST, "Points must be non-negative")
         }
-        val result = assignmentResultRepository.findById(resultId).orElseThrow {
-            ServiceException(HttpStatus.NOT_FOUND, "Result with ID $resultId not found")
-        }
+        val result =
+            assignmentResultRepository.findById(resultId).orElseThrow {
+                ServiceException(HttpStatus.NOT_FOUND, "Result with ID $resultId not found")
+            }
         result.points = request.points
         val saved = assignmentResultRepository.save(result)
         return ResponseEntity.ok(saved.toAdminDto())
     }
 
-    private fun extractAssignmentId(parametersJson: String?): Long? {
-        return try {
+    private fun extractAssignmentId(parametersJson: String?): Long? =
+        try {
             val node = objectMapper.readTree(parametersJson)
             node?.get("assignmentId")?.asLong()
         } catch (ex: Exception) {
             null
         }
-    }
 
     private fun AssignmentResult.toAdminDto(): AssignmentResultAdminDto =
         AssignmentResultAdminDto(

@@ -1,15 +1,15 @@
 package org.jikvict.jikvictbackend.service.auth
 
 import org.springframework.stereotype.Service
+import java.util.Hashtable
 import javax.naming.Context
 import javax.naming.directory.InitialDirContext
-import java.util.Hashtable
 import javax.naming.directory.SearchControls
 
 data class LdapUserData(
     val username: String,
-    val email: String?,
-    val aisId: String?
+    val email: String,
+    val aisId: String,
 )
 
 @Service
@@ -17,7 +17,10 @@ class LdapAuthenticationService {
     private val ldapUrl = "ldaps://ldap.stuba.sk:636"
     private val baseDn = "ou=People,dc=stuba,dc=sk"
 
-    fun authenticate(username: String, password: String): Boolean {
+    fun authenticate(
+        username: String,
+        password: String,
+    ): Boolean {
         if (username.isBlank() || password.isBlank()) {
             return false
         }
@@ -64,7 +67,10 @@ class LdapAuthenticationService {
         }
     }
 
-    fun getUserData(username: String, key: String = "uid"): LdapUserData? {
+    fun getUserData(
+        username: String,
+        key: String = "uid",
+    ): LdapUserData? {
         if (username.isBlank()) {
             return null
         }
@@ -86,8 +92,8 @@ class LdapAuthenticationService {
                 val result = results.next()
                 val attributes = result.attributes
 
-                val email = attributes[("mail")]?.get()?.toString()
-                val aisId = attributes[("uisId")]?.get()?.toString()
+                val email = attributes[("mail")]?.get()?.toString() ?: "unknown"
+                val aisId = attributes[("uisId")]?.get()?.toString() ?: "unknown"
 
                 context.close()
                 LdapUserData(username, email, aisId)
@@ -95,7 +101,7 @@ class LdapAuthenticationService {
                 context.close()
                 null
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }

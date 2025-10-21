@@ -14,13 +14,13 @@ class AssignmentGroupService(
     private val assignmentGroupMapper: AssignmentGroupMapper,
 ) {
     @Transactional
-    fun getAll(): List<AssignmentGroupDto> =
-        assignmentGroupRepository.findAll().map(assignmentGroupMapper::toDto)
+    fun getAll(): List<AssignmentGroupDto> = assignmentGroupRepository.findAll().map(assignmentGroupMapper::toDto)
 
     @Transactional
     fun getById(id: Long): AssignmentGroupDto {
         val assignmentGroup =
-            assignmentGroupRepository.findById(id)
+            assignmentGroupRepository
+                .findById(id)
                 .orElseThrow { ServiceException(HttpStatus.NOT_FOUND, "Assignment group with ID $id not found") }
         return assignmentGroupMapper.toDto(assignmentGroup)
     }
@@ -33,7 +33,10 @@ class AssignmentGroupService(
     }
 
     @Transactional
-    fun update(id: Long, assignmentGroupDto: AssignmentGroupDto): AssignmentGroupDto {
+    fun update(
+        id: Long,
+        assignmentGroupDto: AssignmentGroupDto,
+    ): AssignmentGroupDto {
         if (!assignmentGroupRepository.existsById(id)) {
             throw ServiceException(HttpStatus.NOT_FOUND, "Assignment group with ID $id not found")
         }

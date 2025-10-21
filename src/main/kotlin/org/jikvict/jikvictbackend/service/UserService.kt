@@ -11,37 +11,39 @@ import org.springframework.transaction.annotation.Transactional
 data class ImportResult(
     val username: String,
     val success: Boolean,
-    val message: String
+    val message: String,
 )
 
 @Service
 class UserService(
     private val ldapAuthenticationService: LdapAuthenticationService,
     private val userRepository: UserRepository,
-    private val userMapper: UserMapper
+    private val userMapper: UserMapper,
 ) {
-
     @Transactional
-    fun getAllUsers(): List<UserDto> {
-        return userRepository.findAll().map {
+    fun getAllUsers(): List<UserDto> =
+        userRepository.findAll().map {
             userMapper.toUserDto(it)
         }
-    }
 
     @Transactional
-    fun getUserById(id: Long): UserDto? {
-        return userRepository.findById(id).map {
-            userMapper.toUserDto(it)
-        }.orElse(null)
-    }
+    fun getUserById(id: Long): UserDto? =
+        userRepository
+            .findById(id)
+            .map {
+                userMapper.toUserDto(it)
+            }.orElse(null)
 
     @Transactional
-    fun importUser(username: String, key: String = "uisId"): ImportResult {
+    fun importUser(
+        username: String,
+        key: String = "uisId",
+    ): ImportResult {
         if (username.isBlank()) {
             return ImportResult(username, false, "Username cannot be blank")
         }
 
-        val ldapUserData = ldapAuthenticationService.getUserData(username,key) ?: return ImportResult(username, false, "User not found in LDAP")
+        val ldapUserData = ldapAuthenticationService.getUserData(username, key) ?: return ImportResult(username, false, "User not found in LDAP")
 
         val existingUser = userRepository.findUserByUserNameField(username)
 
@@ -51,20 +53,19 @@ class UserService(
             userRepository.save(existingUser)
             ImportResult(username, true, "User updated successfully")
         } else {
-            val newUser = User().apply {
-                userNameField = username
-                email = ldapUserData.email
-                aisId = ldapUserData.aisId
-            }
+            val newUser =
+                User().apply {
+                    userNameField = username
+                    email = ldapUserData.email
+                    aisId = ldapUserData.aisId
+                }
             userRepository.save(newUser)
             ImportResult(username, true, "User created successfully")
         }
     }
 
     @Transactional
-    fun importUsers(usernames: List<String>): List<ImportResult> {
-        return usernames.map { username -> importUser(username) }
-    }
+    fun importUsers(usernames: List<String>): List<ImportResult> = usernames.map { username -> importUser(username) }
 
     @Transactional
     fun importUserEntity(username: String): User? {
@@ -72,8 +73,9 @@ class UserService(
             return null
         }
 
-        val ldapUserData = ldapAuthenticationService.getUserData(username)
-            ?: return null
+        val ldapUserData =
+            ldapAuthenticationService.getUserData(username)
+                ?: return null
 
         val existingUser = userRepository.findUserByUserNameField(username)
 
@@ -82,16 +84,15 @@ class UserService(
             existingUser.aisId = ldapUserData.aisId
             userRepository.save(existingUser)
         } else {
-            val newUser = User().apply {
-                userNameField = username
-                email = ldapUserData.email
-                aisId = ldapUserData.aisId
-            }
+            val newUser =
+                User().apply {
+                    userNameField = username
+                    email = ldapUserData.email
+                    aisId = ldapUserData.aisId
+                }
             userRepository.save(newUser)
         }
     }
 
-    fun userExistsInLdap(username: String): Boolean {
-        return ldapAuthenticationService.userExists(username)
-    }
+    fun userExistsInLdap(username: String): Boolean = ldapAuthenticationService.userExists(username)
 }

@@ -8,5 +8,5 @@ data class AssignmentInfo(
     val maxAttempts: Int,
     val attemptsUsed: Int,
     val results: List<AssignmentResultDto> = emptyList(),
-    val unacceptedSubmissions: List<UnacceptedSubmission>
+    val unacceptedSubmissions: List<UnacceptedSubmission>,
 )

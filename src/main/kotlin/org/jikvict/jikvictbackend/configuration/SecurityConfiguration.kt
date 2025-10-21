@@ -41,12 +41,14 @@ class SecurityConfiguration(
             }
 
             exceptionHandling {
-                authenticationEntryPoint = AuthenticationEntryPoint { _, response, _ ->
-                    response.sendError(401)
-                }
-                accessDeniedHandler = AccessDeniedHandler { _, response, _ ->
-                    response.sendError(403)
-                }
+                authenticationEntryPoint =
+                    AuthenticationEntryPoint { _, response, _ ->
+                        response.sendError(401)
+                    }
+                accessDeniedHandler =
+                    AccessDeniedHandler { _, response, _ ->
+                        response.sendError(403)
+                    }
             }
 
             addFilterBefore<UsernamePasswordAuthenticationFilter>(
@@ -63,11 +65,8 @@ class SecurityConfiguration(
         return http.build()
     }
 
-
     @Bean
-    fun authenticationManager(
-        http: HttpSecurity,
-    ): AuthenticationManager =
+    fun authenticationManager(http: HttpSecurity): AuthenticationManager =
         http
             .getSharedObject(AuthenticationManagerBuilder::class.java)
             .authenticationProvider(ldapAuthenticationProvider)

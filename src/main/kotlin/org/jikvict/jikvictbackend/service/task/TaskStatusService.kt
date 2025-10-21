@@ -13,16 +13,19 @@ class TaskStatusService(
     private val taskStatusRepository: TaskStatusRepository,
     private val objectMapper: ObjectMapper,
 ) {
-
     @Transactional
-    fun getUnsuccessfulSubmissionsForUser(user: User, assignmentId: Long): List<TaskStatus> {
+    fun getUnsuccessfulSubmissionsForUser(
+        user: User,
+        assignmentId: Long,
+    ): List<TaskStatus> {
         val submissions = taskStatusRepository.findAllByUserAndTaskTypeAndStatus(user, "SOLUTION_VERIFICATION", PendingStatus.FAILED)
-        val filteredByAssignment = submissions.filter { submission ->
-            runCatching {
-                val node = objectMapper.readTree(submission.parameters)
-                node?.get("assignmentId")?.asLong() == assignmentId
-            }.getOrDefault(false)
-        }
+        val filteredByAssignment =
+            submissions.filter { submission ->
+                runCatching {
+                    val node = objectMapper.readTree(submission.parameters)
+                    node?.get("assignmentId")?.asLong() == assignmentId
+                }.getOrDefault(false)
+            }
         return filteredByAssignment
     }
 }

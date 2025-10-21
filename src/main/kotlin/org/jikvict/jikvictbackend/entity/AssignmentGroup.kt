@@ -30,9 +30,5 @@ class AssignmentGroup {
     )
     var users: MutableSet<User> = mutableSetOf()
 
-    override fun toString(): String {
-        return "AssignmentGroup(name='$name', id=$id)"
-    }
-
-
+    override fun toString(): String = "AssignmentGroup(name='$name', id=$id)"
 }

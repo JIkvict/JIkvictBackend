@@ -61,23 +61,23 @@ class Assignment {
     @Column(name = "maximum_attempts", nullable = false, columnDefinition = "integer default 2")
     var maximumAttempts: Int = 2
 
-
     @Column(name = "status_override", nullable = false)
     @Enumerated(EnumType.STRING)
     var statusOverride: AssignmentStatusOverride = AssignmentStatusOverride.AUTO
 }
 
 val Assignment.isClosed: Boolean
-    get() = when (statusOverride) {
-        AssignmentStatusOverride.CLOSED -> true
-        AssignmentStatusOverride.OPEN -> false
-        AssignmentStatusOverride.AUTO -> {
-            LocalDateTime.now().isAfter(endDate) || LocalDateTime.now().isBefore(startDate)
+    get() =
+        when (statusOverride) {
+            AssignmentStatusOverride.CLOSED -> true
+            AssignmentStatusOverride.OPEN -> false
+            AssignmentStatusOverride.AUTO -> {
+                LocalDateTime.now().isAfter(endDate) || LocalDateTime.now().isBefore(startDate)
+            }
         }
-    }
 
 enum class AssignmentStatusOverride {
     OPEN,
     CLOSED,
-    AUTO
+    AUTO,
 }
