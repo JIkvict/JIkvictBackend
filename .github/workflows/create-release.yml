@@ -7,10 +7,10 @@ on:
         required: false
 permissions: write-all
 jobs:
-  generate-open-api:
-    uses: ./.github/workflows/generate-openapi-docs.yml
   create-release:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.print_version.outputs.version }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -45,3 +45,14 @@ jobs:
       - name: Push image
         run: |
           VERSION=$(./gradlew -q :printVersion | tr -d '\n') && docker push ikvict/jikvict-backend:$VERSION
+      - name: Print version
+        id: print_version
+        run: |
+          VERSION=$(./gradlew -q :printVersion | tr -d '\n')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+  generate-open-api:
+    needs: create-release
+    uses: ./.github/workflows/generate-openapi-docs.yml
+    with:
+      version: ${{ needs.create-release.outputs.version }}

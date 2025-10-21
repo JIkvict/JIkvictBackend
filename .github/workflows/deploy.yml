@@ -1,0 +1,15 @@
+name: deploy.yml
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number for the release (empty for auto-increment)'
+        required: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5

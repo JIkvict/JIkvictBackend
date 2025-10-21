@@ -1,6 +1,8 @@
 package org.jikvict.jikvictbackend.service
 
 import org.jikvict.jikvictbackend.entity.User
+import org.jikvict.jikvictbackend.model.dto.UserDto
+import org.jikvict.jikvictbackend.model.mapper.UserMapper
 import org.jikvict.jikvictbackend.repository.UserRepository
 import org.jikvict.jikvictbackend.service.auth.LdapAuthenticationService
 import org.springframework.stereotype.Service
@@ -13,10 +15,25 @@ data class ImportResult(
 )
 
 @Service
-class UserImportService(
+class UserService(
     private val ldapAuthenticationService: LdapAuthenticationService,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val userMapper: UserMapper
 ) {
+
+    @Transactional
+    fun getAllUsers(): List<UserDto> {
+        return userRepository.findAll().map {
+            userMapper.toUserDto(it)
+        }
+    }
+
+    @Transactional
+    fun getUserById(id: Long): UserDto? {
+        return userRepository.findById(id).map {
+            userMapper.toUserDto(it)
+        }.orElse(null)
+    }
 
     @Transactional
     fun importUser(username: String, key: String = "uisId"): ImportResult {

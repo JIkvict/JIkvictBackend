@@ -42,6 +42,7 @@ abstract class AssignmentGroupMapper {
     abstract fun toDto(assignmentGroup: AssignmentGroup): AssignmentGroupDto
 
     protected fun mapUsersToIds(assignmentGroup: AssignmentGroup): List<Long> = assignmentGroup.users.map { it.id }
-
-    protected fun mapAssignmentsToIds(assignmentGroup: AssignmentGroup): List<Long> = assignmentRepository.findAllByAssignmentGroups(java.util.Set.of(assignmentGroup)).stream().map { it.id }.toList()
+    protected fun mapAssignmentsToIds(assignmentGroup: AssignmentGroup): List<Long> {
+        return assignmentRepository.findAllByAssignmentGroups(setOf(assignmentGroup)).map { it.id }
+    }
 }
