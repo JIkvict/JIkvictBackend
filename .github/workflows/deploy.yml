@@ -1,15 +1,57 @@
-name: deploy.yml
+name: Deploy to Remote via SSH
+
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version number for the release (empty for auto-increment)'
-        required: false
+        description: 'Backend image version tag to deploy (e.g., 0.2.12)'
+        required: true
+        type: string
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
+      - name: Validate input
+        run: |
+          if [ -z "${{ github.event.inputs.version }}" ]; then
+            echo "Version is required" >&2
+            exit 1
+          fi
+          if ! echo "${{ github.event.inputs.version }}" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "[WARN] Version is not in x.y.z semver form. Proceeding anyway."
+          fi
+
+      - name: Deploy over SSH and restart compose
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 147.175.151.161
+          username: ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script_stop: true
+          debug: false
+          timeout: 30m
+          command_timeout: 30m
+          script: |
+            set -euo pipefail
+            cd ~/jikvict
+            echo "Creating backup compose.yaml.bak..."
+            cp compose.yaml compose.yaml.bak || true
+
+            VERSION="${{ github.event.inputs.version }}"
+            echo "Updating backend image tag to: ${VERSION}"
+            # Replace only the backend image tag line
+            sed -i -E "s|(image:\s*ikvict/jikvict-backend:)[^[:space:]]+|\\1${VERSION}|" compose.yaml
+
+            echo "Resulting image line:"
+            grep -nE 'image:\s*ikvict/jikvict-backend:' compose.yaml || true
+
+            echo "Bringing up services with new image..."
+            if command -v compose >/dev/null 2>&1; then
+              sudo compose up -d
+            else
+              sudo docker compose up -d
+            fi
+
+            echo "Deployment completed."
