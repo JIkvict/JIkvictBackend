@@ -5,9 +5,9 @@ package org.jikvict.jikvictbackend.model.dto
  */
 data class UserDto(
     val id: Long,
-    val userNameField: String?,
-    val email: String?,
-    val aisId: String?,
+    val userNameField: String,
+    val email: String,
+    val aisId: String,
     val roles: MutableSet<String>,
     val assignmentGroups: MutableSet<AssignmentGroupDto>,
 )

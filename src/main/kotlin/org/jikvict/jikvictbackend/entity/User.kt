@@ -22,13 +22,13 @@ class User : UserDetails {
     var id: Long = 0
 
     @Column(unique = true, name = "username")
-    var userNameField: String? = null
+    var userNameField: String = ""
 
     @Column(name = "email")
-    var email: String? = null
+    var email: String = ""
 
     @Column(name = "ais_id")
-    var aisId: String? = null
+    var aisId: String = ""
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(

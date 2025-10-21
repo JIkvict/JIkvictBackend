@@ -43,6 +43,6 @@ abstract class AssignmentGroupMapper {
 
     protected fun mapUsersToIds(assignmentGroup: AssignmentGroup): List<Long> = assignmentGroup.users.map { it.id }
     protected fun mapAssignmentsToIds(assignmentGroup: AssignmentGroup): List<Long> {
-        return assignmentRepository.findAllByAssignmentGroups(setOf(assignmentGroup)).map { it.id }
+        return assignmentRepository.findAllByGroupIds(setOf(assignmentGroup.id)).map { it.id }
     }
 }

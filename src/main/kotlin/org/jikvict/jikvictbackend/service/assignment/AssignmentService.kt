@@ -26,12 +26,11 @@ class AssignmentService(
         val group = assignmentGroupRepository.findById(groupId).orElseThrow {
             ServiceException(HttpStatus.NOT_FOUND, "Assignment group not found")
         }
-        return assignmentRepository.findAllByAssignmentGroups(setOf(group))
+        return assignmentRepository.findAllByGroupIds(setOf(group.id))
     }
 
     fun getAssignmentsForGroups(groupIds: Set<Long>): List<Assignment> {
-        val groups = assignmentGroupRepository.findAllById(groupIds).toSet()
-        return assignmentRepository.findAllByAssignmentGroups(groups)
+        return assignmentRepository.findAllByGroupIds(groupIds)
     }
 
     fun createAssignment(assignmentDto: CreateAssignmentDto): Assignment {

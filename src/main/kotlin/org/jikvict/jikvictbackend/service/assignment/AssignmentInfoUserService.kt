@@ -64,7 +64,7 @@ class AssignmentInfoUserService(
 
     @Transactional
     fun getAllAssignmentsForUser(user: User): List<Assignment> {
-        val assignments = assignmentRepository.findAllByAssignmentGroups(user.assignmentGroups)
+        val assignments = assignmentRepository.findAllByGroupIds(user.assignmentGroups.map { it.id })
         return assignments
     }
 
