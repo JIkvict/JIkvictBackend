@@ -58,3 +58,52 @@ tasks.register("printVersion") {
     }
 }
 
+val deployVersion = providers.gradleProperty("deployVersion")
+val deployHost = providers.gradleProperty("deployHost").orElse("147.175.151.161")
+val deployUser = providers.gradleProperty("deployUser").orElse("ubuntu")
+val deployKeyPath = providers.gradleProperty("deployKeyPath").orElse("~/.ssh/id_rsa-fiit")
+val deployDir = providers.gradleProperty("deployDir").orElse("~/jikvict")
+
+tasks.register<Exec>("deploy") {
+    group = "deployment"
+    description = "Deploys specified backend image version to remote host via SSH (edits compose.yaml and runs docker compose up -d)."
+
+    doFirst {
+        val version = deployVersion.orNull ?: throw GradleException("Missing -PdeployVersion=x.y.z")
+        val host = deployHost.get()
+        val user = deployUser.get()
+        val keyPath = deployKeyPath.get()
+        val remoteDir = deployDir.get()
+
+        println("[deploy] Host=$host, User=$user, Dir=$remoteDir, Version=$version")
+        println("[deploy] Using key: $keyPath")
+
+        // language=shell script
+        val remoteScript = """
+            set -euo pipefail
+            cd $remoteDir
+            echo "Creating backup compose.yaml.bak..."
+            cp compose.yaml compose.yaml.bak || true
+            VERSION="$version"
+            echo "Updating backend image tag to: $version"
+            sed -i -E "s|(image:[[:space:]]*ikvict/jikvict-backend:)[^[:space:]]+|\1$version|" compose.yaml
+            echo "Resulting image line:"
+            grep -nE 'image:\s*ikvict/jikvict-backend:' compose.yaml || true
+            echo "Bringing up services with new image..."
+            if command -v compose >/dev/null 2>&1; then
+              sudo compose up -d
+            else
+              sudo docker compose up -d
+            fi
+            echo "Deployment completed."
+        """.trimIndent()
+
+        commandLine(
+            "ssh",
+            "-o", "StrictHostKeyChecking=no",
+            "-i", keyPath,
+            "$user@$host",
+            remoteScript,
+        )
+    }
+}
