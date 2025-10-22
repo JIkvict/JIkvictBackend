@@ -92,9 +92,9 @@ class LdapAuthenticationService {
                 val result = results.next()
                 val attributes = result.attributes
 
-                val email = attributes[("mail")]?.get()?.toString() ?: "unknown"
-                val aisId = attributes[("uisId")]?.get()?.toString() ?: "unknown"
-                val aisName = attributes[("uid")]?.get()?.toString() ?: "unknown"
+                val email = attributes[("mail")]?.get()?.toString() ?: return null
+                val aisId = attributes[("uisId")]?.get()?.toString() ?: return null
+                val aisName = attributes[("uid")]?.get()?.toString() ?: return null
 
                 context.close()
                 LdapUserData(aisName, email, aisId)
