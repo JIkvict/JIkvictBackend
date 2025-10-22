@@ -68,16 +68,16 @@ class UserService(
     fun importUsers(usernames: List<String>): List<ImportResult> = usernames.map { username -> importUser(username) }
 
     @Transactional
-    fun importUserEntity(username: String): User? {
-        if (username.isBlank()) {
+    fun importUserEntityByAisId(aisId: String): User? {
+        if (aisId.isBlank()) {
             return null
         }
 
         val ldapUserData =
-            ldapAuthenticationService.getUserData(username)
+            ldapAuthenticationService.getUserData(aisId, "uisId")
                 ?: return null
 
-        val existingUser = userRepository.findUserByUserNameField(username)
+        val existingUser = userRepository.findByAisId(aisId)
 
         return if (existingUser != null) {
             existingUser.email = ldapUserData.email
@@ -86,9 +86,9 @@ class UserService(
         } else {
             val newUser =
                 User().apply {
-                    userNameField = username
+                    userNameField = ldapUserData.username
                     email = ldapUserData.email
-                    aisId = ldapUserData.aisId
+                    this.aisId = ldapUserData.aisId
                 }
             userRepository.save(newUser)
         }
