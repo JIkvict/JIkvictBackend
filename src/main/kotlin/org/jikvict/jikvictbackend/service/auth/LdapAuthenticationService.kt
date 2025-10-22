@@ -84,7 +84,7 @@ class LdapAuthenticationService {
             val context = InitialDirContext(env)
             val searchControls = SearchControls()
             searchControls.searchScope = SearchControls.SUBTREE_SCOPE
-            searchControls.returningAttributes = arrayOf("mail", "uisId")
+            searchControls.returningAttributes = arrayOf("mail", "uisId", "uid")
 
             val results = context.search(baseDn, "$key=$username", searchControls)
 
