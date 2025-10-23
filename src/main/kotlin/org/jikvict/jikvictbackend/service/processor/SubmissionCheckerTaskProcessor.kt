@@ -35,6 +35,9 @@ class SubmissionCheckerTaskProcessor(
 
     @RabbitListener(queues = ["verification.queue"], containerFactory = "manualAckContainerFactory")
     suspend fun process(message: VerificationTaskMessage) {
+        if (taskQueueService.isTaskCancelled(message.taskId)) {
+            return
+        }
         try {
             taskQueueService.updateTaskStatus(
                 message.taskId,

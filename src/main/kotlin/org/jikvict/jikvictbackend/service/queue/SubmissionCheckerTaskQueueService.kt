@@ -28,6 +28,10 @@ class SubmissionCheckerTaskQueueService(
         assignmentId: Int,
     ): Long {
         val user = userDetailsService.getCurrentUser()
+        if (isAlreadyQueuedForUser(user)) {
+            throw IllegalStateException("You already have a pending task")
+        }
+
         val taskStatus =
             TaskStatus().apply {
                 taskType = "SOLUTION_VERIFICATION"

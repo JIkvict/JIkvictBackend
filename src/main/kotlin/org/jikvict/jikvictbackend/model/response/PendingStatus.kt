@@ -5,4 +5,5 @@ enum class PendingStatus {
     PENDING,
     FAILED,
     REJECTED,
+    CANCELLED,
 }

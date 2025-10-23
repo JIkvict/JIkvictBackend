@@ -22,6 +22,11 @@ abstract class TaskQueueService(
     private val taskRegistry: TaskRegistry,
     private val log: Logger,
 ) {
+
+    fun isAlreadyQueuedForUser(user: User): Boolean {
+        val tasks = taskStatusRepository.findAllByUserAndTaskTypeAndStatus(user, "SOLUTION_VERIFICATION", PendingStatus.PENDING)
+        return tasks.isNotEmpty()
+    }
     internal fun sendTaskToQueue(message: TaskMessage<*>) {
         val processor =
             taskRegistry.getProcessorByTaskType(message.taskType)
@@ -79,6 +84,11 @@ abstract class TaskQueueService(
         }
 
         taskStatusRepository.save(taskStatus)
+    }
+
+    fun isTaskCancelled(taskId: Long): Boolean {
+        val taskStatusRepository = taskStatusRepository.findById(taskId).orElseThrow { ServiceException(HttpStatus.NOT_FOUND, "Task with ID $taskId not found") }
+        return taskStatusRepository.status == PendingStatus.CANCELLED
     }
 
     fun getTaskStatusResponse(
