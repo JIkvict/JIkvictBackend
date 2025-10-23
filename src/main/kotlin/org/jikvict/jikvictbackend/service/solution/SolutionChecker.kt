@@ -40,6 +40,7 @@ class SolutionChecker(
     ): TestSuiteResult {
         val executionId = UUID.randomUUID().toString()
         val tempDir = Files.createTempDirectory("code-$executionId")
+        logger.info("Created temporary directory: ${tempDir.toAbsolutePath()} for task: $executionId")
         val targetFile = tempDir.resolve("solution")
         Files.write(targetFile, solution)
         val hiddenTargetFile = tempDir.resolve("hidden-files")

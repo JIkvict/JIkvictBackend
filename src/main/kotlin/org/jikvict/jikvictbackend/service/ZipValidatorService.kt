@@ -70,6 +70,7 @@ class ZipValidatorService(
                     while (zipStream.nextEntry.also { entry = it } != null) {
                         entriesCount++
                         entry?.let { zipEntry -> validateZipEntry(zipEntry) }
+                        logger.info("Validated ZIP entry: ${entry?.name}")
                         zipStream.closeEntry()
                     }
                 } catch (e: ZipValidationException) {
