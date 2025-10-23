@@ -120,7 +120,30 @@ class DockerRunner(
             throw t
         } finally {
             withContext(Dispatchers.IO) {
+                val containerId = container?.containerId
+                // Stop the container if it's still running
                 runCatching { container?.stop() }
+
+                // Best-effort: disconnect from the custom network (if provided)
+                runCatching {
+                    if (containerId != null && !this@DockerRunner.networkName.isNullOrBlank()) {
+                        container.dockerClient?.disconnectFromNetworkCmd()
+                            ?.withContainerId(containerId)
+                            ?.withNetworkId(this@DockerRunner.networkName)
+                            ?.exec()
+                    }
+                }
+
+                // Ensure the container is removed along with any anonymous volumes
+                runCatching {
+                    if (containerId != null) {
+                        container.dockerClient?.removeContainerCmd(containerId)
+                            ?.withRemoveVolumes(true)
+                            ?.withForce(true)
+                            ?.exec()
+                    }
+                }
+
                 val resultFiles = binds.mapNotNull { it.path }.map { Path.of(it) }
                 mountedFilesConsumers.forEach { it.accept(resultFiles) }
             }

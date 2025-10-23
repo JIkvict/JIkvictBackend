@@ -138,8 +138,10 @@ class NetworkManager(
                 logger.warn("Failed to stop proxy for $taskId", it)
             }
             runCatching {
-                docker.removeContainerCmd(id).exec()
-                logger.info("Removed proxy container for $taskId")
+                docker.removeContainerCmd(id)
+                    .withRemoveVolumes(true)
+                    .exec()
+                logger.info("Removed proxy container for $taskId (volumes removed)")
             }.onFailure {
                 logger.warn("Failed to cleanup proxy for $taskId", it)
             }
@@ -153,6 +155,8 @@ class NetworkManager(
                 logger.warn("Failed to cleanup network for $taskId", e)
             }
         }
+        // Clear cached proxy IP for this network name to avoid memory leaks
+        ips.remove(networkName)
     }
 
     fun getProxyIpAddress(taskId: String): String {
