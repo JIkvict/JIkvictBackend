@@ -73,9 +73,10 @@ class AssignmentService(
         val outputStream = ByteArrayOutputStream()
         gitService.streamZipToOutput(
             outputStream,
-            pathFilters = listOf("^task$task/.*/hidden/.*".toRegex()),
+            pathFilters = listOf("^task$task/.*".toRegex()),
             excludePatterns =
                 listOf(
+                    ".*/exposed(/.*)?".toRegex(),
                     "\\.git/.*".toRegex(),
                     "\\.idea/.*".toRegex(),
                 ),

@@ -28,7 +28,7 @@ jobs:
         name: Setup Gradle
       - name: Create release
         run: |
-          ./gradlew release ${{ github.event.inputs.version != '' && format('-Pversion={0}', github.event.inputs.version) || '' }}
+          ./gradlew release ${{ github.event.inputs.version != '' && format('-Prelease.version={0}', github.event.inputs.version) || '' }}
       - name: Build jar
         run: ./gradlew :bootJar
       - name: Build docker image

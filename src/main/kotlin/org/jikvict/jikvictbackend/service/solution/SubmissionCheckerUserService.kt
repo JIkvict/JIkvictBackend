@@ -85,7 +85,7 @@ class SubmissionCheckerUserService(
     fun getPendingSubmissions(): PendingSubmissionDto? {
         val user = userDetailsService.getCurrentUser()
         val tasks = taskStatusRepository.findAllByUserAndTaskTypeAndStatus(user, "SOLUTION_VERIFICATION", PendingStatus.PENDING)
-        val task = tasks.first()
+        val task = tasks.firstOrNull() ?: return null
         val assignmentId = objectMapper.readTree(task.parameters)?.get("assignmentId")?.asLong()
         val createdAt = task.createdAt
         return assignmentId?.let {
