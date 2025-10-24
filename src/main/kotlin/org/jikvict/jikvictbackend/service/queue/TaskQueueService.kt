@@ -22,11 +22,11 @@ abstract class TaskQueueService(
     private val taskRegistry: TaskRegistry,
     private val log: Logger,
 ) {
-
     fun isAlreadyQueuedForUser(user: User): Boolean {
         val tasks = taskStatusRepository.findAllByUserAndTaskTypeAndStatus(user, "SOLUTION_VERIFICATION", PendingStatus.PENDING)
         return tasks.isNotEmpty()
     }
+
     internal fun sendTaskToQueue(message: TaskMessage<*>) {
         val processor =
             taskRegistry.getProcessorByTaskType(message.taskType)

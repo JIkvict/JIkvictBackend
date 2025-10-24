@@ -30,7 +30,9 @@ class UsersController(
 
     @PreAuthorize("hasRole('TEACHER')")
     @PostMapping
-    fun registerUsers(@RequestBody aisIds: List<String>): ResponseEntity<List<UserDto>> {
+    fun registerUsers(
+        @RequestBody aisIds: List<String>,
+    ): ResponseEntity<List<UserDto>> {
         val imported = aisIds.mapNotNull { userService.importUserEntityByAisId(it) }
         val result = imported.map { userMapper.toUserDto(it) }
         return ResponseEntity.ok(result)

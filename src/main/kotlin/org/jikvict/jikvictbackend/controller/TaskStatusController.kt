@@ -33,9 +33,7 @@ class TaskStatusController(
     }
 
     @GetMapping("/pending")
-    fun getPendingTask(): ResponseEntity<PendingSubmissionDto?> {
-        return ResponseEntity.ok(submissionCheckerUserService.getPendingSubmissions())
-    }
+    fun getPendingTask(): ResponseEntity<PendingSubmissionDto?> = ResponseEntity.ok(submissionCheckerUserService.getPendingSubmissions())
 
     @PostMapping("/cancel/{taskId}")
     fun cancelPendingSubmission(
