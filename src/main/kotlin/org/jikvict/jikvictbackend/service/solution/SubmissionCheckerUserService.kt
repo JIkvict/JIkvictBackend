@@ -102,6 +102,7 @@ class SubmissionCheckerUserService(
         }
         if (task.status == PendingStatus.PENDING) {
             task.status = PendingStatus.CANCELLED
+            task.message = "Submission cancelled by user"
             taskStatusRepository.save(task)
         }
     }
