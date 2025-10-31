@@ -37,7 +37,11 @@ abstract class AssignmentMapper {
             }.toSet()
 
     @Mapping(target = "isClosed", expression = "java(mapIsClosed(assignment))")
+    @Mapping(target= "assignmentGroupsIds", expression = "java(getAssignmentGroupIds(assignment))")
     abstract fun toDto(assignment: Assignment): AssignmentDto
 
     fun mapIsClosed(assignment: Assignment): Boolean = assignment.isClosed
+
+    protected fun getAssignmentGroupIds(assignment: Assignment): List<Long> =
+        assignment.assignmentGroups.map { it.id }
 }

@@ -19,6 +19,7 @@ data class AssignmentDto(
     val pidsLimit: Long,
     val isClosed: Boolean,
     val maximumAttempts: Int,
+    val assignmentGroupsIds: List<Long>,
 )
 
 data class CreateAssignmentDto(
