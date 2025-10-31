@@ -89,7 +89,7 @@ class SubmissionCheckerUserService(
         val assignmentId = objectMapper.readTree(task.parameters)?.get("assignmentId")?.asLong()
         val createdAt = task.createdAt
         return assignmentId?.let {
-            PendingSubmissionDto(it, createdAt)
+            PendingSubmissionDto(task.id,it, createdAt)
         }
     }
 
