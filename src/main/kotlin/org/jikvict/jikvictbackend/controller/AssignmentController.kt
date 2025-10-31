@@ -5,13 +5,10 @@ import org.jikvict.jikvictbackend.model.domain.AssignmentInfo
 import org.jikvict.jikvictbackend.model.dto.AssignmentDto
 import org.jikvict.jikvictbackend.model.dto.CreateAssignmentDto
 import org.jikvict.jikvictbackend.model.mapper.AssignmentMapper
-import org.jikvict.jikvictbackend.model.response.PendingStatusResponse
-import org.jikvict.jikvictbackend.model.response.ResponsePayload
 import org.jikvict.jikvictbackend.repository.AssignmentRepository
 import org.jikvict.jikvictbackend.service.UserDetailsServiceImpl
 import org.jikvict.jikvictbackend.service.assignment.AssignmentInfoUserService
 import org.jikvict.jikvictbackend.service.assignment.AssignmentService
-import org.jikvict.jikvictbackend.service.queue.AssignmentTaskQueueService
 import org.jikvict.problems.exception.contract.ServiceException
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -33,7 +30,6 @@ import org.springframework.web.bind.annotation.RestController
 class AssignmentController(
     private val assignmentRepository: AssignmentRepository,
     private val assignmentMapper: AssignmentMapper,
-    private val assignmentTaskQueueService: AssignmentTaskQueueService,
     private val userDetailsService: UserDetailsServiceImpl,
     private val assignmentInfoUserService: AssignmentInfoUserService,
     private val assignmentService: AssignmentService,
@@ -112,15 +108,10 @@ class AssignmentController(
     @PostMapping
     fun createAssignment(
         @RequestBody assignmentDto: CreateAssignmentDto,
-    ): ResponseEntity<PendingStatusResponse<Long>> {
-        val result = assignmentTaskQueueService.enqueueAssignmentCreationTask(assignmentDto)
-        val response =
-            PendingStatusResponse(
-                payload = ResponsePayload(result.id),
-                status = result.status,
-                message = result.parameters,
-            )
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body(response)
+    ): ResponseEntity<AssignmentDto> {
+        val result = assignmentService.createAssignment(assignmentDto)
+        val dto = assignmentMapper.toDto(result)
+        return ResponseEntity.ok(dto)
     }
 
     @PreAuthorize("hasRole('TEACHER')")
