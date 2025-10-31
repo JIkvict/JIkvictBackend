@@ -1,6 +1,7 @@
 package org.jikvict.docker
 
 import com.github.dockerjava.api.command.WaitContainerResultCallback
+import com.github.dockerjava.api.exception.DockerClientException
 import com.github.dockerjava.api.model.Bind
 import org.jikvict.docker.consumer.ExitCodeConsumer
 import org.jikvict.docker.consumer.LogsConsumer
@@ -30,7 +31,7 @@ class DockerRunner(
     private val envs: List<DockerEnv> = emptyList(),
     private val networkName: String? = null,
 ) {
-    suspend fun run() {
+    suspend fun run(isActive: () -> Boolean) {
         var container: GenericContainer<*>? = null
         try {
             container = withContext(Dispatchers.IO) {
@@ -68,18 +69,15 @@ class DockerRunner(
                                 .withNetworkId(this@DockerRunner.networkName)
                                 .exec()
 
-
                             Thread.sleep(2000)
                             val containerInfo = container.dockerClient.inspectContainerCmd(container.containerId).exec()
                             val networks = containerInfo.networkSettings.networks
                             println("Solution container networks: ${networks.keys}")
 
-
                             val networkName = networks.keys.find { it.startsWith("jikvict-task-") }
                             if (networkName != null) {
                                 val proxyName = "$networkName-proxy"
                                 println("Attempting to resolve proxy: $proxyName")
-
 
                                 try {
                                     val execResult = container.dockerClient.execCreateCmd(container.containerId)
@@ -101,15 +99,33 @@ class DockerRunner(
                         }
                     }
                 }
-
             }
 
             val exitCode = withTimeout(timeout) {
                 withContext(Dispatchers.IO) {
-                    container.dockerClient
-                        .waitContainerCmd(container.containerId)
-                        .exec(WaitContainerResultCallback())
-                        .awaitStatusCode(timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+                    val checkInterval = 3000L
+                    var result: Int? = null
+
+                    while (result == null && isActive()) {
+                        result = try {
+                            container.dockerClient
+                                .waitContainerCmd(container.containerId)
+                                .exec(WaitContainerResultCallback())
+                                .awaitStatusCode(checkInterval, TimeUnit.MILLISECONDS)
+                        } catch (e: DockerClientException) {
+                            if (e.message?.contains("timeout", ignoreCase = true) == true) {
+                                null
+                            } else {
+                                throw e
+                            }
+                        }
+                    }
+
+                    if (!isActive()) {
+                        throw CancellationException("Task was cancelled")
+                    }
+
+                    result ?: throw IllegalStateException("Container exited without status code")
                 }
             }
 
@@ -121,10 +137,8 @@ class DockerRunner(
         } finally {
             withContext(Dispatchers.IO) {
                 val containerId = container?.containerId
-                // Stop the container if it's still running
                 runCatching { container?.stop() }
 
-                // Best-effort: disconnect from the custom network (if provided)
                 runCatching {
                     if (containerId != null && !this@DockerRunner.networkName.isNullOrBlank()) {
                         container.dockerClient?.disconnectFromNetworkCmd()
@@ -134,7 +148,6 @@ class DockerRunner(
                     }
                 }
 
-                // Ensure the container is removed along with any anonymous volumes
                 runCatching {
                     if (containerId != null) {
                         container.dockerClient?.removeContainerCmd(containerId)

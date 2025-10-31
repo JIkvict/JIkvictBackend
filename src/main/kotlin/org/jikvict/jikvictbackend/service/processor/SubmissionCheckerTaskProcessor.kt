@@ -62,20 +62,23 @@ class SubmissionCheckerTaskProcessor(
                     userSolutionChecker.checkSubmission(
                         assignmentEntity.id,
                         message.additionalParams.solutionBytes,
-                        user,
-                    )
+                        user
+                    ) { !taskQueueService.isTaskCancelled(message.taskId) }
                 }
 
-            assignmentResultService.handleAssignmentResult(assignmentEntity.id, result, user)
+            if (!taskQueueService.isTaskCancelled(message.taskId)) {
 
-            taskQueueService.updateTaskStatus(
-                message.taskId,
-                PendingStatus.DONE,
-                "Solution verification completed successfully result: \n$result",
-            )
+                assignmentResultService.handleAssignmentResult(assignmentEntity.id, result, user)
 
-            log.info("Solution verification completed: ${message.taskId}")
-            log.info("Solution verification result: $result")
+                taskQueueService.updateTaskStatus(
+                    message.taskId,
+                    PendingStatus.DONE,
+                    "Solution verification completed successfully result: \n$result",
+                )
+
+                log.info("Solution verification completed: ${message.taskId}")
+                log.info("Solution verification result: $result")
+            }
         } catch (e: Exception) {
             log.error("Error verifying solution: ${e.message}", e)
             if (e is ServiceException) {

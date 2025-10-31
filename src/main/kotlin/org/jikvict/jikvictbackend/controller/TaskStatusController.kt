@@ -5,6 +5,7 @@ import org.jikvict.jikvictbackend.model.response.PendingStatusResponse
 import org.jikvict.jikvictbackend.service.UserDetailsServiceImpl
 import org.jikvict.jikvictbackend.service.queue.GeneralTaskQueueService
 import org.jikvict.jikvictbackend.service.solution.SubmissionCheckerUserService
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -35,7 +36,7 @@ class TaskStatusController(
     @GetMapping("/pending")
     fun getPendingTask(): ResponseEntity<PendingSubmissionDto?> = ResponseEntity.ok(submissionCheckerUserService.getPendingSubmissions())
 
-    @PostMapping("/cancel/{taskId}")
+    @PostMapping("/cancel/{taskId}", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun cancelPendingSubmission(
         @PathVariable taskId: Long,
     ): ResponseEntity<Unit> {

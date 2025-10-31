@@ -31,12 +31,13 @@ class SubmissionCheckerUserService(
         assignmentId: Long,
         solutionBytes: ByteArray,
         user: User,
+        isActive: () -> Boolean
     ): TestSuiteResult {
         val assignment = assignmentUserService.getAssignmentByIdForUser(assignmentId, user)
         checkIsNotClosed(assignment.id)
         checkUserCanSubmit(user, assignment.id)
         checkForAttemptsLimit(assignment.id, user)
-        return submissionCheckerService.checkSubmission(assignment, solutionBytes)
+        return submissionCheckerService.checkSubmission(assignment, solutionBytes, isActive)
     }
 
     fun checkForAttemptsLimit(

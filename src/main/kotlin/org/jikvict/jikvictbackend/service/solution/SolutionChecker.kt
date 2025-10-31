@@ -31,12 +31,14 @@ class SolutionChecker(
         solution: ByteArray,
         hiddenFiles: ByteArray,
         assignment: Assignment,
-    ): TestSuiteResult = execute(solution, hiddenFiles, assignment)
+        isActive: () -> Boolean
+    ): TestSuiteResult = execute(solution, hiddenFiles, assignment, isActive)
 
     private suspend fun execute(
         solution: ByteArray,
         hiddenFiles: ByteArray,
         assignmentDto: Assignment,
+        isActive: () -> Boolean
     ): TestSuiteResult {
         val executionId = UUID.randomUUID().toString()
         val tempDir = Files.createTempDirectory("code-$executionId")
@@ -129,7 +131,7 @@ class SolutionChecker(
             }
 
         try {
-            runner.run()
+            runner.run(isActive)
 
             val results =
                 runCatching {
