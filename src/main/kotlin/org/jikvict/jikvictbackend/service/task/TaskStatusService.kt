@@ -19,8 +19,10 @@ class TaskStatusService(
         assignmentId: Long,
     ): List<TaskStatus> {
         val submissions = taskStatusRepository.findAllByUserAndTaskTypeAndStatus(user, "SOLUTION_VERIFICATION", PendingStatus.FAILED)
+        val cancelled = taskStatusRepository.findAllByUserAndTaskTypeAndStatus(user, "SOLUTION_VERIFICATION", PendingStatus.CANCELLED)
+        val all = submissions + cancelled
         val filteredByAssignment =
-            submissions.filter { submission ->
+            all.filter { submission ->
                 runCatching {
                     val node = objectMapper.readTree(submission.parameters)
                     node?.get("assignmentId")?.asLong() == assignmentId
