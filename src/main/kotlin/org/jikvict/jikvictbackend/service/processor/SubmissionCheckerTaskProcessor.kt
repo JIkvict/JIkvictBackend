@@ -81,6 +81,11 @@ class SubmissionCheckerTaskProcessor(
             }
         } catch (e: Exception) {
             log.error("Error verifying solution: ${e.message}", e)
+
+            if (taskQueueService.isTaskCancelled(message.taskId)) {
+                return
+            }
+
             if (e is ServiceException) {
                 when {
                     e.status.is4xxClientError ->

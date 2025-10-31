@@ -31,7 +31,7 @@ class SubmissionCheckerUserService(
         assignmentId: Long,
         solutionBytes: ByteArray,
         user: User,
-        isActive: () -> Boolean
+        isActive: () -> Boolean,
     ): TestSuiteResult {
         val assignment = assignmentUserService.getAssignmentByIdForUser(assignmentId, user)
         checkIsNotClosed(assignment.id)
@@ -90,7 +90,7 @@ class SubmissionCheckerUserService(
         val assignmentId = objectMapper.readTree(task.parameters)?.get("assignmentId")?.asLong()
         val createdAt = task.createdAt
         return assignmentId?.let {
-            PendingSubmissionDto(task.id,it, createdAt)
+            PendingSubmissionDto(task.id, it, createdAt)
         }
     }
 
@@ -100,7 +100,9 @@ class SubmissionCheckerUserService(
         if (task.user.id != user.id) {
             throw ServiceException(HttpStatus.FORBIDDEN, "You do not have permission to access this task")
         }
-        task.status = PendingStatus.CANCELLED
-        taskStatusRepository.save(task)
+        if (task.status == PendingStatus.PENDING) {
+            task.status = PendingStatus.CANCELLED
+            taskStatusRepository.save(task)
+        }
     }
 }
