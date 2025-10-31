@@ -32,4 +32,5 @@ data class CreateAssignmentDto(
     val cpuLimit: Long,
     val pidsLimit: Long,
     val assignmentGroupsIds: List<Long>,
+    val maximumAttempts: Int,
 )
