@@ -80,6 +80,55 @@ class GitService(
         }
     }
 
+    fun getAllAvailableTaskIds(): List<Long> {
+        val credentialsProvider = UsernamePasswordCredentialsProvider(properties.githubUsername, properties.githubToken)
+
+        val repoDesc = DfsRepositoryDescription("streaming-repo")
+        val repo = InMemoryRepository(repoDesc)
+        repo.create()
+
+        Git(repo).use { git ->
+            git
+                .remoteAdd()
+                .setName("origin")
+                .setUri(URIish(properties.repositoryUrl))
+                .call()
+
+            git
+                .fetch()
+                .setRemote("origin")
+                .setRefSpecs(RefSpec("+refs/heads/main:refs/remotes/origin/main"))
+                .setCredentialsProvider(credentialsProvider)
+                .setDepth(1)
+                .call()
+
+            val ref = repo.exactRef("refs/remotes/origin/main") ?: error("Branch origin/main not found")
+            val revWalk = RevWalk(repo)
+            val commit = revWalk.parseCommit(ref.objectId)
+            val tree = commit.tree
+
+            val taskPattern = "^task(\\d+)/.*".toRegex()
+            val taskIds = mutableSetOf<Long>()
+
+            val treeWalk = TreeWalk(repo)
+            treeWalk.addTree(tree)
+            treeWalk.isRecursive = true
+
+            while (treeWalk.next()) {
+                val path = treeWalk.pathString
+                val matchResult = taskPattern.matchEntire(path)
+
+                if (matchResult != null) {
+                    val taskId = matchResult.groupValues[1].toLongOrNull()
+                    if (taskId != null) {
+                        taskIds.add(taskId)
+                    }
+                }
+            }
+
+            return taskIds.sorted()
+        }
+    }
     fun streamZipToOutput(
         outputStream: OutputStream,
         pathFilters: List<Regex> = emptyList(),

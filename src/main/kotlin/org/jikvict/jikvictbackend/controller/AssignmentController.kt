@@ -124,6 +124,12 @@ class AssignmentController(
     }
 
     @PreAuthorize("hasRole('TEACHER')")
+    @GetMapping("/available-tasks")
+    fun availableTasks(): ResponseEntity<List<Long>> {
+        return ResponseEntity.ok(assignmentService.getAllAvailableTaskIds())
+    }
+
+    @PreAuthorize("hasRole('TEACHER')")
     @PutMapping("/{id}")
     fun updateAssignment(
         @PathVariable id: Long,

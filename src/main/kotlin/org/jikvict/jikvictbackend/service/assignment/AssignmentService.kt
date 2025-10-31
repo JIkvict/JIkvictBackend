@@ -99,5 +99,9 @@ class AssignmentService(
         return outputStream.toByteArray()
     }
 
+    fun getAllAvailableTaskIds(): List<Long> {
+        return gitService.getAllAvailableTaskIds()
+    }
+
     fun getAssignmentDescription(task: Int): String = gitService.getFileContentFromAssignmentRepo(Path.of("DESCRIPTION.md"), task).toString(Charsets.UTF_8)
 }
