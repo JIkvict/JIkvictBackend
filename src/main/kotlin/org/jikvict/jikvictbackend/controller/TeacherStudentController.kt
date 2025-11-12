@@ -64,7 +64,7 @@ class TeacherStudentController(
         val payload =
             StudentOverviewDto(
                 userId = user.id,
-                userName = user.userNameField ?: "",
+                userName = user.userNameField,
                 submissions = submissions,
                 results = results,
             )

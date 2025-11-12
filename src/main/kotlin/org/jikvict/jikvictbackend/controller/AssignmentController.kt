@@ -1,6 +1,5 @@
 package org.jikvict.jikvictbackend.controller
 
-import org.jikvict.jikvictbackend.entity.Assignment
 import org.jikvict.jikvictbackend.model.domain.AssignmentInfo
 import org.jikvict.jikvictbackend.model.dto.AssignmentDto
 import org.jikvict.jikvictbackend.model.dto.CreateAssignmentDto
@@ -62,10 +61,11 @@ class AssignmentController(
     @GetMapping("/{id}")
     fun getAssignment(
         @PathVariable id: Long,
-    ): ResponseEntity<Assignment> {
+    ): ResponseEntity<AssignmentDto> {
         val user = userDetailsService.getCurrentUser()
         val assignment = assignmentInfoUserService.getAssignmentByIdForUser(id, user)
-        return ResponseEntity.ok(assignment)
+        val dto = assignmentMapper.toDto(assignment)
+        return ResponseEntity.ok(dto)
     }
 
     @GetMapping("/all", produces = [MediaType.APPLICATION_JSON_VALUE])
