@@ -138,6 +138,13 @@ class AssignmentController(
     }
 
     @PreAuthorize("hasRole('TEACHER')")
+    @PutMapping("/admin/{id}")
+    fun getAssignmentAdmin(@PathVariable id: Long): ResponseEntity<AssignmentDto> {
+        val assignment = assignmentRepository.findById(id).orElseThrow()
+        return ResponseEntity.ok(assignmentMapper.toDto(assignment))
+    }
+
+    @PreAuthorize("hasRole('TEACHER')")
     @DeleteMapping("/{id}")
     fun deleteAssignment(
         @PathVariable id: Long,
