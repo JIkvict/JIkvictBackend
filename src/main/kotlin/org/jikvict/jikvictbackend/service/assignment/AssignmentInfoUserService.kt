@@ -70,10 +70,9 @@ class AssignmentInfoUserService(
         userIds: List<Long>,
         groupIds: List<Long>,
     ): List<AssignmentInfo> {
-        if (userIds.isEmpty() && groupIds.isEmpty()) {
-            return emptyList()
-        }
-        val usersToSearch = if (userIds.isEmpty()) {
+        val usersToSearch = if (userIds.isEmpty() && groupIds.isEmpty()) {
+            userRepository.findAll()
+        } else if (groupIds.isNotEmpty()) {
             userRepository.findDistinctByAssignmentGroups_IdIn(groupIds)
         } else {
             userRepository.findAllById(userIds)
