@@ -89,7 +89,7 @@ class AssignmentInfoUserService(
         assignmentId: Long,
         user: User,
     ): AssignmentInfo {
-        val assignment = getAssignmentByIdForUser(assignmentId, user)
+        val assignment = assignmentService.getAssignmentById(assignmentId)
         val attemptsUsed = assignmentResultService.getUsedAttempts(assignmentId, user)
         val results = assignmentResultService.getResults(assignmentId, user)
         results.forEach { entityManager.detach(it) }
