@@ -9,6 +9,7 @@ import org.jikvict.jikvictbackend.model.dto.withHiddenInfo
 import org.jikvict.jikvictbackend.model.mapper.AssignmentResultMapper
 import org.jikvict.jikvictbackend.model.mapper.TaskStatusMapper
 import org.jikvict.jikvictbackend.repository.AssignmentRepository
+import org.jikvict.jikvictbackend.repository.UserRepository
 import org.jikvict.jikvictbackend.service.task.TaskStatusService
 import org.jikvict.problems.exception.contract.ServiceException
 import org.springframework.http.HttpStatus
@@ -25,6 +26,7 @@ class AssignmentInfoUserService(
     private val assignmentRepository: AssignmentRepository,
     private val taskStatusService: TaskStatusService,
     private val taskStatusMapper: TaskStatusMapper,
+    private val userRepository: UserRepository
 ) {
     @Transactional
     fun getAssignmentInfoForUser(
@@ -48,6 +50,55 @@ class AssignmentInfoUserService(
                     assignmentResultMapper.toDto(it)
                 }
             }
+        val unacceptedSubmission = taskStatusService.getUnsuccessfulSubmissionsForUser(user, assignmentId)
+        val mappedUnacceptedSubmission: List<UnacceptedSubmission> = unacceptedSubmission.map(taskStatusMapper::toUnacceptedSubmission)
+        val assignmentInfo =
+            AssignmentInfo(
+                assignmentId = assignment.id,
+                taskId = assignment.taskId,
+                maxAttempts = assignment.maximumAttempts,
+                attemptsUsed = attemptsUsed,
+                results = mappedResults,
+                unacceptedSubmissions = mappedUnacceptedSubmission,
+            )
+        return assignmentInfo
+    }
+
+    @Transactional
+    fun getAssignmentInfoByUserGroupsAndUsers(
+        assignmentId: Long,
+        userIds: List<Long>,
+        groupIds: List<Long>,
+    ): List<AssignmentInfo> {
+        if (userIds.isEmpty() && groupIds.isEmpty()) {
+            return emptyList()
+        }
+        val usersToSearch = if (userIds.isEmpty()) {
+            userRepository.findDistinctByAssignmentGroups_IdIn(groupIds)
+        } else {
+            userRepository.findAllById(userIds)
+        }
+        val result = usersToSearch.map { user ->
+            getAssignmentInfoForTeacher(assignmentId, user)
+        }
+        return result
+    }
+
+    @Transactional
+    fun getAssignmentInfoForTeacher(
+        assignmentId: Long,
+        user: User,
+    ): AssignmentInfo {
+        val assignment = getAssignmentByIdForUser(assignmentId, user)
+        val attemptsUsed = assignmentResultService.getUsedAttempts(assignmentId, user)
+        val results = assignmentResultService.getResults(assignmentId, user)
+        results.forEach { entityManager.detach(it) }
+
+        val mappedResults =
+            results.map {
+                assignmentResultMapper.toDto(it)
+            }
+
         val unacceptedSubmission = taskStatusService.getUnsuccessfulSubmissionsForUser(user, assignmentId)
         val mappedUnacceptedSubmission: List<UnacceptedSubmission> = unacceptedSubmission.map(taskStatusMapper::toUnacceptedSubmission)
         val assignmentInfo =

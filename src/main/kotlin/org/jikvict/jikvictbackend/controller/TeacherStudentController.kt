@@ -2,12 +2,15 @@ package org.jikvict.jikvictbackend.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.jikvict.jikvictbackend.entity.AssignmentResult
+import org.jikvict.jikvictbackend.model.domain.AssignmentInfo
 import org.jikvict.jikvictbackend.model.dto.AssignmentResultAdminDto
+import org.jikvict.jikvictbackend.model.dto.StatsRequestDto
 import org.jikvict.jikvictbackend.model.dto.StudentOverviewDto
 import org.jikvict.jikvictbackend.model.dto.SubmissionDto
 import org.jikvict.jikvictbackend.repository.AssignmentResultRepository
 import org.jikvict.jikvictbackend.repository.TaskStatusRepository
 import org.jikvict.jikvictbackend.repository.UserRepository
+import org.jikvict.jikvictbackend.service.assignment.AssignmentInfoUserService
 import org.jikvict.problems.exception.contract.ServiceException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -15,6 +18,7 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -27,10 +31,17 @@ class TeacherStudentController(
     private val taskStatusRepository: TaskStatusRepository,
     private val assignmentResultRepository: AssignmentResultRepository,
     private val objectMapper: ObjectMapper,
+    private val assignmentInfoUserService: AssignmentInfoUserService,
 ) {
     data class UpdatePointsRequest(
         val points: Int,
     )
+
+    @PreAuthorize("hasRole('TEACHER')")
+    @PostMapping("/teacher/assignment-info/{assignmentId}")
+    fun getAssignmentInfo(@PathVariable assignmentId: Long, @RequestBody request: StatsRequestDto): ResponseEntity<List<AssignmentInfo>> {
+        return ResponseEntity.ok(assignmentInfoUserService.getAssignmentInfoByUserGroupsAndUsers(assignmentId, request.userIds, request.groupIds))
+    }
 
     @PreAuthorize("hasRole('TEACHER')")
     @GetMapping("/teacher/students/{userId}/overview")

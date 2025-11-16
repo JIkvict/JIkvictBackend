@@ -87,9 +87,9 @@ class AssignmentController(
     @PreAuthorize("hasRole('TEACHER')")
     @GetMapping("/{assignmentGroup}/all")
     fun getAllForAssignmentGroup(
-        @PathVariable assignmentGroup: String,
+        @PathVariable assignmentGroup: Long,
     ): ResponseEntity<List<AssignmentDto>> {
-        val assignments = assignmentService.getAssignmentsForGroup(assignmentGroup.toLong())
+        val assignments = assignmentService.getAssignmentsForGroup(assignmentGroup)
         val assignmentDtos = assignments.map(assignmentMapper::toDto)
         return ResponseEntity.ok(assignmentDtos)
     }

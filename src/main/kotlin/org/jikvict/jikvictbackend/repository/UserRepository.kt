@@ -9,4 +9,5 @@ interface UserRepository : JpaRepository<User, Long> {
     fun findUserById(userId: Long): User?
 
     fun findByAisId(aisId: String): User?
+    fun findDistinctByAssignmentGroups_IdIn(groupIds: Collection<Long>): List<User>
 }
