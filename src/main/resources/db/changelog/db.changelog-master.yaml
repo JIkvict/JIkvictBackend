@@ -3,3 +3,5 @@ databaseChangeLog:
       file: db/changelog/0001-init-schema.yaml
   - include:
       file: db/changelog/0002-unidirectional-assignment-index.yaml
+  - include:
+      file: db/changelog/0002-changelog.yaml

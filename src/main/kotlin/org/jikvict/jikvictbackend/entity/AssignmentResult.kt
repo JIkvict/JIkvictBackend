@@ -4,12 +4,14 @@ import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import org.jikvict.testing.model.TestSuiteResult
 import java.time.LocalDateTime
+import jakarta.persistence.Basic
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
+import jakarta.persistence.Lob
 import jakarta.persistence.ManyToOne
 
 @Entity(name = "assignment_result")
@@ -32,4 +34,9 @@ class AssignmentResult {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "execution_logs", columnDefinition = "jsonb")
     var testSuiteResult: TestSuiteResult? = null
+
+    @Lob
+    @Basic(fetch = FetchType.LAZY)
+    @Column(name = "zip_file", columnDefinition = "bytea")
+    var zipFile: ByteArray? = null
 }

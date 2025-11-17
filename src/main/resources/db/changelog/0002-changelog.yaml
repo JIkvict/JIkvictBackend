@@ -1,0 +1,94 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1763412257919-10
+      author: antonhorobets
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addColumn:
+            columns:
+              - column:
+                  name: zip_file
+                  type: bytea
+            tableName: assignment_result
+  - changeSet:
+      id: 1763412257919-1
+      author: antonhorobets
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - dropNotNullConstraint:
+            columnDataType: bigint
+            columnName: assignment_id
+            tableName: assignment_result
+  - changeSet:
+      id: 1763412257919-2
+      author: antonhorobets
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - modifyDataType:
+            columnName: name
+            newDataType: VARCHAR(255)
+            tableName: roles
+  - changeSet:
+      id: 1763412257919-3
+      author: antonhorobets
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - modifyDataType:
+            columnName: status
+            newDataType: VARCHAR(255)
+            tableName: task_statuses
+  - changeSet:
+      id: 1763412257919-4
+      author: antonhorobets
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - modifyDataType:
+            columnName: status_override
+            newDataType: VARCHAR(255)
+            tableName: assignments
+  - changeSet:
+      id: 1763412257919-5
+      author: antonhorobets
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - modifyDataType:
+            columnName: task_type
+            newDataType: VARCHAR(255)
+            tableName: task_statuses
+  - changeSet:
+      id: 1763412257919-6
+      author: antonhorobets
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - dropNotNullConstraint:
+            columnDataType: datetime
+            columnName: time_stamp
+            tableName: assignment_result
+  - changeSet:
+      id: 1763412257919-7
+      author: antonhorobets
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - dropNotNullConstraint:
+            columnDataType: bigint
+            columnName: user_id
+            tableName: assignment_result
+  - changeSet:
+      id: 1763412257919-8
+      author: antonhorobets
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - dropNotNullConstraint:
+            columnDataType: bigint
+            columnName: user_id
+            tableName: refresh_tokens
+  - changeSet:
+      id: 1763412257919-9
+      author: antonhorobets
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - dropNotNullConstraint:
+            columnDataType: bigint
+            columnName: user_id
+            tableName: task_statuses
+

@@ -21,6 +21,7 @@ class AssignmentResultService(
         assignmentId: Long,
         result: TestSuiteResult,
         user: User,
+        solutionBytes: ByteArray,
     ): AssignmentResult {
         val assignment =
             assignmentRepository.findById(assignmentId).orElseThrow {
@@ -33,6 +34,7 @@ class AssignmentResultService(
                 this.user = user
                 this.assignment = assignment
                 this.timeStamp = LocalDateTime.now()
+                this.zipFile = solutionBytes
             }
         assignmentResultRepository.save(resultEntity)
         return resultEntity

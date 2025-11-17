@@ -68,7 +68,9 @@ class SubmissionCheckerTaskProcessor(
 
             if (!taskQueueService.isTaskCancelled(message.taskId)) {
 
-                assignmentResultService.handleAssignmentResult(assignmentEntity.id, result, user)
+                withContext(Dispatchers.IO) {
+                    assignmentResultService.handleAssignmentResult(assignmentEntity.id, result, user, message.additionalParams.solutionBytes)
+                }
 
                 taskQueueService.updateTaskStatus(
                     message.taskId,
