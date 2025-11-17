@@ -5,3 +5,17 @@ databaseChangeLog:
       file: db/changelog/0002-unidirectional-assignment-index.yaml
   - include:
       file: db/changelog/0002-changelog.yaml
+
+  - changeSet:
+      id: recreate-zip-file-as-oid-2
+      author: antonhorobets
+      changes:
+        - dropColumn:
+            tableName: assignment_result
+            columnName: zip_file
+        - addColumn:
+            tableName: assignment_result
+            columns:
+              - column:
+                  name: zip_file
+                  type: oid
