@@ -37,6 +37,6 @@ class AssignmentResult {
 
     @Lob
     @Basic(fetch = FetchType.LAZY)
-    @Column(name = "zip_file", columnDefinition = "bytea")
+    @Column(name = "zip_file")
     var zipFile: ByteArray? = null
 }
