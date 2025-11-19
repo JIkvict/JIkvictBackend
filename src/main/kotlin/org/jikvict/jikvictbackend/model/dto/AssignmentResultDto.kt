@@ -8,6 +8,7 @@ import java.time.LocalDateTime
  * DTO for [org.jikvict.jikvictbackend.entity.AssignmentResult]
  */
 data class AssignmentResultDto(
+    val id: Long,
     val timeStamp: LocalDateTime,
     val points: Int,
     val result: TestSuiteResult?,
