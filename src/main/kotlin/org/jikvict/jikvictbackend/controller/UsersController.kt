@@ -1,6 +1,7 @@
 package org.jikvict.jikvictbackend.controller
 
 import org.jikvict.jikvictbackend.model.dto.UserDto
+import org.jikvict.jikvictbackend.model.dto.UsersOfGroupsDto
 import org.jikvict.jikvictbackend.model.mapper.UserMapper
 import org.jikvict.jikvictbackend.service.UserService
 import org.springframework.http.ResponseEntity
@@ -28,6 +29,11 @@ class UsersController(
     @GetMapping
     fun getAllUsers(): ResponseEntity<List<UserDto>> = ResponseEntity.ok(userService.getAllUsers())
 
+    @PreAuthorize("hasRole('TEACHER')")
+    @PostMapping("/of-group" )
+    fun getUsersOfGroup(dto:  UsersOfGroupsDto): ResponseEntity<List<UserDto>> {
+        return ResponseEntity.ok(userService.getUsersOfGroups(dto.groupIds))
+    }
     @PreAuthorize("hasRole('TEACHER')")
     @PostMapping
     fun registerUsers(

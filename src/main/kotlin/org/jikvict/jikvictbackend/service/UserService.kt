@@ -21,6 +21,14 @@ class UserService(
     private val userMapper: UserMapper,
 ) {
     @Transactional
+    fun getUsersOfGroups(groupIds: List<Long>): List<UserDto> {
+        return userRepository.findDistinctByAssignmentGroups_IdIn(groupIds).map {
+            userMapper.toUserDto(it)
+        }
+    }
+
+
+    @Transactional
     fun getAllUsers(): List<UserDto> =
         userRepository.findAll().map {
             userMapper.toUserDto(it)

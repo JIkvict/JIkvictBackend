@@ -8,6 +8,7 @@ import org.jikvict.jikvictbackend.model.domain.UnacceptedSubmission
 import org.jikvict.jikvictbackend.model.dto.withHiddenInfo
 import org.jikvict.jikvictbackend.model.mapper.AssignmentResultMapper
 import org.jikvict.jikvictbackend.model.mapper.TaskStatusMapper
+import org.jikvict.jikvictbackend.model.mapper.UserMapper
 import org.jikvict.jikvictbackend.repository.AssignmentRepository
 import org.jikvict.jikvictbackend.repository.UserRepository
 import org.jikvict.jikvictbackend.service.task.TaskStatusService
@@ -26,7 +27,8 @@ class AssignmentInfoUserService(
     private val assignmentRepository: AssignmentRepository,
     private val taskStatusService: TaskStatusService,
     private val taskStatusMapper: TaskStatusMapper,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val userMapper: UserMapper
 ) {
     @Transactional
     fun getAssignmentInfoForUser(
@@ -60,6 +62,7 @@ class AssignmentInfoUserService(
                 attemptsUsed = attemptsUsed,
                 results = mappedResults,
                 unacceptedSubmissions = mappedUnacceptedSubmission,
+                userMapper.toUserDto(user)
             )
         return assignmentInfo
     }
@@ -108,6 +111,7 @@ class AssignmentInfoUserService(
                 attemptsUsed = attemptsUsed,
                 results = mappedResults,
                 unacceptedSubmissions = mappedUnacceptedSubmission,
+                userMapper.toUserDto(user)
             )
         return assignmentInfo
     }
