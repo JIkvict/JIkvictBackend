@@ -63,6 +63,7 @@ class TeacherStudentController(
         return ResponseEntity.ok(assignmentInfoUserService.getAssignmentInfoByUserGroupsAndUsers(assignmentId, request.userIds, request.groupIds))
     }
 
+    @Transactional
     @PreAuthorize("hasRole('TEACHER')")
     @GetMapping("/teacher/students/{userId}/overview")
     fun getStudentOverview(
