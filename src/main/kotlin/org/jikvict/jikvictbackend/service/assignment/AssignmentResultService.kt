@@ -40,6 +40,7 @@ class AssignmentResultService(
         return resultEntity
     }
 
+    @Transactional
     fun getResults(
         assignmentId: Long,
         user: User,
@@ -52,6 +53,7 @@ class AssignmentResultService(
         return submissions
     }
 
+    @Transactional
     fun getUsedAttempts(
         assignmentId: Long,
         user: User,

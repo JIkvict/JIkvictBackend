@@ -138,7 +138,7 @@ class TeacherStudentController(
         try {
             val node = objectMapper.readTree(parametersJson)
             node?.get("assignmentId")?.asLong()
-        } catch (ex: Exception) {
+        } catch (_: Exception) {
             null
         }
 
