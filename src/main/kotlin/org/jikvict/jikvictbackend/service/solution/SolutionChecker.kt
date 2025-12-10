@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.UUID
+import kotlin.jvm.java
 import kotlin.streams.asSequence
 import kotlin.time.Duration.Companion.seconds
 
@@ -81,7 +82,7 @@ class SolutionChecker(
 
                 withBinds(
                     Bind(tempDir.toString(), Volume("/app/input")),
-                    Bind(gradleCacheDir.toString(), Volume("/gradle-cache")),
+//                    Bind(gradleCacheDir.toString(), Volume("/gradle-cache")),
                 )
                 withMountedFilesConsumers(
                     { paths ->
