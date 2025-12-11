@@ -16,7 +16,7 @@ class RefreshTokenService(
 ) {
     fun createRefreshToken(userId: Long): RefreshToken {
         val token = UUID.randomUUID().toString()
-        val expiryDate = Instant.now().plusMillis(jwtProperties.refreshExpirationMs)
+        val expiryDate = Instant.now().plusSeconds(jwtProperties.refreshExpirationSeconds)
         val user = userRepository.findUserById(userId)
         requireNotNull(user) { "User is not present in the database" }
 
