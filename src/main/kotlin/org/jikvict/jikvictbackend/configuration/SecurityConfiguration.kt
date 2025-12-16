@@ -31,6 +31,10 @@ class SecurityConfiguration(
             csrf { disable() }
             cors { disable() }
             authorizeHttpRequests {
+                // Require auth for long-living token endpoints
+                authorize("/api/auth/long-token", authenticated)
+                authorize("/api/auth/long-token/**", authenticated)
+                // Public auth endpoints (login/refresh)
                 authorize("/api/auth/**", permitAll)
                 authorize("/v3/api-docs", permitAll)
                 authorize("/api/v1/**", permitAll)
