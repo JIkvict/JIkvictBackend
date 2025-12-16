@@ -5,6 +5,8 @@ databaseChangeLog:
       file: db/changelog/0002-unidirectional-assignment-index.yaml
   - include:
       file: db/changelog/0002-changelog.yaml
+  - include:
+      file: db/changelog/0003-add-long-living-tokens.yaml
 
   - changeSet:
       id: recreate-zip-file-as-oid-2
