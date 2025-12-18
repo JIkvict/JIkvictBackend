@@ -46,6 +46,7 @@ class QueueStatusWebSocketBroadcastTest {
             queueStatusService,
             mockk<UserDetailsServiceImpl>(),
             messagingTemplate,
+            mockk(relaxed = true),
         )
     }
 

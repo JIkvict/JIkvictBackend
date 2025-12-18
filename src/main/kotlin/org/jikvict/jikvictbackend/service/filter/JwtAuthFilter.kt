@@ -52,4 +52,11 @@ class JwtAuthFilter(
 
         chain.doFilter(request, response)
     }
+
+    override fun shouldNotFilter(request: HttpServletRequest): Boolean {
+        val path = request.servletPath
+        return path.startsWith("/ws/") ||
+            path.startsWith("/app/") ||
+            path.startsWith("/topic/")
+    }
 }
