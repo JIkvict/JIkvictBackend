@@ -1,5 +1,6 @@
 package org.jikvict.jikvictbackend.controller
 
+import org.apache.logging.log4j.Logger
 import org.jikvict.jikvictbackend.model.response.QueueStatusDto
 import org.jikvict.jikvictbackend.service.UserDetailsServiceImpl
 import org.jikvict.jikvictbackend.service.queue.QueueStatusService
@@ -10,7 +11,6 @@ import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RestController
-import java.security.Principal
 
 @RestController
 @EnableScheduling
@@ -18,12 +18,13 @@ class QueueStatusController(
     private val queueStatusService: QueueStatusService,
     private val userDetailsService: UserDetailsServiceImpl,
     private val messagingTemplate: SimpMessagingTemplate,
+    private val log: Logger,
 ) {
 
     @MessageMapping("/queue-status")
     @SendTo("/topic/queue-status")
-    fun getQueueStatusWs(principal: Principal?): QueueStatusDto {
-        return buildQueueStatus(principal)
+    fun getQueueStatusWs(): QueueStatusDto {
+        return buildQueueStatus()
     }
 
     @Scheduled(fixedRate = 2000)
@@ -35,12 +36,18 @@ class QueueStatusController(
     }
 
     @GetMapping("/api/queue-status")
-    fun getQueueStatusHttp(principal: Principal?): QueueStatusDto {
-        return buildQueueStatus(principal)
+    fun getQueueStatusHttp(): QueueStatusDto {
+        return buildQueueStatus()
     }
 
 
-    private fun buildQueueStatus(principal: Principal?): QueueStatusDto {
+    private fun buildQueueStatus(): QueueStatusDto {
+        val principal = try {
+            userDetailsService.getCurrentUser()
+        } catch (e: Exception) {
+            log.error("Failed to get current user", e)
+            null
+        }
         if (principal == null) {
             return QueueStatusDto(
                 totalInQueue = 0,
@@ -49,7 +56,6 @@ class QueueStatusController(
                 estimatedTimeRemainingSeconds = null,
             )
         }
-        val user = userDetailsService.getCurrentUser()
-        return queueStatusService.getQueueStatus(user)
+        return queueStatusService.getQueueStatus(principal)
     }
 }
