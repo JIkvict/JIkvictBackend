@@ -1,5 +1,6 @@
 package org.jikvict.jikvictbackend.configuration
 
+import org.jikvict.jikvictbackend.service.filter.JwtWebSocketHandshakeInterceptor
 import org.springframework.context.annotation.Configuration
 import org.springframework.messaging.simp.config.MessageBrokerRegistry
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker
@@ -8,7 +9,9 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 
 @Configuration
 @EnableWebSocketMessageBroker
-class WebSocketConfig : WebSocketMessageBrokerConfigurer {
+class WebSocketConfig(
+    private val jwtWebSocketHandshakeInterceptor: JwtWebSocketHandshakeInterceptor,
+) : WebSocketMessageBrokerConfigurer {
     override fun configureMessageBroker(registry: MessageBrokerRegistry) {
         registry.enableSimpleBroker("/topic")
         registry.setApplicationDestinationPrefixes("/app")
@@ -17,6 +20,7 @@ class WebSocketConfig : WebSocketMessageBrokerConfigurer {
     override fun registerStompEndpoints(registry: StompEndpointRegistry) {
         registry.addEndpoint("/ws/queue-status")
             .setAllowedOriginPatterns("*")
+            .addInterceptors(jwtWebSocketHandshakeInterceptor)
             .withSockJS()
     }
 }

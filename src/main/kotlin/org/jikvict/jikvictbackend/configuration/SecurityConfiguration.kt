@@ -40,6 +40,9 @@ class SecurityConfiguration(
                 authorize("/api/v1/**", permitAll)
                 // Websocket
                 authorize("/ws/**", permitAll)
+                authorize("/app/**", permitAll)
+                authorize("/topic/**", permitAll)
+
                 authorize(anyRequest, authenticated)
             }
             sessionManagement {
