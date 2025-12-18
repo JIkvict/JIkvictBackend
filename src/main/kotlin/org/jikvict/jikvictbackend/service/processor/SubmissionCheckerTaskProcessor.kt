@@ -46,13 +46,17 @@ class SubmissionCheckerTaskProcessor(
             )
 
             val assignmentEntity =
-                assignmentRepository.findPropsById(message.additionalParams.assignmentId.toLong()) ?: throw ServiceException(
+                withContext(Dispatchers.IO) {
+                    assignmentRepository.findPropsById(message.additionalParams.assignmentId.toLong())
+                } ?: throw ServiceException(
                     HttpStatus.NOT_FOUND,
                     "Assignment with ID ${message.additionalParams.assignmentId} not found",
                 )
 
             val user =
-                userRepository.findUserById(message.additionalParams.userId) ?: throw ServiceException(
+                withContext(Dispatchers.IO) {
+                    userRepository.findUserById(message.additionalParams.userId)
+                } ?: throw ServiceException(
                     HttpStatus.NOT_FOUND,
                     "User not found",
                 )

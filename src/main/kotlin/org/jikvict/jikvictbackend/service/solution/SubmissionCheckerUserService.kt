@@ -15,6 +15,8 @@ import org.jikvict.testing.model.TestSuiteResult
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Service
 class SubmissionCheckerUserService(
@@ -33,9 +35,13 @@ class SubmissionCheckerUserService(
         user: User,
         isActive: () -> Boolean,
     ): TestSuiteResult {
-        val assignment = assignmentUserService.getAssignmentByIdForUser(assignmentId, user)
+        val assignment = withContext(Dispatchers.IO) {
+            assignmentUserService.getAssignmentByIdForUser(assignmentId, user)
+        }
         checkIsNotClosed(assignment.id)
-        checkUserCanSubmit(user, assignment.id)
+        withContext(Dispatchers.IO) {
+            checkUserCanSubmit(user, assignment.id)
+        }
         checkForAttemptsLimit(assignment.id, user)
         return submissionCheckerService.checkSubmission(assignment, solutionBytes, isActive)
     }

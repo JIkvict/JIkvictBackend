@@ -17,6 +17,7 @@ springdoc-openapi-gradle = "1.8.0"
 mapstruct = "1.6.0"
 spring-mockk = "4.0.2"
 axion = "1.20.1"
+caffeine = "3.1.8"
 
 [libraries]
 # Spring Boot
@@ -30,7 +31,9 @@ spring-boot-gradle-plugin = { module = "org.springframework.boot:spring-boot-gra
 spring-gradle-dependency-management = { module = "io.spring.gradle:dependency-management-plugin", version.ref = "dependency-management" }
 spring-openapi-gradle-plugin = { module = "org.springdoc:springdoc-openapi-gradle-plugin", version.ref = "springdoc-openapi-gradle" }
 spring-boot-starter-validation = { group = "org.springframework.boot", name = "spring-boot-starter-validation" }
+spring-boot-starter-websocket = { group = "org.springframework.boot", name = "spring-boot-starter-websocket" }
 spring-liquibase = { module = "org.liquibase:liquibase-core" }
+spring-boot-starter-cache = { group = "org.springframework.boot", name = "spring-boot-starter-cache" }
 
 # Spring Security
 spring-security-test = { group = "org.springframework.security", name = "spring-security-test" }
@@ -98,6 +101,9 @@ ldap = { module = "com.unboundid:unboundid-ldapsdk" }
 
 # Axion
 axion-release = { module = "pl.allegro.tech.build:axion-release-plugin", version.ref = "axion" }
+
+# Cache
+caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
 [bundles]
 test = [
     "spring-boot-starter-test",

@@ -11,10 +11,20 @@ interface AssignmentRepository : JpaRepository<Assignment, Long> {
         val id: Long
     }
 
+    interface AssignmentTimeoutProps {
+        val id: Long
+        val timeOutSeconds: Long
+    }
+
     @Query("select a.id as id, a.taskId as taskId from Assignment a where a.id = :id")
     fun findPropsById(
         @Param("id") id: Long,
     ): AssignmentProps?
+
+    @Query("select a.id as id, a.timeOutSeconds as timeOutSeconds from Assignment a where a.id in :ids")
+    fun findTimeoutsByIds(
+        @Param("ids") ids: Collection<Long>,
+    ): List<AssignmentTimeoutProps>
 
     @Query("select a from Assignment a join a.assignmentGroups g where g.id in :groupIds")
     fun findAllByGroupIds(
