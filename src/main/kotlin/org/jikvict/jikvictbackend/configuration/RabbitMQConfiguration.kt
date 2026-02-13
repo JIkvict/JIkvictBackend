@@ -6,9 +6,11 @@ import org.springframework.amqp.core.BindingBuilder
 import org.springframework.amqp.core.Declarable
 import org.springframework.amqp.core.Declarables
 import org.springframework.amqp.core.DirectExchange
+import org.springframework.amqp.core.MessageDeliveryMode
 import org.springframework.amqp.core.Queue
 import org.springframework.amqp.rabbit.connection.ConnectionFactory
 import org.springframework.amqp.rabbit.core.RabbitAdmin
+import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter
 import org.springframework.amqp.support.converter.MessageConverter
 import org.springframework.boot.context.properties.ConfigurationProperties
@@ -60,6 +62,23 @@ class RabbitMQConfiguration(
 
     @Bean
     fun messageConverter(): MessageConverter = Jackson2JsonMessageConverter()
+
+
+    @Bean
+    fun rabbitTemplate(
+        connectionFactory: ConnectionFactory,
+        messageConverter: MessageConverter,
+    ): RabbitTemplate {
+        return RabbitTemplate(connectionFactory).apply {
+            setMessageConverter(messageConverter)
+            setBeforePublishPostProcessors(
+                { message ->
+                    message.messageProperties.deliveryMode = MessageDeliveryMode.PERSISTENT
+                    message
+                },
+            )
+        }
+    }
 }
 
 @ConfigurationProperties("rabbitmq")

@@ -20,11 +20,6 @@ class TaskStatusController(
     private val userDetailsService: UserDetailsServiceImpl,
     private val submissionCheckerUserService: SubmissionCheckerUserService,
 ) {
-    /**
-     * Gets the status of an any task
-     * @param taskId The task ID
-     * @return A response with the task status and assignment ID if available
-     */
     @GetMapping("/status/{taskId}")
     fun getTaskStatus(
         @PathVariable taskId: Long,

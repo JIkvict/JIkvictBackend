@@ -14,7 +14,6 @@ dependencies {
     implementation(libs.spring.boot.starter.security)
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.validation)
-    implementation(libs.spring.boot.starter.websocket)
     implementation(libs.spring.boot.starter.cache)
     implementation(libs.jackson.module.kotlin)
     implementation(libs.springdoc.openapi.starter.webmvc.ui)

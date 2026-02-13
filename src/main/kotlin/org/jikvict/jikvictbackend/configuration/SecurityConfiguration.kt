@@ -38,10 +38,6 @@ class SecurityConfiguration(
                 authorize("/api/auth/**", permitAll)
                 authorize("/v3/api-docs", permitAll)
                 authorize("/api/v1/**", permitAll)
-                // Websocket
-                authorize("/ws/**", permitAll)
-                authorize("/app/**", permitAll)
-                authorize("/topic/**", permitAll)
 
                 authorize(anyRequest, authenticated)
             }

@@ -1,5 +1,6 @@
 package org.jikvict.jikvictbackend.controller
 
+import org.jikvict.jikvictbackend.annotation.OnlyTeacher
 import org.jikvict.jikvictbackend.model.domain.AssignmentInfo
 import org.jikvict.jikvictbackend.model.dto.AssignmentDto
 import org.jikvict.jikvictbackend.model.dto.CreateAssignmentDto
@@ -84,7 +85,7 @@ class AssignmentController(
         return assignmentDtoPage.toList()
     }
 
-    @PreAuthorize("hasRole('TEACHER')")
+    @OnlyTeacher
     @GetMapping("/{assignmentGroup}/all")
     fun getAllForAssignmentGroup(
         @PathVariable assignmentGroup: Long,
@@ -94,7 +95,7 @@ class AssignmentController(
         return ResponseEntity.ok(assignmentDtos)
     }
 
-    @PreAuthorize("hasRole('TEACHER')")
+    @OnlyTeacher
     @GetMapping("/all-for-groups")
     fun getAssignmentsForGroups(
         @RequestParam("groupIds") groupIds: List<Long>,
@@ -104,7 +105,7 @@ class AssignmentController(
         return ResponseEntity.ok(assignmentDtos)
     }
 
-    @PreAuthorize("hasRole('TEACHER')")
+    @OnlyTeacher
     @PostMapping
     fun createAssignment(
         @RequestBody assignmentDto: CreateAssignmentDto,
@@ -114,13 +115,13 @@ class AssignmentController(
         return ResponseEntity.ok(dto)
     }
 
-    @PreAuthorize("hasRole('TEACHER')")
+    @OnlyTeacher
     @GetMapping("/available-tasks")
     fun availableTasks(): ResponseEntity<List<Long>> {
         return ResponseEntity.ok(assignmentService.getAllAvailableTaskIds())
     }
 
-    @PreAuthorize("hasRole('TEACHER')")
+    @OnlyTeacher
     @PutMapping("/{id}")
     fun updateAssignment(
         @PathVariable id: Long,
@@ -137,14 +138,14 @@ class AssignmentController(
         return ResponseEntity.ok(assignmentMapper.toDto(updatedAssignment))
     }
 
-    @PreAuthorize("hasRole('TEACHER')")
+    @OnlyTeacher
     @PutMapping("/admin/{id}")
     fun getAssignmentAdmin(@PathVariable id: Long): ResponseEntity<AssignmentDto> {
         val assignment = assignmentRepository.findById(id).orElseThrow()
         return ResponseEntity.ok(assignmentMapper.toDto(assignment))
     }
 
-    @PreAuthorize("hasRole('TEACHER')")
+    @OnlyTeacher
     @DeleteMapping("/{id}")
     fun deleteAssignment(
         @PathVariable id: Long,
