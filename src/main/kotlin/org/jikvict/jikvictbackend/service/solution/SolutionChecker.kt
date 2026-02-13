@@ -17,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.UUID
-import kotlin.jvm.java
 import kotlin.streams.asSequence
 import kotlin.time.Duration.Companion.seconds
 
@@ -32,22 +31,25 @@ class SolutionChecker(
         solution: ByteArray,
         hiddenFiles: ByteArray,
         assignment: Assignment,
-        isActive: () -> Boolean
+        isActive: () -> Boolean,
     ): TestSuiteResult = execute(solution, hiddenFiles, assignment, isActive)
 
     private suspend fun execute(
         solution: ByteArray,
         hiddenFiles: ByteArray,
         assignmentDto: Assignment,
-        isActive: () -> Boolean
+        isActive: () -> Boolean,
     ): TestSuiteResult {
         val executionId = UUID.randomUUID().toString()
         val tempDir = Files.createTempDirectory("code-$executionId")
         logger.info("Created temporary directory: ${tempDir.toAbsolutePath()} for task: $executionId")
+
         val targetFile = tempDir.resolve("solution")
         Files.write(targetFile, solution)
+
         val hiddenTargetFile = tempDir.resolve("hidden-files")
         Files.write(hiddenTargetFile, hiddenFiles)
+
         val gradleCacheDir = Path.of("/tmp/gradle-cache", executionId)
         Files.createDirectories(gradleCacheDir)
 
@@ -61,6 +63,23 @@ class SolutionChecker(
             gradleCacheDir.grantAllPermissions()
         }
 
+        val totalMemoryBytes = assignmentDto.memoryLimit
+        val mb = 1024L * 1024L
+        val totalMemoryMB = totalMemoryBytes / mb
+
+        val wrapperHeapMB = 64L
+
+        val systemOverheadMB = 400L
+
+        var gradleHeapMB = totalMemoryMB - wrapperHeapMB - systemOverheadMB
+
+        if (gradleHeapMB < 256) {
+            logger.warn("Task $executionId: Low memory container ($totalMemoryMB MB). Forcing Gradle Heap to 256MB.")
+            gradleHeapMB = 256
+        }
+
+        logger.info("Task $executionId Memory Config: Total=${totalMemoryMB}MB. Allocating Gradle Xmx=${gradleHeapMB}MB, Wrapper Xmx=${wrapperHeapMB}MB")
+
         var resultsJson: String? = null
         val runner =
             dockerRunner("jikvict-solution-runner") {
@@ -68,11 +87,22 @@ class SolutionChecker(
 
                 withEnvs(
                     env("GRADLE_USER_HOME", "/gradle-cache"),
+
+                    env(
+                        "ORG_GRADLE_JVMARGS",
+                        "-Xmx${gradleHeapMB}m -XX:MaxMetaspaceSize=350m -Dkotlin.compiler.execution.strategy=in-process",
+                    ),
+
                     env(
                         "GRADLE_OPTS",
-                        "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Xmx512m -Dhttp.proxyHost=$proxyIp -Dhttp.proxyPort=3128 -Dhttps.proxyHost=$proxyIp -Dhttps.proxyPort=3128",
+                        "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Dhttp.proxyHost=$proxyIp -Dhttp.proxyPort=3128 -Dhttps.proxyHost=$proxyIp -Dhttps.proxyPort=3128",
                     ),
-                    env("JAVA_OPTS", "-Xmx256m -Xms128m -Dhttp.proxyHost=$proxyIp -Dhttp.proxyPort=3128 -Dhttps.proxyHost=$proxyIp -Dhttps.proxyPort=3128"),
+
+                    env(
+                        "JAVA_OPTS",
+                        "-Xmx${wrapperHeapMB}m -XX:MaxMetaspaceSize=128m -Dhttp.proxyHost=$proxyIp -Dhttp.proxyPort=3128 -Dhttps.proxyHost=$proxyIp -Dhttps.proxyPort=3128",
+                    ),
+
                     env("RESULTS_OUTPUT_DIR", "/app/input"),
                     env("http_proxy", "http://$proxyIp:3128"),
                     env("https_proxy", "http://$proxyIp:3128"),
@@ -82,7 +112,6 @@ class SolutionChecker(
 
                 withBinds(
                     Bind(tempDir.toString(), Volume("/app/input")),
-//                    Bind(gradleCacheDir.toString(), Volume("/gradle-cache")),
                 )
                 withMountedFilesConsumers(
                     { paths ->
@@ -138,9 +167,10 @@ class SolutionChecker(
                 runCatching {
                     objectMapper.readValue(resultsJson, TestSuiteResult::class.java)
                 }.onFailure {
+                    logger.error("Failed to parse results. Raw JSON content: ${resultsJson?.take(200)}...")
                     throw ServiceException(
                         HttpStatus.INTERNAL_SERVER_ERROR,
-                        "Failed to parse test results, probably the solution is invalid and no tests were executed",
+                        "Failed to parse test results. It's possible the solution crashed or timed out before generating a report.",
                     )
                 }.getOrNull()!!
 
@@ -157,12 +187,13 @@ class SolutionChecker(
 
     private fun cleanupDirectory(directory: Path) {
         try {
-            Files
-                .walk(directory)
-                .sorted(Comparator.reverseOrder())
-                .forEach(Files::delete)
+            if (Files.exists(directory)) {
+                Files.walk(directory)
+                    .sorted(Comparator.reverseOrder())
+                    .forEach(Files::delete)
+            }
         } catch (e: Exception) {
-            logger.error("Error cleaning up temporary directory", e)
+            logger.error("Error cleaning up temporary directory: $directory", e)
         }
     }
 }
