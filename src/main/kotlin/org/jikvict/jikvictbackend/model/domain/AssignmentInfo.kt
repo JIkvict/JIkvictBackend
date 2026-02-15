@@ -10,5 +10,5 @@ data class AssignmentInfo(
     val attemptsUsed: Int,
     val results: List<AssignmentResultDto> = emptyList(),
     val unacceptedSubmissions: List<UnacceptedSubmission>,
-    val author: UserDto
+    val author: UserDto,
 )

@@ -117,9 +117,7 @@ class AssignmentController(
 
     @OnlyTeacher
     @GetMapping("/available-tasks")
-    fun availableTasks(): ResponseEntity<List<Long>> {
-        return ResponseEntity.ok(assignmentService.getAllAvailableTaskIds())
-    }
+    fun availableTasks(): ResponseEntity<List<Long>> = ResponseEntity.ok(assignmentService.getAllAvailableTaskIds())
 
     @OnlyTeacher
     @PutMapping("/{id}")
@@ -140,7 +138,9 @@ class AssignmentController(
 
     @OnlyTeacher
     @PutMapping("/admin/{id}")
-    fun getAssignmentAdmin(@PathVariable id: Long): ResponseEntity<AssignmentDto> {
+    fun getAssignmentAdmin(
+        @PathVariable id: Long,
+    ): ResponseEntity<AssignmentDto> {
         val assignment = assignmentRepository.findById(id).orElseThrow()
         return ResponseEntity.ok(assignmentMapper.toDto(assignment))
     }

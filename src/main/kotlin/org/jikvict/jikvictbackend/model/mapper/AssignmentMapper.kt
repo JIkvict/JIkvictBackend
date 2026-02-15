@@ -32,15 +32,14 @@ abstract class AssignmentMapper {
     @Transactional
     abstract fun toEntity(assignmentDto: AssignmentDto): Assignment
 
-    fun mapAssignmentGroups(assignmentDto: AssignmentDto): Set<AssignmentGroup> {
-        return assignmentDto.assignmentGroupsIds.mapNotNull {
-            assignmentGroupRepository.findAssignmentGroupById(it)
-        }.toSet()
-    }
+    fun mapAssignmentGroups(assignmentDto: AssignmentDto): Set<AssignmentGroup> =
+        assignmentDto.assignmentGroupsIds
+            .mapNotNull {
+                assignmentGroupRepository.findAssignmentGroupById(it)
+            }.toSet()
 
-    fun mapDescription(assignmentDto: AssignmentDto): String {
-        return assignmentDto.description ?: gitService.getFileContentFromAssignmentRepo(Path.of("DESCRIPTION.md"), assignmentDto.taskId).toString(Charsets.UTF_8)
-    }
+    fun mapDescription(assignmentDto: AssignmentDto): String =
+        assignmentDto.description ?: gitService.getFileContentFromAssignmentRepo(Path.of("DESCRIPTION.md"), assignmentDto.taskId).toString(Charsets.UTF_8)
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "assignmentGroups", expression = "java(getAssignmentGroups(createAssignmentDto))")
@@ -59,6 +58,5 @@ abstract class AssignmentMapper {
 
     fun mapIsClosed(assignment: Assignment): Boolean = assignment.isClosed
 
-    protected fun getAssignmentGroupIds(assignment: Assignment): List<Long> =
-        assignment.assignmentGroups.map { it.id }
+    protected fun getAssignmentGroupIds(assignment: Assignment): List<Long> = assignment.assignmentGroups.map { it.id }
 }

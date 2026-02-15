@@ -87,22 +87,18 @@ class SolutionChecker(
 
                 withEnvs(
                     env("GRADLE_USER_HOME", "/gradle-cache"),
-
                     env(
                         "ORG_GRADLE_JVMARGS",
                         "-Xmx${gradleHeapMB}m -XX:MaxMetaspaceSize=350m -Dkotlin.compiler.execution.strategy=in-process",
                     ),
-
                     env(
                         "GRADLE_OPTS",
                         "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false -Dhttp.proxyHost=$proxyIp -Dhttp.proxyPort=3128 -Dhttps.proxyHost=$proxyIp -Dhttps.proxyPort=3128",
                     ),
-
                     env(
                         "JAVA_OPTS",
                         "-Xmx${wrapperHeapMB}m -XX:MaxMetaspaceSize=128m -Dhttp.proxyHost=$proxyIp -Dhttp.proxyPort=3128 -Dhttps.proxyHost=$proxyIp -Dhttps.proxyPort=3128",
                     ),
-
                     env("RESULTS_OUTPUT_DIR", "/app/input"),
                     env("http_proxy", "http://$proxyIp:3128"),
                     env("https_proxy", "http://$proxyIp:3128"),
@@ -188,7 +184,8 @@ class SolutionChecker(
     private fun cleanupDirectory(directory: Path) {
         try {
             if (Files.exists(directory)) {
-                Files.walk(directory)
+                Files
+                    .walk(directory)
                     .sorted(Comparator.reverseOrder())
                     .forEach(Files::delete)
             }

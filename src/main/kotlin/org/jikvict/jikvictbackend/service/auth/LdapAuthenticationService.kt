@@ -70,6 +70,8 @@ class LdapAuthenticationService {
     fun getUserData(
         username: String,
         key: String = "uid",
+        authUsername: String? = null,
+        authPassword: String? = null,
     ): LdapUserData? {
         if (username.isBlank()) {
             return null
@@ -78,7 +80,14 @@ class LdapAuthenticationService {
         val env = Hashtable<String, String>()
         env[Context.INITIAL_CONTEXT_FACTORY] = "com.sun.jndi.ldap.LdapCtxFactory"
         env[Context.PROVIDER_URL] = ldapUrl
-        env[Context.SECURITY_AUTHENTICATION] = "none"
+
+        if (authUsername != null && authPassword != null) {
+            env[Context.SECURITY_AUTHENTICATION] = "simple"
+            env[Context.SECURITY_PRINCIPAL] = "uid=$authUsername,$baseDn"
+            env[Context.SECURITY_CREDENTIALS] = authPassword
+        } else {
+            env[Context.SECURITY_AUTHENTICATION] = "none"
+        }
 
         return try {
             val context = InitialDirContext(env)

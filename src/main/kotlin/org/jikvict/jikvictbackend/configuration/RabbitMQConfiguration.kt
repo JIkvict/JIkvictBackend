@@ -63,13 +63,12 @@ class RabbitMQConfiguration(
     @Bean
     fun messageConverter(): MessageConverter = Jackson2JsonMessageConverter()
 
-
     @Bean
     fun rabbitTemplate(
         connectionFactory: ConnectionFactory,
         messageConverter: MessageConverter,
-    ): RabbitTemplate {
-        return RabbitTemplate(connectionFactory).apply {
+    ): RabbitTemplate =
+        RabbitTemplate(connectionFactory).apply {
             setMessageConverter(messageConverter)
             setBeforePublishPostProcessors(
                 { message ->
@@ -78,7 +77,6 @@ class RabbitMQConfiguration(
                 },
             )
         }
-    }
 }
 
 @ConfigurationProperties("rabbitmq")

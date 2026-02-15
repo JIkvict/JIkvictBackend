@@ -32,7 +32,11 @@ class LongLivingTokenService(
     }
 
     fun deleteForUser(userId: Long): Boolean =
-        longLivingTokenRepository.findByUserId(userId)
-            ?.let { longLivingTokenRepository.delete(it); true }
+        longLivingTokenRepository
+            .findByUserId(userId)
+            ?.let {
+                longLivingTokenRepository.delete(it)
+                true
+            }
             ?: false
 }

@@ -13,20 +13,17 @@ class QueueStatusController(
     private val userDetailsService: UserDetailsServiceImpl,
     private val log: Logger,
 ) {
-
     @GetMapping("/api/queue-status")
-    fun getQueueStatusHttp(): QueueStatusDto {
-        return buildQueueStatus()
-    }
-
+    fun getQueueStatusHttp(): QueueStatusDto = buildQueueStatus()
 
     private fun buildQueueStatus(): QueueStatusDto {
-        val principal = try {
-            userDetailsService.getCurrentUser()
-        } catch (e: Exception) {
-            log.error("Failed to get current user", e)
-            null
-        }
+        val principal =
+            try {
+                userDetailsService.getCurrentUser()
+            } catch (e: Exception) {
+                log.error("Failed to get current user", e)
+                null
+            }
         if (principal == null) {
             return QueueStatusDto(
                 totalInQueue = 0,

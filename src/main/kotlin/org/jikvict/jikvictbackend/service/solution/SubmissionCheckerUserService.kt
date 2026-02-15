@@ -35,9 +35,10 @@ class SubmissionCheckerUserService(
         user: User,
         isActive: () -> Boolean,
     ): TestSuiteResult {
-        val assignment = withContext(Dispatchers.IO) {
-            assignmentUserService.getAssignmentByIdForUser(assignmentId, user)
-        }
+        val assignment =
+            withContext(Dispatchers.IO) {
+                assignmentUserService.getAssignmentByIdForUser(assignmentId, user)
+            }
         checkIsNotClosed(assignment.id)
         withContext(Dispatchers.IO) {
             checkUserCanSubmit(user, assignment.id)

@@ -59,9 +59,10 @@ class TeacherStudentController(
 
     @PreAuthorize("hasRole('TEACHER')")
     @PostMapping("/teacher/assignment-info/{assignmentId}")
-    fun getAssignmentInfo(@PathVariable assignmentId: Long, @RequestBody request: StatsRequestDto): ResponseEntity<List<AssignmentInfo>> {
-        return ResponseEntity.ok(assignmentInfoUserService.getAssignmentInfoByUserGroupsAndUsers(assignmentId, request.userIds, request.groupIds))
-    }
+    fun getAssignmentInfo(
+        @PathVariable assignmentId: Long,
+        @RequestBody request: StatsRequestDto,
+    ): ResponseEntity<List<AssignmentInfo>> = ResponseEntity.ok(assignmentInfoUserService.getAssignmentInfoByUserGroupsAndUsers(assignmentId, request.userIds, request.groupIds))
 
     @Transactional
     @PreAuthorize("hasRole('TEACHER')")

@@ -27,11 +27,12 @@ class QueueStatusServiceTest {
         taskStatusRepository = mockk()
         assignmentCacheService = mockk()
         objectMapper = ObjectMapper()
-        queueStatusService = QueueStatusService(
-            taskStatusRepository,
-            assignmentCacheService,
-            objectMapper
-        )
+        queueStatusService =
+            QueueStatusService(
+                taskStatusRepository,
+                assignmentCacheService,
+                objectMapper,
+            )
     }
 
     @Test
@@ -47,10 +48,11 @@ class QueueStatusServiceTest {
 
         every { taskStatusRepository.findAllByStatus(PendingStatus.PENDING) } returns listOf(task1, task2, task3)
 
-        val timeoutProps = listOf(
-            createTimeoutProps(101L, 300L),
-            createTimeoutProps(102L, 300L)
-        )
+        val timeoutProps =
+            listOf(
+                createTimeoutProps(101L, 300L),
+                createTimeoutProps(102L, 300L),
+            )
         every { assignmentCacheService.getAssignmentTimeouts(listOf(101L, 102L)) } returns timeoutProps
 
         // When
@@ -98,10 +100,11 @@ class QueueStatusServiceTest {
 
         every { taskStatusRepository.findAllByStatus(PendingStatus.PENDING) } returns listOf(task1, task2, task3)
 
-        val timeoutProps = listOf(
-            createTimeoutProps(101L, 300L),
-            createTimeoutProps(102L, 600L)
-        )
+        val timeoutProps =
+            listOf(
+                createTimeoutProps(101L, 300L),
+                createTimeoutProps(102L, 600L),
+            )
         every { assignmentCacheService.getAssignmentTimeouts(listOf(101L, 102L)) } returns timeoutProps
 
         // When
@@ -152,12 +155,13 @@ class QueueStatusServiceTest {
     fun `getQueueStatus should handle missing assignmentId in parameters`() {
         // Given
         val user = createUser(1L, "user1")
-        val task = TaskStatus().apply {
-            id = 1L
-            this.user = user
-            createdAt = LocalDateTime.now()
-            parameters = """{"someOtherField": "value"}"""
-        }
+        val task =
+            TaskStatus().apply {
+                id = 1L
+                this.user = user
+                createdAt = LocalDateTime.now()
+                parameters = """{"someOtherField": "value"}"""
+            }
 
         every { taskStatusRepository.findAllByStatus(PendingStatus.PENDING) } returns listOf(task)
         every { assignmentCacheService.getAssignmentTimeouts(emptyList()) } returns emptyList()
@@ -172,15 +176,22 @@ class QueueStatusServiceTest {
         assertNull(result.estimatedTimeRemainingSeconds)
     }
 
-    private fun createUser(id: Long, username: String): User {
-        return User().apply {
+    private fun createUser(
+        id: Long,
+        username: String,
+    ): User =
+        User().apply {
             this.id = id
             this.userNameField = username
         }
-    }
 
-    private fun createTaskStatus(id: Long, user: User, assignmentId: Long, createdAt: LocalDateTime): TaskStatus {
-        return TaskStatus().apply {
+    private fun createTaskStatus(
+        id: Long,
+        user: User,
+        assignmentId: Long,
+        createdAt: LocalDateTime,
+    ): TaskStatus =
+        TaskStatus().apply {
             this.id = id
             this.user = user
             this.createdAt = createdAt
@@ -188,12 +199,13 @@ class QueueStatusServiceTest {
             this.status = PendingStatus.PENDING
             this.parameters = """{"assignmentId": $assignmentId, "originalFilename": "test.zip"}"""
         }
-    }
 
-    private fun createTimeoutProps(id: Long, timeoutSeconds: Long): AssignmentRepository.AssignmentTimeoutProps {
-        return object : AssignmentRepository.AssignmentTimeoutProps {
+    private fun createTimeoutProps(
+        id: Long,
+        timeoutSeconds: Long,
+    ): AssignmentRepository.AssignmentTimeoutProps =
+        object : AssignmentRepository.AssignmentTimeoutProps {
             override val id: Long = id
             override val timeOutSeconds: Long = timeoutSeconds
         }
-    }
 }

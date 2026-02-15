@@ -26,13 +26,15 @@ class QueueStatusService(
         val userTask =
             pendingTasks.firstOrNull { it.user.id == user.id }
 
-        val userTaskPosition = userTask?.let { task ->
-            pendingTasks.indexOfFirst { it.id == task.id } + 1
-        }
+        val userTaskPosition =
+            userTask?.let { task ->
+                pendingTasks.indexOfFirst { it.id == task.id } + 1
+            }
 
-        val estimatedTime = userTask?.let { task ->
-            calculateEstimatedTime(pendingTasks, task.id)
-        }
+        val estimatedTime =
+            userTask?.let { task ->
+                calculateEstimatedTime(pendingTasks, task.id)
+            }
 
         return QueueStatusDto(
             totalInQueue = totalInQueue,
@@ -51,33 +53,35 @@ class QueueStatusService(
         val totalInQueue = pendingTasks.size
 
         val assignmentIds =
-            pendingTasks.mapNotNull { task ->
-                runCatching {
-                    val node = objectMapper.readTree(task.parameters)
-                    node?.get("assignmentId")?.asLong()
-                }.getOrNull()
-            }.distinct()
+            pendingTasks
+                .mapNotNull { task ->
+                    runCatching {
+                        val node = objectMapper.readTree(task.parameters)
+                        node?.get("assignmentId")?.asLong()
+                    }.getOrNull()
+                }.distinct()
 
         val timeoutMap = assignmentCacheService.getAssignmentTimeouts(assignmentIds).associateBy { it.id }
 
-        return pendingTasks.mapIndexed { index, task ->
-            val assignmentId =
-                runCatching {
-                    val node = objectMapper.readTree(task.parameters)
-                    node?.get("assignmentId")?.asLong()
-                }.getOrNull()
+        return pendingTasks
+            .mapIndexed { index, task ->
+                val assignmentId =
+                    runCatching {
+                        val node = objectMapper.readTree(task.parameters)
+                        node?.get("assignmentId")?.asLong()
+                    }.getOrNull()
 
-            val timeoutSeconds = assignmentId?.let { timeoutMap[it]?.timeOutSeconds }
-            val estimatedTime = timeoutSeconds?.let { (index) * it }
+                val timeoutSeconds = assignmentId?.let { timeoutMap[it]?.timeOutSeconds }
+                val estimatedTime = timeoutSeconds?.let { (index) * it }
 
-            task.user.id to
-                QueueStatusDto(
-                    totalInQueue = totalInQueue,
-                    userTaskPosition = index + 1,
-                    userTaskId = task.id,
-                    estimatedTimeRemainingSeconds = estimatedTime,
-                )
-        }.toMap()
+                task.user.id to
+                    QueueStatusDto(
+                        totalInQueue = totalInQueue,
+                        userTaskPosition = index + 1,
+                        userTaskId = task.id,
+                        estimatedTimeRemainingSeconds = estimatedTime,
+                    )
+            }.toMap()
     }
 
     private fun calculateEstimatedTime(
@@ -88,12 +92,14 @@ class QueueStatusService(
         if (taskIndex < 0) return null
 
         val assignmentIds =
-            pendingTasks.take(taskIndex + 1).mapNotNull { task ->
-                runCatching {
-                    val node = objectMapper.readTree(task.parameters)
-                    node?.get("assignmentId")?.asLong()
-                }.getOrNull()
-            }.distinct()
+            pendingTasks
+                .take(taskIndex + 1)
+                .mapNotNull { task ->
+                    runCatching {
+                        val node = objectMapper.readTree(task.parameters)
+                        node?.get("assignmentId")?.asLong()
+                    }.getOrNull()
+                }.distinct()
 
         val timeoutMap = assignmentCacheService.getAssignmentTimeouts(assignmentIds).associateBy { it.id }
 

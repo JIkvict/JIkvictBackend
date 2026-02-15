@@ -60,6 +60,7 @@ jobs:
       - name: Commit OpenAPI docs into docs branch (no history rewrite)
         env:
           API_VERSION: ${{ steps.version.outputs.api_version }}
+          DOCKER_API_VERSION: 1.44
         run: |
           # Ensure we are on docs branch (create it if needed)
           if git ls-remote --heads origin docs | grep -q refs/heads/docs; then

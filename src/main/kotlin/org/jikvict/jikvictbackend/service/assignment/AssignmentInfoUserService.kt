@@ -28,7 +28,7 @@ class AssignmentInfoUserService(
     private val taskStatusService: TaskStatusService,
     private val taskStatusMapper: TaskStatusMapper,
     private val userRepository: UserRepository,
-    private val userMapper: UserMapper
+    private val userMapper: UserMapper,
 ) {
     @Transactional
     fun getAssignmentInfoForUser(
@@ -62,7 +62,7 @@ class AssignmentInfoUserService(
                 attemptsUsed = attemptsUsed,
                 results = mappedResults,
                 unacceptedSubmissions = mappedUnacceptedSubmission,
-                userMapper.toUserDto(user)
+                userMapper.toUserDto(user),
             )
         return assignmentInfo
     }
@@ -73,16 +73,18 @@ class AssignmentInfoUserService(
         userIds: List<Long>,
         groupIds: List<Long>,
     ): List<AssignmentInfo> {
-        val usersToSearch = if (userIds.isEmpty() && groupIds.isEmpty()) {
-            userRepository.findAll()
-        } else if (groupIds.isNotEmpty()) {
-            userRepository.findDistinctByAssignmentGroups_IdIn(groupIds)
-        } else {
-            userRepository.findAllById(userIds)
-        }
-        val result = usersToSearch.map { user ->
-            getAssignmentInfoForTeacher(assignmentId, user)
-        }
+        val usersToSearch =
+            if (userIds.isEmpty() && groupIds.isEmpty()) {
+                userRepository.findAll()
+            } else if (groupIds.isNotEmpty()) {
+                userRepository.findDistinctByAssignmentGroups_IdIn(groupIds)
+            } else {
+                userRepository.findAllById(userIds)
+            }
+        val result =
+            usersToSearch.map { user ->
+                getAssignmentInfoForTeacher(assignmentId, user)
+            }
         return result
     }
 
@@ -111,7 +113,7 @@ class AssignmentInfoUserService(
                 attemptsUsed = attemptsUsed,
                 results = mappedResults,
                 unacceptedSubmissions = mappedUnacceptedSubmission,
-                userMapper.toUserDto(user)
+                userMapper.toUserDto(user),
             )
         return assignmentInfo
     }

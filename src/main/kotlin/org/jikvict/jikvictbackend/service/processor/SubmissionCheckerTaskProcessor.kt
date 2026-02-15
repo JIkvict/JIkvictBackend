@@ -66,12 +66,11 @@ class SubmissionCheckerTaskProcessor(
                     userSolutionChecker.checkSubmission(
                         assignmentEntity.id,
                         message.additionalParams.solutionBytes,
-                        user
+                        user,
                     ) { !taskQueueService.isTaskCancelled(message.taskId) }
                 }
 
             if (!taskQueueService.isTaskCancelled(message.taskId)) {
-
                 withContext(Dispatchers.IO) {
                     assignmentResultService.handleAssignmentResult(assignmentEntity.id, result, user, message.additionalParams.solutionBytes)
                 }

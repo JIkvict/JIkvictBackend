@@ -23,7 +23,11 @@ class LdapAuthenticationProvider(
             throw BadCredentialsException("Invalid username or password")
         }
 
-        val ldapUserData = ldapAuthenticationService.getUserData(username) ?: throw BadCredentialsException("Invalid username or password")
+        val ldapUserData = ldapAuthenticationService.getUserData(
+            username = username,
+            authUsername = username,
+            authPassword = password
+        ) ?: throw BadCredentialsException("Invalid username or password")
 
         val user =
             userRepository

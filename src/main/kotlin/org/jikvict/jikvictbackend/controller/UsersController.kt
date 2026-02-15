@@ -30,10 +30,9 @@ class UsersController(
     fun getAllUsers(): ResponseEntity<List<UserDto>> = ResponseEntity.ok(userService.getAllUsers())
 
     @PreAuthorize("hasRole('TEACHER')")
-    @PostMapping("/of-group" )
-    fun getUsersOfGroup(dto:  UsersOfGroupsDto): ResponseEntity<List<UserDto>> {
-        return ResponseEntity.ok(userService.getUsersOfGroups(dto.groupIds))
-    }
+    @PostMapping("/of-group")
+    fun getUsersOfGroup(dto: UsersOfGroupsDto): ResponseEntity<List<UserDto>> = ResponseEntity.ok(userService.getUsersOfGroups(dto.groupIds))
+
     @PreAuthorize("hasRole('TEACHER')")
     @PostMapping
     fun registerUsers(
