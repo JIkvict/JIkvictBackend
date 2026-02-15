@@ -105,7 +105,7 @@ class LdapAuthenticationService {
         env[Context.INITIAL_CONTEXT_FACTORY] = "com.sun.jndi.ldap.LdapCtxFactory"
         env[Context.PROVIDER_URL] = ldapUrl
         env[Context.SECURITY_PROTOCOL] = "ssl"
-        env["java.naming.ldap.factory.socket"] = DummySSLSocketFactory::class.java.name
+        env["java.naming.ldap.factory.socket"] = LdapBlindSocketFactory::class.java.name
 
         if (authUsername != null && authPassword != null) {
             env[Context.SECURITY_AUTHENTICATION] = "simple"
@@ -156,34 +156,45 @@ class LdapAuthenticationService {
 }
 
 
-class DummySSLSocketFactory : SSLSocketFactory() {
+class LdapBlindSocketFactory {
+    companion object {
+        @JvmStatic
+        fun getDefault(): SocketFactory {
+            return BlindSSLSocketFactory()
+        }
+    }
+}
+
+private class BlindSSLSocketFactory : SSLSocketFactory() {
     private val factory: SSLSocketFactory
 
     init {
-        // Создаем TrustManager, который вообще ничего не проверяет
-        val trustAllCerts = arrayOf<TrustManager>(
-            object : X509TrustManager {
-                override fun getAcceptedIssuers(): Array<X509Certificate> = emptyArray()
-                override fun checkClientTrusted(certs: Array<X509Certificate>, authType: String) {}
-                override fun checkServerTrusted(certs: Array<X509Certificate>, authType: String) {}
-            },
-        )
+        val trustAllCerts = arrayOf<TrustManager>(object : X509TrustManager {
+            override fun getAcceptedIssuers(): Array<X509Certificate> = emptyArray()
+            override fun checkClientTrusted(certs: Array<X509Certificate>, authType: String) {}
+            override fun checkServerTrusted(certs: Array<X509Certificate>, authType: String) {}
+        })
 
         val sslContext = SSLContext.getInstance("TLS")
         sslContext.init(null, trustAllCerts, SecureRandom())
         factory = sslContext.socketFactory
     }
 
-    companion object {
-        @JvmStatic
-        fun getDefault(): SocketFactory = DummySSLSocketFactory()
-    }
-
     override fun getDefaultCipherSuites(): Array<String> = factory.defaultCipherSuites
     override fun getSupportedCipherSuites(): Array<String> = factory.supportedCipherSuites
-    override fun createSocket(s: Socket?, host: String?, port: Int, autoClose: Boolean) = factory.createSocket(s, host, port, autoClose)
-    override fun createSocket(host: String?, port: Int) = factory.createSocket(host, port)
-    override fun createSocket(host: String?, port: Int, localHost: InetAddress?, localPort: Int) = factory.createSocket(host, port, localHost, localPort)
-    override fun createSocket(host: InetAddress?, port: Int) = factory.createSocket(host, port)
-    override fun createSocket(address: InetAddress?, port: Int, localAddress: InetAddress?, localPort: Int) = factory.createSocket(address, port, localAddress, localPort)
+
+    override fun createSocket(s: Socket?, host: String?, port: Int, autoClose: Boolean): Socket =
+        factory.createSocket(s, host, port, autoClose)
+
+    override fun createSocket(host: String?, port: Int): Socket =
+        factory.createSocket(host, port)
+
+    override fun createSocket(host: String?, port: Int, localHost: InetAddress?, localPort: Int): Socket =
+        factory.createSocket(host, port, localHost, localPort)
+
+    override fun createSocket(host: InetAddress?, port: Int): Socket =
+        factory.createSocket(host, port)
+
+    override fun createSocket(address: InetAddress?, port: Int, localAddress: InetAddress?, localPort: Int): Socket =
+        factory.createSocket(address, port, localAddress, localPort)
 }
