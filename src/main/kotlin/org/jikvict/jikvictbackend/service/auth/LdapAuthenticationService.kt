@@ -35,7 +35,7 @@ class LdapConfig {
         val baseEnvironment = mutableMapOf<String, Any>(
             "com.sun.jndi.ldap.connect.timeout" to "10000",
             "com.sun.jndi.ldap.read.timeout" to "10000",
-            "com.sun.jndi.ldap.connect.pool" to "true",
+            "com.sun.jndi.ldap.connect.pool" to "false",
             "com.sun.jndi.ldap.connect.pool.timeout" to "300000"
         )
         contextSource.setBaseEnvironmentProperties(baseEnvironment)
