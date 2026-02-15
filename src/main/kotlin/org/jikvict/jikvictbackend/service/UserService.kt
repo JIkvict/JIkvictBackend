@@ -80,7 +80,7 @@ class UserService(
         }
 
         val ldapUserData =
-            ldapAuthenticationService.getUserData(aisId, "uisId")
+            ldapAuthenticationService.getUserData(aisId, "uid")
                 ?: return null
 
         val existingUser = userRepository.findByAisId(aisId)
