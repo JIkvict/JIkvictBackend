@@ -1,18 +1,20 @@
 package org.jikvict.jikvictbackend.service.auth
 
 import org.apache.logging.log4j.LogManager
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+import org.springframework.ldap.core.LdapTemplate
+import org.springframework.ldap.core.support.LdapContextSource
+import org.springframework.ldap.core.support.SimpleDirContextAuthenticationStrategy
 import org.springframework.stereotype.Service
-import java.net.InetAddress
-import java.net.Socket
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
 import java.util.Hashtable
 import javax.naming.Context
 import javax.naming.directory.InitialDirContext
 import javax.naming.directory.SearchControls
-import javax.net.SocketFactory
+import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLContext
-import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
 
@@ -22,6 +24,24 @@ data class LdapUserData(
     val aisId: String,
 )
 
+@Configuration
+class LdapConfig {
+    @Bean
+    fun ldapContextSource(): LdapContextSource {
+        // Настраиваем бин для Spring LDAP (если используете LdapTemplate)
+        val contextSource = LdapContextSource()
+        contextSource.setUrl("ldaps://ldap.stuba.sk:636")
+        contextSource.setBase("ou=People,dc=stuba,dc=sk")
+        contextSource.setAuthenticationStrategy(SimpleDirContextAuthenticationStrategy())
+        return contextSource
+    }
+
+    @Bean
+    fun ldapTemplate(contextSource: LdapContextSource): LdapTemplate {
+        return LdapTemplate(contextSource)
+    }
+}
+
 @Service
 class LdapAuthenticationService {
     private val logger = LogManager.getLogger(this::class.java)
@@ -29,6 +49,25 @@ class LdapAuthenticationService {
     private val baseDn = "ou=People,dc=stuba,dc=sk"
 
     init {
+        try {
+            val trustAllCerts = arrayOf<TrustManager>(object : X509TrustManager {
+                override fun getAcceptedIssuers(): Array<X509Certificate>? = null
+                override fun checkClientTrusted(certs: Array<X509Certificate>, authType: String) {}
+                override fun checkServerTrusted(certs: Array<X509Certificate>, authType: String) {}
+            })
+
+            val sc = SSLContext.getInstance("TLS")
+            sc.init(null, trustAllCerts, SecureRandom())
+
+            // Устанавливаем этот контекст как глобальный дефолт для всей JVM
+            SSLContext.setDefault(sc)
+            HttpsURLConnection.setDefaultSSLSocketFactory(sc.socketFactory)
+
+            logger.warn("Global SSL validation disabled to fix LDAP Docker connection.")
+        } catch (e: Exception) {
+            logger.error("Failed to disable SSL validation", e)
+        }
+
         System.setProperty("https.protocols", "TLSv1.2,TLSv1.3")
         System.setProperty("jdk.tls.client.protocols", "TLSv1.2,TLSv1.3")
     }
@@ -52,7 +91,9 @@ class LdapAuthenticationService {
         env[Context.SECURITY_PRINCIPAL] = userDn
         env[Context.SECURITY_CREDENTIALS] = password
         env[Context.SECURITY_PROTOCOL] = "ssl"
-        env["java.naming.ldap.factory.socket"] = LdapBlindSocketFactory::class.java.name
+
+        // Убрали строку с factory.socket — она больше не нужна, так как мы подменили дефолт.
+
         return try {
             val context = InitialDirContext(env)
             context.close()
@@ -105,7 +146,6 @@ class LdapAuthenticationService {
         env[Context.INITIAL_CONTEXT_FACTORY] = "com.sun.jndi.ldap.LdapCtxFactory"
         env[Context.PROVIDER_URL] = ldapUrl
         env[Context.SECURITY_PROTOCOL] = "ssl"
-        env["java.naming.ldap.factory.socket"] = LdapBlindSocketFactory::class.java.name
 
         if (authUsername != null && authPassword != null) {
             env[Context.SECURITY_AUTHENTICATION] = "simple"
@@ -153,48 +193,4 @@ class LdapAuthenticationService {
             null
         }
     }
-}
-
-
-class LdapBlindSocketFactory {
-    companion object {
-        @JvmStatic
-        fun getDefault(): SocketFactory {
-            return BlindSSLSocketFactory()
-        }
-    }
-}
-
-private class BlindSSLSocketFactory : SSLSocketFactory() {
-    private val factory: SSLSocketFactory
-
-    init {
-        val trustAllCerts = arrayOf<TrustManager>(object : X509TrustManager {
-            override fun getAcceptedIssuers(): Array<X509Certificate> = emptyArray()
-            override fun checkClientTrusted(certs: Array<X509Certificate>, authType: String) {}
-            override fun checkServerTrusted(certs: Array<X509Certificate>, authType: String) {}
-        })
-
-        val sslContext = SSLContext.getInstance("TLS")
-        sslContext.init(null, trustAllCerts, SecureRandom())
-        factory = sslContext.socketFactory
-    }
-
-    override fun getDefaultCipherSuites(): Array<String> = factory.defaultCipherSuites
-    override fun getSupportedCipherSuites(): Array<String> = factory.supportedCipherSuites
-
-    override fun createSocket(s: Socket?, host: String?, port: Int, autoClose: Boolean): Socket =
-        factory.createSocket(s, host, port, autoClose)
-
-    override fun createSocket(host: String?, port: Int): Socket =
-        factory.createSocket(host, port)
-
-    override fun createSocket(host: String?, port: Int, localHost: InetAddress?, localPort: Int): Socket =
-        factory.createSocket(host, port, localHost, localPort)
-
-    override fun createSocket(host: InetAddress?, port: Int): Socket =
-        factory.createSocket(host, port)
-
-    override fun createSocket(address: InetAddress?, port: Int, localAddress: InetAddress?, localPort: Int): Socket =
-        factory.createSocket(address, port, localAddress, localPort)
 }
