@@ -20,6 +20,11 @@ class LdapAuthenticationService {
     private val ldapUrl = "ldaps://ldap.stuba.sk:636"
     private val baseDn = "ou=People,dc=stuba,dc=sk"
 
+    init {
+        System.setProperty("https.protocols", "TLSv1.2,TLSv1.3")
+        System.setProperty("jdk.tls.client.protocols", "TLSv1.2,TLSv1.3")
+    }
+
     fun authenticate(
         username: String,
         password: String,
@@ -38,6 +43,7 @@ class LdapAuthenticationService {
         env[Context.SECURITY_AUTHENTICATION] = "simple"
         env[Context.SECURITY_PRINCIPAL] = userDn
         env[Context.SECURITY_CREDENTIALS] = password
+        env[Context.SECURITY_PROTOCOL] = "ssl"
 
         return try {
             val context = InitialDirContext(env)
@@ -59,6 +65,7 @@ class LdapAuthenticationService {
         env[Context.INITIAL_CONTEXT_FACTORY] = "com.sun.jndi.ldap.LdapCtxFactory"
         env[Context.PROVIDER_URL] = ldapUrl
         env[Context.SECURITY_AUTHENTICATION] = "none"
+        env[Context.SECURITY_PROTOCOL] = "ssl"
 
         return try {
             val context = InitialDirContext(env)
@@ -89,6 +96,7 @@ class LdapAuthenticationService {
         val env = Hashtable<String, String>()
         env[Context.INITIAL_CONTEXT_FACTORY] = "com.sun.jndi.ldap.LdapCtxFactory"
         env[Context.PROVIDER_URL] = ldapUrl
+        env[Context.SECURITY_PROTOCOL] = "ssl"
 
         if (authUsername != null && authPassword != null) {
             env[Context.SECURITY_AUTHENTICATION] = "simple"
