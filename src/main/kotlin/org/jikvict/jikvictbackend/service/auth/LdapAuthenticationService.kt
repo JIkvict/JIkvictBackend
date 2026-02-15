@@ -1,18 +1,18 @@
+
 package org.jikvict.jikvictbackend.service.auth
 
 import org.apache.logging.log4j.LogManager
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.ldap.core.AttributesMapper
 import org.springframework.ldap.core.LdapTemplate
 import org.springframework.ldap.core.support.LdapContextSource
-import org.springframework.ldap.core.support.SimpleDirContextAuthenticationStrategy
+import org.springframework.ldap.filter.EqualsFilter
+import org.springframework.ldap.query.LdapQueryBuilder
 import org.springframework.stereotype.Service
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
-import java.util.Hashtable
-import javax.naming.Context
-import javax.naming.directory.InitialDirContext
-import javax.naming.directory.SearchControls
+import javax.naming.directory.Attributes
 import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
@@ -26,27 +26,6 @@ data class LdapUserData(
 
 @Configuration
 class LdapConfig {
-    @Bean
-    fun ldapContextSource(): LdapContextSource {
-        // Настраиваем бин для Spring LDAP (если используете LdapTemplate)
-        val contextSource = LdapContextSource()
-        contextSource.setUrl("ldaps://ldap.stuba.sk:636")
-        contextSource.setBase("ou=People,dc=stuba,dc=sk")
-        contextSource.setAuthenticationStrategy(SimpleDirContextAuthenticationStrategy())
-        return contextSource
-    }
-
-    @Bean
-    fun ldapTemplate(contextSource: LdapContextSource): LdapTemplate {
-        return LdapTemplate(contextSource)
-    }
-}
-
-@Service
-class LdapAuthenticationService {
-    private val logger = LogManager.getLogger(this::class.java)
-    private val ldapUrl = "ldaps://ldap.stuba.sk:636"
-    private val baseDn = "ou=People,dc=stuba,dc=sk"
 
     init {
         try {
@@ -58,45 +37,54 @@ class LdapAuthenticationService {
 
             val sc = SSLContext.getInstance("TLS")
             sc.init(null, trustAllCerts, SecureRandom())
-
-            // Устанавливаем этот контекст как глобальный дефолт для всей JVM
             SSLContext.setDefault(sc)
             HttpsURLConnection.setDefaultSSLSocketFactory(sc.socketFactory)
 
-            logger.warn("Global SSL validation disabled to fix LDAP Docker connection.")
-        } catch (e: Exception) {
-            logger.error("Failed to disable SSL validation", e)
-        }
+            System.setProperty("https.protocols", "TLSv1.2,TLSv1.3")
+            System.setProperty("jdk.tls.client.protocols", "TLSv1.2,TLSv1.3")
 
-        System.setProperty("https.protocols", "TLSv1.2,TLSv1.3")
-        System.setProperty("jdk.tls.client.protocols", "TLSv1.2,TLSv1.3")
+            LogManager.getLogger(this::class.java).warn("Global SSL validation disabled for LDAP")
+        } catch (e: Exception) {
+            LogManager.getLogger(this::class.java).error("Failed to disable SSL validation", e)
+        }
     }
 
-    fun authenticate(
-        username: String,
-        password: String,
-    ): Boolean {
+    @Bean
+    fun ldapContextSource(): LdapContextSource {
+        val contextSource = LdapContextSource()
+        contextSource.setUrl("ldaps://ldap.stuba.sk:636")
+        contextSource.setBase("ou=People,dc=stuba,dc=sk")
+        contextSource.isAnonymousReadOnly = true
+        contextSource.afterPropertiesSet()
+        return contextSource
+    }
+
+    @Bean
+    fun ldapTemplate(contextSource: LdapContextSource): LdapTemplate {
+        return LdapTemplate(contextSource)
+    }
+}
+
+@Service
+class LdapAuthenticationService(
+    private val ldapTemplate: LdapTemplate
+) {
+    private val logger = LogManager.getLogger(this::class.java)
+
+    fun authenticate(username: String, password: String): Boolean {
         if (username.isBlank() || password.isBlank()) {
             logger.warn("Authentication failed: username or password is blank")
             return false
         }
 
-        val userDn = "uid=$username,$baseDn"
-        logger.info("Attempting LDAP authentication for user: $username with DN: $userDn")
-        val env = Hashtable<String, String>()
-
-        env[Context.INITIAL_CONTEXT_FACTORY] = "com.sun.jndi.ldap.LdapCtxFactory"
-        env[Context.PROVIDER_URL] = ldapUrl
-        env[Context.SECURITY_AUTHENTICATION] = "simple"
-        env[Context.SECURITY_PRINCIPAL] = userDn
-        env[Context.SECURITY_CREDENTIALS] = password
-        env[Context.SECURITY_PROTOCOL] = "ssl"
-
-        // Убрали строку с factory.socket — она больше не нужна, так как мы подменили дефолт.
+        logger.info("Attempting LDAP authentication for user: $username")
 
         return try {
-            val context = InitialDirContext(env)
-            context.close()
+            ldapTemplate.authenticate(
+                "",
+                EqualsFilter("uid", username).encode(),
+                password
+            )
             logger.info("LDAP authentication successful for user: $username")
             true
         } catch (e: Exception) {
@@ -110,22 +98,17 @@ class LdapAuthenticationService {
             return false
         }
 
-        val env = Hashtable<String, String>()
-        env[Context.INITIAL_CONTEXT_FACTORY] = "com.sun.jndi.ldap.LdapCtxFactory"
-        env[Context.PROVIDER_URL] = ldapUrl
-        env[Context.SECURITY_AUTHENTICATION] = "none"
-        env[Context.SECURITY_PROTOCOL] = "ssl"
-
         return try {
-            val context = InitialDirContext(env)
-            val searchControls = SearchControls()
-            searchControls.searchScope = SearchControls.SUBTREE_SCOPE
+            val query = LdapQueryBuilder.query()
+                .where("uid").`is`(username)
 
-            val results = context.search(baseDn, "uid=$username", searchControls)
-            val exists = results.hasMore()
-            context.close()
-            exists
+            val results = ldapTemplate.search(query, AttributesMapper<String> { attrs ->
+                attrs["uid"]?.get()?.toString()
+            }).toList()
+
+            results.isNotEmpty()
         } catch (e: Exception) {
+            logger.error("Error checking if user exists: $username - ${e.message}", e)
             false
         }
     }
@@ -142,52 +125,45 @@ class LdapAuthenticationService {
         }
 
         logger.info("Getting user data for: $username (auth: ${authUsername != null})")
-        val env = Hashtable<String, String>()
-        env[Context.INITIAL_CONTEXT_FACTORY] = "com.sun.jndi.ldap.LdapCtxFactory"
-        env[Context.PROVIDER_URL] = ldapUrl
-        env[Context.SECURITY_PROTOCOL] = "ssl"
-
-        if (authUsername != null && authPassword != null) {
-            env[Context.SECURITY_AUTHENTICATION] = "simple"
-            env[Context.SECURITY_PRINCIPAL] = "uid=$authUsername,$baseDn"
-            env[Context.SECURITY_CREDENTIALS] = authPassword
-            logger.debug("Using authenticated search")
-        } else {
-            env[Context.SECURITY_AUTHENTICATION] = "none"
-            logger.debug("Using anonymous search")
-        }
 
         return try {
-            val context = InitialDirContext(env)
-            val searchControls = SearchControls()
-            searchControls.searchScope = SearchControls.SUBTREE_SCOPE
-            searchControls.returningAttributes = arrayOf("mail", "uisId", "uid")
-
-            val results = context.search(baseDn, "$key=$username", searchControls)
-
-            if (results.hasMore()) {
-                val result = results.next()
-                val attributes = result.attributes
-
-                val email = attributes[("mail")]?.get()?.toString()
-                val aisId = attributes[("uisId")]?.get()?.toString()
-                val aisName = attributes[("uid")]?.get()?.toString()
-
-                logger.info("Found user data: email=$email, aisId=$aisId, aisName=$aisName")
-
-                if (email == null || aisId == null || aisName == null) {
-                    logger.warn("Incomplete user data for: $username")
-                    context.close()
-                    return null
+            val template = if (authUsername != null && authPassword != null) {
+                val authContextSource = LdapContextSource().apply {
+                    setUrl("ldaps://ldap.stuba.sk:636")
+                    setBase("ou=People,dc=stuba,dc=sk")
+                    userDn = "uid=$authUsername,ou=People,dc=stuba,dc=sk"
+                    setPassword(authPassword)
+                    afterPropertiesSet()
                 }
-
-                context.close()
-                LdapUserData(aisName, email, aisId)
+                LdapTemplate(authContextSource)
             } else {
-                context.close()
-                logger.warn("No user data found for: $username")
-                null
+                ldapTemplate
             }
+
+            val query = LdapQueryBuilder.query()
+                .where(key).`is`(username)
+
+            val results = template.search(query) { attrs: Attributes ->
+                val email = attrs["mail"]?.get()?.toString()
+                val aisId = attrs["uisId"]?.get()?.toString()
+                val aisName = attrs["uid"]?.get()?.toString()
+
+                if (email != null && aisId != null && aisName != null) {
+                    LdapUserData(aisName, email, aisId)
+                } else {
+                    null
+                }
+            }.toList()
+
+            val userData = results.firstOrNull()
+
+            if (userData != null) {
+                logger.info("Found user data: ${userData.email}, ${userData.aisId}, ${userData.username}")
+            } else {
+                logger.warn("No user data found for: $username")
+            }
+
+            userData
         } catch (e: Exception) {
             logger.error("getUserData failed for user: $username - ${e.message}", e)
             null
