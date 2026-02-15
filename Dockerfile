@@ -2,7 +2,7 @@ FROM bellsoft/liberica-openjdk-debian:21
 LABEL authors="antonhorobets"
 
 RUN apt-get update && \
-    apt-get install -y tzdata ca-certificates openssl && \
+    apt-get install -y tzdata ca-certificates openssl ldap-utils && \
     ln -sf /usr/share/zoneinfo/Europe/Prague /etc/localtime && \
     echo "Europe/Prague" > /etc/timezone && \
     update-ca-certificates && \

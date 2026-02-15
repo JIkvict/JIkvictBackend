@@ -2,15 +2,10 @@
 package org.jikvict.jikvictbackend.service.auth
 
 import org.apache.logging.log4j.LogManager
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
-import org.springframework.ldap.core.AttributesMapper
-import org.springframework.ldap.core.LdapTemplate
-import org.springframework.ldap.core.support.LdapContextSource
-import org.springframework.ldap.filter.EqualsFilter
-import org.springframework.ldap.query.LdapQueryBuilder
 import org.springframework.stereotype.Service
-import javax.naming.directory.Attributes
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.util.concurrent.TimeUnit
 
 data class LdapUserData(
     val username: String,
@@ -18,45 +13,12 @@ data class LdapUserData(
     val aisId: String,
 )
 
-
-@Configuration
-class LdapConfig {
-
-    @Bean
-    fun ldapContextSource(): LdapContextSource {
-        val contextSource = LdapContextSource()
-        contextSource.setUrl("ldaps://ldap.stuba.sk:636")
-        contextSource.setBase("ou=People,dc=stuba,dc=sk")
-
-        contextSource.isAnonymousReadOnly = false
-
-        contextSource.isPooled = true
-
-        val baseEnvironment = mutableMapOf<String, Any>(
-            "com.sun.jndi.ldap.connect.timeout" to "10000",
-            "com.sun.jndi.ldap.read.timeout" to "10000",
-            "com.sun.jndi.ldap.connect.pool" to "false",
-            "com.sun.jndi.ldap.connect.pool.timeout" to "300000"
-        )
-        contextSource.setBaseEnvironmentProperties(baseEnvironment)
-
-        contextSource.afterPropertiesSet()
-
-        LogManager.getLogger(this::class.java).info("LDAP configured for ldaps://ldap.stuba.sk:636")
-
-        return contextSource
-    }
-
-    @Bean
-    fun ldapTemplate(contextSource: LdapContextSource): LdapTemplate {
-        return LdapTemplate(contextSource)
-    }
-}
 @Service
-class LdapAuthenticationService(
-    private val ldapTemplate: LdapTemplate
-) {
+class LdapAuthenticationService {
     private val logger = LogManager.getLogger(this::class.java)
+
+    private val ldapUrl = "ldaps://ldap.stuba.sk:636"
+    private val baseDn = "ou=People,dc=stuba,dc=sk"
 
     fun authenticate(username: String, password: String): Boolean {
         if (username.isBlank() || password.isBlank()) {
@@ -64,48 +26,72 @@ class LdapAuthenticationService(
             return false
         }
 
-        logger.info("Attempting LDAP authentication for user: $username")
+        logger.info("Attempting LDAP authentication for user: $username via ldapsearch")
 
         return try {
-            val authContextSource = LdapContextSource().apply {
-                setUrl("ldaps://ldap.stuba.sk:636")
-                setBase("ou=People,dc=stuba,dc=sk")
-                userDn = "uid=$username,ou=People,dc=stuba,dc=sk"
-                setPassword(password)
+            val bindDn = "uid=$username,$baseDn"
 
-                val baseEnvironment = mutableMapOf<String, Any>(
-                    "com.sun.jndi.ldap.connect.timeout" to "10000",
-                    "com.sun.jndi.ldap.read.timeout" to "10000"
-                )
-                setBaseEnvironmentProperties(baseEnvironment)
+            val process = ProcessBuilder(
+                "ldapsearch",
+                "-x",
+                "-H", ldapUrl,
+                "-D", bindDn,
+                "-w", password,
+                "-b", baseDn,
+                "(uid=$username)",
+                "uid"
+            ).redirectErrorStream(true)
+                .start()
 
-                afterPropertiesSet()
+            val exitCode = process.waitFor(10, TimeUnit.SECONDS)
+
+            if (!exitCode) {
+                logger.error("LDAP authentication timeout for user: $username")
+                process.destroyForcibly()
+                return false
             }
 
-            val context = authContextSource.readOnlyContext
-            context.close()
+            val result = process.exitValue()
 
-            logger.info("LDAP authentication successful for user: $username")
-            true
+            if (result == 0) {
+                logger.info("LDAP authentication successful for user: $username")
+                true
+            } else {
+                logger.warn("LDAP authentication failed for user: $username, exit code: $result")
+                false
+            }
         } catch (e: Exception) {
             logger.error("LDAP authentication failed for user: $username - ${e.message}", e)
             false
         }
     }
+
     fun userExists(username: String): Boolean {
         if (username.isBlank()) {
             return false
         }
 
         return try {
-            val query = LdapQueryBuilder.query()
-                .where("uid").`is`(username)
+            val process = ProcessBuilder(
+                "ldapsearch",
+                "-x",
+                "-H", ldapUrl,
+                "-b", baseDn,
+                "(uid=$username)",
+                "uid"
+            ).redirectErrorStream(true)
+                .start()
 
-            val results = ldapTemplate.search(query, AttributesMapper<String> { attrs ->
-                attrs["uid"]?.get()?.toString()
-            }).toList()
+            val exitCode = process.waitFor(10, TimeUnit.SECONDS)
 
-            results.isNotEmpty()
+            if (!exitCode) {
+                process.destroyForcibly()
+                return false
+            }
+
+            val output = BufferedReader(InputStreamReader(process.inputStream)).use { it.readText() }
+
+            process.exitValue() == 0 && output.contains("uid: $username")
         } catch (e: Exception) {
             logger.error("Error checking if user exists: $username - ${e.message}", e)
             false
@@ -126,45 +112,72 @@ class LdapAuthenticationService(
         logger.info("Getting user data for: $username (auth: ${authUsername != null})")
 
         return try {
-            val template = if (authUsername != null && authPassword != null) {
-                val authContextSource = LdapContextSource().apply {
-                    setUrl("ldaps://ldap.stuba.sk:636")
-                    setBase("ou=People,dc=stuba,dc=sk")
-                    userDn = "uid=$authUsername,ou=People,dc=stuba,dc=sk"
-                    setPassword(authPassword)
-                    afterPropertiesSet()
-                }
-                LdapTemplate(authContextSource)
-            } else {
-                ldapTemplate
+            val commands = mutableListOf(
+                "ldapsearch",
+                "-x",
+                "-H", ldapUrl
+            )
+
+            if (authUsername != null && authPassword != null) {
+                val bindDn = "uid=$authUsername,$baseDn"
+                commands.addAll(listOf("-D", bindDn, "-w", authPassword))
             }
 
-            val query = LdapQueryBuilder.query()
-                .where(key).`is`(username)
+            commands.addAll(listOf(
+                "-b", baseDn,
+                "($key=$username)",
+                "mail", "uisId", "uid"
+            ))
 
-            val results = template.search(query) { attrs: Attributes ->
-                val email = attrs["mail"]?.get()?.toString()
-                val aisId = attrs["uisId"]?.get()?.toString()
-                val aisName = attrs["uid"]?.get()?.toString()
+            val process = ProcessBuilder(commands)
+                .redirectErrorStream(true)
+                .start()
 
-                if (email != null && aisId != null && aisName != null) {
-                    LdapUserData(aisName, email, aisId)
-                } else {
-                    null
-                }
-            }.toList()
+            val exitCode = process.waitFor(10, TimeUnit.SECONDS)
 
-            val userData = results.firstOrNull()
+            if (!exitCode) {
+                logger.error("LDAP getUserData timeout for user: $username")
+                process.destroyForcibly()
+                return null
+            }
 
-            if (userData != null) {
-                logger.info("Found user data: ${userData.email}, ${userData.aisId}, ${userData.username}")
-            } else {
+            if (process.exitValue() != 0) {
+                logger.warn("LDAP getUserData failed for user: $username, exit code: ${process.exitValue()}")
+                return null
+            }
+
+            val output = BufferedReader(InputStreamReader(process.inputStream)).use { it.readText() }
+
+            parseLdapOutput(output)?.also {
+                logger.info("Found user data: ${it.email}, ${it.aisId}, ${it.username}")
+            } ?: run {
                 logger.warn("No user data found for: $username")
+                null
             }
-
-            userData
         } catch (e: Exception) {
             logger.error("getUserData failed for user: $username - ${e.message}", e)
+            null
+        }
+    }
+
+    private fun parseLdapOutput(output: String): LdapUserData? {
+        val lines = output.lines()
+
+        var username: String? = null
+        var email: String? = null
+        var aisId: String? = null
+
+        for (line in lines) {
+            when {
+                line.startsWith("uid: ") -> username = line.substringAfter("uid: ").trim()
+                line.startsWith("mail: ") -> email = line.substringAfter("mail: ").trim()
+                line.startsWith("uisId: ") -> aisId = line.substringAfter("uisId: ").trim()
+            }
+        }
+
+        return if (username != null && email != null && aisId != null) {
+            LdapUserData(username, email, aisId)
+        } else {
             null
         }
     }
