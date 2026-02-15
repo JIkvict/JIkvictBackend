@@ -1,5 +1,6 @@
 package org.jikvict.jikvictbackend.service
 
+import org.apache.logging.log4j.Logger
 import org.jikvict.jikvictbackend.entity.User
 import org.jikvict.jikvictbackend.model.dto.UserDto
 import org.jikvict.jikvictbackend.model.mapper.UserMapper
@@ -19,6 +20,7 @@ class UserService(
     private val ldapAuthenticationService: LdapAuthenticationService,
     private val userRepository: UserRepository,
     private val userMapper: UserMapper,
+    private val logger: Logger
 ) {
     @Transactional
     fun getUsersOfGroups(groupIds: List<Long>): List<UserDto> =
@@ -79,11 +81,12 @@ class UserService(
             return null
         }
 
+        logger.info("Importing user with AIS ID $aisId")
         val ldapUserData =
             ldapAuthenticationService.getUserData(aisId, "uid")
                 ?: return null
-
-        val existingUser = userRepository.findByAisId(aisId)
+        logger.info("Found user data: ${ldapUserData.email}, ${ldapUserData.aisId}, ${ldapUserData.username}")
+        val existingUser = userRepository.findByAisId(ldapUserData.aisId)
 
         return if (existingUser != null) {
             existingUser.email = ldapUserData.email
