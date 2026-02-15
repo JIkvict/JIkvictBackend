@@ -18,6 +18,7 @@ data class LdapUserData(
     val aisId: String,
 )
 
+
 @Configuration
 class LdapConfig {
 
@@ -26,7 +27,19 @@ class LdapConfig {
         val contextSource = LdapContextSource()
         contextSource.setUrl("ldaps://ldap.stuba.sk:636")
         contextSource.setBase("ou=People,dc=stuba,dc=sk")
-        contextSource.isAnonymousReadOnly = true
+
+        contextSource.isAnonymousReadOnly = false
+
+        contextSource.isPooled = true
+
+        val baseEnvironment = mutableMapOf<String, Any>(
+            "com.sun.jndi.ldap.connect.timeout" to "10000",
+            "com.sun.jndi.ldap.read.timeout" to "10000",
+            "com.sun.jndi.ldap.connect.pool" to "true",
+            "com.sun.jndi.ldap.connect.pool.timeout" to "300000"
+        )
+        contextSource.setBaseEnvironmentProperties(baseEnvironment)
+
         contextSource.afterPropertiesSet()
 
         LogManager.getLogger(this::class.java).info("LDAP configured for ldaps://ldap.stuba.sk:636")
@@ -39,7 +52,6 @@ class LdapConfig {
         return LdapTemplate(contextSource)
     }
 }
-
 @Service
 class LdapAuthenticationService(
     private val ldapTemplate: LdapTemplate
@@ -55,11 +67,24 @@ class LdapAuthenticationService(
         logger.info("Attempting LDAP authentication for user: $username")
 
         return try {
-            ldapTemplate.authenticate(
-                "",
-                EqualsFilter("uid", username).encode(),
-                password
-            )
+            val authContextSource = LdapContextSource().apply {
+                setUrl("ldaps://ldap.stuba.sk:636")
+                setBase("ou=People,dc=stuba,dc=sk")
+                userDn = "uid=$username,ou=People,dc=stuba,dc=sk"
+                setPassword(password)
+
+                val baseEnvironment = mutableMapOf<String, Any>(
+                    "com.sun.jndi.ldap.connect.timeout" to "10000",
+                    "com.sun.jndi.ldap.read.timeout" to "10000"
+                )
+                setBaseEnvironmentProperties(baseEnvironment)
+
+                afterPropertiesSet()
+            }
+
+            val context = authContextSource.readOnlyContext
+            context.close()
+
             logger.info("LDAP authentication successful for user: $username")
             true
         } catch (e: Exception) {
@@ -67,7 +92,6 @@ class LdapAuthenticationService(
             false
         }
     }
-
     fun userExists(username: String): Boolean {
         if (username.isBlank()) {
             return false
