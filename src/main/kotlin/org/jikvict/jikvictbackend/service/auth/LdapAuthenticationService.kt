@@ -2,7 +2,6 @@
 package org.jikvict.jikvictbackend.service.auth
 
 import org.apache.logging.log4j.LogManager
-import org.springframework.boot.autoconfigure.ldap.LdapProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.ldap.core.AttributesMapper
@@ -11,16 +10,7 @@ import org.springframework.ldap.core.support.LdapContextSource
 import org.springframework.ldap.filter.EqualsFilter
 import org.springframework.ldap.query.LdapQueryBuilder
 import org.springframework.stereotype.Service
-import java.security.SecureRandom
-import java.security.cert.X509Certificate
 import javax.naming.directory.Attributes
-import javax.net.SocketFactory
-import javax.net.ssl.HttpsURLConnection
-import javax.net.ssl.SSLContext
-import javax.net.ssl.SSLSocketFactory
-import javax.net.ssl.TrustManager
-import javax.net.ssl.X509TrustManager
-import kotlin.jvm.java
 
 data class LdapUserData(
     val username: String,
@@ -28,65 +18,19 @@ data class LdapUserData(
     val aisId: String,
 )
 
-class TrustAllSSLSocketFactory {
-    companion object {
-        private val sslSocketFactory: SSLSocketFactory
-
-        init {
-            val trustAllCerts = arrayOf<TrustManager>(
-                object : X509TrustManager {
-                    override fun getAcceptedIssuers(): Array<X509Certificate>? = null
-                    override fun checkClientTrusted(certs: Array<X509Certificate>, authType: String) {}
-                    override fun checkServerTrusted(certs: Array<X509Certificate>, authType: String) {}
-                },
-            )
-
-            val sslContext = SSLContext.getInstance("TLS")
-            sslContext.init(null, trustAllCerts, SecureRandom())
-            sslSocketFactory = sslContext.socketFactory
-        }
-
-        @JvmStatic
-        fun getDefault(): SocketFactory = sslSocketFactory
-    }
-}
-
 @Configuration
 class LdapConfig {
 
-    init {
-        try {
-            val trustAllCerts = arrayOf<TrustManager>(
-                object : X509TrustManager {
-                    override fun getAcceptedIssuers(): Array<X509Certificate>? = null
-                    override fun checkClientTrusted(certs: Array<X509Certificate>, authType: String) {}
-                    override fun checkServerTrusted(certs: Array<X509Certificate>, authType: String) {}
-                },
-            )
-
-            val sc = SSLContext.getInstance("TLS")
-            sc.init(null, trustAllCerts, SecureRandom())
-            SSLContext.setDefault(sc)
-            HttpsURLConnection.setDefaultSSLSocketFactory(sc.socketFactory)
-
-            System.setProperty("https.protocols", "TLSv1.2,TLSv1.3")
-            System.setProperty("jdk.tls.client.protocols", "TLSv1.2,TLSv1.3")
-
-            LogManager.getLogger(this::class.java).warn("Global SSL validation disabled for LDAP")
-        } catch (e: Exception) {
-            LogManager.getLogger(this::class.java).error("Failed to disable SSL validation", e)
-        }
-    }
-
     @Bean
-    fun ldapContextSource(properties: LdapProperties): LdapContextSource {
+    fun ldapContextSource(): LdapContextSource {
         val contextSource = LdapContextSource()
         contextSource.setUrl("ldaps://ldap.stuba.sk:636")
         contextSource.setBase("ou=People,dc=stuba,dc=sk")
         contextSource.isAnonymousReadOnly = true
         contextSource.afterPropertiesSet()
-        properties.baseEnvironment["java.naming.ldap.factory.socket"] = TrustAllSSLSocketFactory::class.java.getName()
-        contextSource.setBaseEnvironmentProperties(properties.baseEnvironment.toMap())
+
+        LogManager.getLogger(this::class.java).info("LDAP configured for ldaps://ldap.stuba.sk:636")
+
         return contextSource
     }
 
@@ -98,7 +42,7 @@ class LdapConfig {
 
 @Service
 class LdapAuthenticationService(
-    private val ldapTemplate: LdapTemplate,
+    private val ldapTemplate: LdapTemplate
 ) {
     private val logger = LogManager.getLogger(this::class.java)
 
@@ -114,7 +58,7 @@ class LdapAuthenticationService(
             ldapTemplate.authenticate(
                 "",
                 EqualsFilter("uid", username).encode(),
-                password,
+                password
             )
             logger.info("LDAP authentication successful for user: $username")
             true
@@ -133,12 +77,9 @@ class LdapAuthenticationService(
             val query = LdapQueryBuilder.query()
                 .where("uid").`is`(username)
 
-            val results = ldapTemplate.search(
-                query,
-                AttributesMapper<String> { attrs ->
-                    attrs["uid"]?.get()?.toString()
-                },
-            ).toList()
+            val results = ldapTemplate.search(query, AttributesMapper<String> { attrs ->
+                attrs["uid"]?.get()?.toString()
+            }).toList()
 
             results.isNotEmpty()
         } catch (e: Exception) {
