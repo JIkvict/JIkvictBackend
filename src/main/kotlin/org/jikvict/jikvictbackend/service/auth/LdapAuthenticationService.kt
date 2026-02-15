@@ -1,5 +1,7 @@
+
 package org.jikvict.jikvictbackend.service.auth
 
+import org.apache.logging.log4j.LogManager
 import org.springframework.stereotype.Service
 import java.util.Hashtable
 import javax.naming.Context
@@ -14,6 +16,7 @@ data class LdapUserData(
 
 @Service
 class LdapAuthenticationService {
+    private val logger = LogManager.getLogger(this::class.java)
     private val ldapUrl = "ldaps://ldap.stuba.sk:636"
     private val baseDn = "ou=People,dc=stuba,dc=sk"
 
@@ -22,10 +25,12 @@ class LdapAuthenticationService {
         password: String,
     ): Boolean {
         if (username.isBlank() || password.isBlank()) {
+            logger.warn("Authentication failed: username or password is blank")
             return false
         }
 
         val userDn = "uid=$username,$baseDn"
+        logger.info("Attempting LDAP authentication for user: $username with DN: $userDn")
         val env = Hashtable<String, String>()
 
         env[Context.INITIAL_CONTEXT_FACTORY] = "com.sun.jndi.ldap.LdapCtxFactory"
@@ -37,8 +42,10 @@ class LdapAuthenticationService {
         return try {
             val context = InitialDirContext(env)
             context.close()
+            logger.info("LDAP authentication successful for user: $username")
             true
         } catch (e: Exception) {
+            logger.error("LDAP authentication failed for user: $username - ${e.message}", e)
             false
         }
     }
@@ -74,9 +81,11 @@ class LdapAuthenticationService {
         authPassword: String? = null,
     ): LdapUserData? {
         if (username.isBlank()) {
+            logger.warn("getUserData failed: username is blank")
             return null
         }
 
+        logger.info("Getting user data for: $username (auth: ${authUsername != null})")
         val env = Hashtable<String, String>()
         env[Context.INITIAL_CONTEXT_FACTORY] = "com.sun.jndi.ldap.LdapCtxFactory"
         env[Context.PROVIDER_URL] = ldapUrl
@@ -85,8 +94,10 @@ class LdapAuthenticationService {
             env[Context.SECURITY_AUTHENTICATION] = "simple"
             env[Context.SECURITY_PRINCIPAL] = "uid=$authUsername,$baseDn"
             env[Context.SECURITY_CREDENTIALS] = authPassword
+            logger.debug("Using authenticated search")
         } else {
             env[Context.SECURITY_AUTHENTICATION] = "none"
+            logger.debug("Using anonymous search")
         }
 
         return try {
@@ -101,17 +112,27 @@ class LdapAuthenticationService {
                 val result = results.next()
                 val attributes = result.attributes
 
-                val email = attributes[("mail")]?.get()?.toString() ?: return null
-                val aisId = attributes[("uisId")]?.get()?.toString() ?: return null
-                val aisName = attributes[("uid")]?.get()?.toString() ?: return null
+                val email = attributes[("mail")]?.get()?.toString()
+                val aisId = attributes[("uisId")]?.get()?.toString()
+                val aisName = attributes[("uid")]?.get()?.toString()
+
+                logger.info("Found user data: email=$email, aisId=$aisId, aisName=$aisName")
+
+                if (email == null || aisId == null || aisName == null) {
+                    logger.warn("Incomplete user data for: $username")
+                    context.close()
+                    return null
+                }
 
                 context.close()
                 LdapUserData(aisName, email, aisId)
             } else {
                 context.close()
+                logger.warn("No user data found for: $username")
                 null
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            logger.error("getUserData failed for user: $username - ${e.message}", e)
             null
         }
     }
