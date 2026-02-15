@@ -1,9 +1,12 @@
-FROM bellsoft/liberica-openjdk-alpine:21
+FROM bellsoft/liberica-openjdk-debian:21
 LABEL authors="antonhorobets"
 
-RUN apk add --no-cache tzdata && \
-    cp /usr/share/zoneinfo/Europe/Prague /etc/localtime && \
-    echo "Europe/Prague" > /etc/timezone
+RUN apt-get update && \
+    apt-get install -y tzdata ca-certificates && \
+    ln -sf /usr/share/zoneinfo/Europe/Prague /etc/localtime && \
+    echo "Europe/Prague" > /etc/timezone && \
+    update-ca-certificates && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 ENV TZ=Europe/Prague
 ENV JAVA_TOOL_OPTIONS="-Duser.timezone=Europe/Prague"
