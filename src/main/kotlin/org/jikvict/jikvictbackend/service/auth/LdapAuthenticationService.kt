@@ -52,7 +52,7 @@ class LdapAuthenticationService {
         env[Context.SECURITY_PRINCIPAL] = userDn
         env[Context.SECURITY_CREDENTIALS] = password
         env[Context.SECURITY_PROTOCOL] = "ssl"
-
+        env["java.naming.ldap.factory.socket"] = LdapBlindSocketFactory::class.java.name
         return try {
             val context = InitialDirContext(env)
             context.close()
