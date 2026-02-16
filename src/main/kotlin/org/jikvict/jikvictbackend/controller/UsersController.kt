@@ -6,7 +6,6 @@ import org.jikvict.jikvictbackend.model.dto.UsersOfGroupsDto
 import org.jikvict.jikvictbackend.model.mapper.UserMapper
 import org.jikvict.jikvictbackend.service.UserService
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -28,7 +27,7 @@ class UsersController(
 
 
     @OnlyTeacher
-    @GetMapping("/batch")
+    @PostMapping("/batch")
     fun getUsersByIds(
         @RequestBody ids: List<Long>,
     ): ResponseEntity<List<UserDto>> = ResponseEntity.ok(userService.getBatchByIds(ids))
