@@ -35,6 +35,11 @@ class UserService(
         }
 
     @Transactional
+    fun getBatchByIds(ids: List<Long>): List<UserDto> {
+        return userRepository.findAllById(ids).map(userMapper::toUserDto)
+    }
+
+    @Transactional
     fun getUserById(id: Long): UserDto? =
         userRepository
             .findById(id)
