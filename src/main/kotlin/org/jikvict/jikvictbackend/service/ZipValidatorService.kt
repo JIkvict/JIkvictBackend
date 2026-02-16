@@ -14,8 +14,10 @@ import org.springframework.stereotype.Service
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.multipart.MultipartFile
 import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
+import java.util.zip.ZipOutputStream
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
 
@@ -28,7 +30,8 @@ class ZipValidatorService(
     fun validateZipArchive(file: MultipartFile) {
         validateFileSize(file)
         validateFileType(file)
-        validateZipStructure(file)
+        val cleanedBytes = removeFilesWithSuspiciousExtensions(file.bytes)
+        validateZipStructure(cleanedBytes)
         logger.info("ZIP validation completed successfully")
     }
 
@@ -55,14 +58,80 @@ class ZipValidatorService(
         logger.debug("File type validation passed")
     }
 
-    private fun validateZipStructure(file: MultipartFile) {
+    private fun removeFilesWithSuspiciousExtensions(zipBytes: ByteArray): ByteArray {
+        val suspiciousFiles = mutableListOf<String>()
+        var totalFiles = 0
+
+        // First pass: identify files with suspicious extensions
+        ZipInputStream(ByteArrayInputStream(zipBytes)).use { zipStream ->
+            var entry: ZipEntry?
+            while (zipStream.nextEntry.also { entry = it } != null) {
+                entry?.let { zipEntry ->
+                    if (!zipEntry.isDirectory) {
+                        totalFiles++
+                        val entryName = zipEntry.name
+                        if (solutionsProperties.suspiciousExtensions.any { entryName.endsWith(it, ignoreCase = true) }) {
+                            suspiciousFiles.add(entryName)
+                            logger.warn("Found suspicious file extension in ZIP entry: $entryName - will be removed")
+                        }
+                    }
+                }
+                zipStream.closeEntry()
+            }
+        }
+
+        // If no suspicious files found, return original bytes
+        if (suspiciousFiles.isEmpty()) {
+            return zipBytes
+        }
+
+        // Second pass: rebuild zip without suspicious files
+        logger.info("Rebuilding ZIP archive without ${suspiciousFiles.size} suspicious file(s): $suspiciousFiles")
+        val baos = ByteArrayOutputStream()
+        ZipOutputStream(baos).use { zipOut ->
+            ZipInputStream(ByteArrayInputStream(zipBytes)).use { zipStream ->
+                var entry: ZipEntry?
+                var hasValidEntries = false
+                while (zipStream.nextEntry.also { entry = it } != null) {
+                    entry?.let { zipEntry ->
+                        val entryName = zipEntry.name
+                        if (entryName !in suspiciousFiles) {
+                            // Copy this entry to the new zip
+                            val newEntry = ZipEntry(entryName)
+                            zipOut.putNextEntry(newEntry)
+                            if (!zipEntry.isDirectory) {
+                                zipStream.copyTo(zipOut)
+                                hasValidEntries = true
+                            }
+                            zipOut.closeEntry()
+                        }
+                    }
+                    zipStream.closeEntry()
+                }
+
+                // If all files were removed, create an empty placeholder file to keep zip valid
+                if (!hasValidEntries && totalFiles > 0) {
+                    logger.info("All files were removed, creating empty placeholder")
+                    val placeholderEntry = ZipEntry(".empty")
+                    zipOut.putNextEntry(placeholderEntry)
+                    zipOut.write(ByteArray(0))
+                    zipOut.closeEntry()
+                }
+            }
+        }
+
+        logger.info("ZIP archive cleaned successfully")
+        return baos.toByteArray()
+    }
+
+    private fun validateZipStructure(zipBytes: ByteArray) {
         try {
-            require(file.bytes.size >= 4 && isZipFileSignatureValid(file.bytes)) {
+            require(zipBytes.size >= 4 && isZipFileSignatureValid(zipBytes)) {
                 logger.warn("Invalid ZIP file signature detected")
                 throw InvalidZipStructureException("Invalid ZIP file: File signature does not match ZIP format")
             }
 
-            ZipInputStream(ByteArrayInputStream(file.bytes)).use { zipStream ->
+            ZipInputStream(ByteArrayInputStream(zipBytes)).use { zipStream ->
                 var entry: ZipEntry?
                 var entriesCount = 0
 
@@ -134,11 +203,6 @@ class ZipValidatorService(
             throw EntrySizeExceededException("Security violation: Entry size exceeds limit of ${solutionsProperties.maxEntrySize} bytes: $entryName")
         }
 
-        require(!solutionsProperties.suspiciousExtensions.any { entryName.endsWith(it, ignoreCase = true) }) {
-            logger.warn("Suspicious file extension detected in ZIP entry: $entryName")
-            throw SuspiciousFileExtensionException("Security violation: Suspicious file extension detected in entry: $entryName")
-        }
-
         if (zipEntry.size > 0 && zipEntry.compressedSize > 0) {
             val ratio = zipEntry.size.toDouble() / zipEntry.compressedSize.toDouble()
             logger.debug("Compression ratio for $entryName: $ratio (size: ${zipEntry.size}, compressed: ${zipEntry.compressedSize})")
@@ -170,7 +234,7 @@ class ZipValidatorService(
                 "GB" to 1024L * 1024L * 1024L,
             )
 
-        val regex = "(\\d+)([BKMG]B)".toRegex()
+        val regex = "(\\d+)(B|KB|MB|GB)".toRegex()
         val matchResult = regex.find(sizeStr.trim())
 
         val result =
@@ -181,7 +245,7 @@ class ZipValidatorService(
 
         require(result != null && result > 0) {
             logger.error("Invalid size string format: '$sizeStr'")
-            throw FileSizeExceededException("Invalid size format: '$sizeStr'. Expected format: <number><unit> (e.g., 10MB, 500KB)")
+            throw IllegalArgumentException("Invalid size format: '$sizeStr'. Expected format: <number><unit> (e.g., 10MB, 500KB)")
         }
 
         logger.debug("Parsed size string '$sizeStr' to $result bytes")
