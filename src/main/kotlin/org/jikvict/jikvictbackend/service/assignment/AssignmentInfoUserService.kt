@@ -76,10 +76,10 @@ class AssignmentInfoUserService(
         val usersToSearch =
             if (userIds.isEmpty() && groupIds.isEmpty()) {
                 userRepository.findAll()
-            } else if (groupIds.isNotEmpty()) {
-                userRepository.findDistinctByAssignmentGroups_IdIn(groupIds)
-            } else {
+            } else if (userIds.isNotEmpty()) {
                 userRepository.findAllById(userIds)
+            } else {
+                userRepository.findDistinctByAssignmentGroups_IdIn(groupIds)
             }
         val result =
             usersToSearch.map { user ->
