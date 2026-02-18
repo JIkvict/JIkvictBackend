@@ -1,6 +1,8 @@
 package org.jikvict.jikvictbackend.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.jikvict.jikvictbackend.annotation.AnyTeacher
+import org.jikvict.jikvictbackend.annotation.RWTeacher
 import org.jikvict.jikvictbackend.entity.AssignmentResult
 import org.jikvict.jikvictbackend.model.domain.AssignmentInfo
 import org.jikvict.jikvictbackend.model.dto.AssignmentResultAdminDto
@@ -16,7 +18,6 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -42,7 +43,7 @@ class TeacherStudentController(
     )
 
     @Transactional
-    @PreAuthorize("hasRole('TEACHER')")
+    @AnyTeacher
     @GetMapping("/teacher/zip/{assignmentResultId}", produces = [MediaType.APPLICATION_OCTET_STREAM_VALUE])
     fun downloadZip(
         @PathVariable assignmentResultId: Long,
@@ -57,7 +58,7 @@ class TeacherStudentController(
             .body(zipBytes)
     }
 
-    @PreAuthorize("hasRole('TEACHER')")
+    @AnyTeacher
     @PostMapping("/teacher/assignment-info/{assignmentId}")
     fun getAssignmentInfo(
         @PathVariable assignmentId: Long,
@@ -65,7 +66,7 @@ class TeacherStudentController(
     ): ResponseEntity<List<AssignmentInfo>> = ResponseEntity.ok(assignmentInfoUserService.getAssignmentInfoByUserGroupsAndUsers(assignmentId, request.userIds, request.groupIds))
 
     @Transactional
-    @PreAuthorize("hasRole('TEACHER')")
+    @AnyTeacher
     @GetMapping("/teacher/students/{userId}/overview")
     fun getStudentOverview(
         @PathVariable userId: Long,
@@ -104,7 +105,7 @@ class TeacherStudentController(
         return ResponseEntity.ok(payload)
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @RWTeacher
     @DeleteMapping("/admin/submissions/{submissionId}")
     fun deleteSubmission(
         @PathVariable submissionId: Long,
@@ -117,7 +118,7 @@ class TeacherStudentController(
         return ResponseEntity.noContent().build()
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @RWTeacher
     @PutMapping("/admin/results/{resultId}/points")
     fun updateResultPoints(
         @PathVariable resultId: Long,

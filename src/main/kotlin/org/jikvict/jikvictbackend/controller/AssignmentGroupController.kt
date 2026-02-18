@@ -1,6 +1,7 @@
 package org.jikvict.jikvictbackend.controller
 
-import org.jikvict.jikvictbackend.annotation.OnlyTeacher
+import org.jikvict.jikvictbackend.annotation.AnyTeacher
+import org.jikvict.jikvictbackend.annotation.RWTeacher
 import org.jikvict.jikvictbackend.model.dto.AssignmentGroupDto
 import org.jikvict.jikvictbackend.service.assignment.AssignmentGroupService
 import org.springframework.http.HttpStatus
@@ -20,14 +21,14 @@ import org.springframework.web.bind.annotation.RestController
 class AssignmentGroupController(
     private val assignmentGroupService: AssignmentGroupService,
 ) {
-    @OnlyTeacher
+    @AnyTeacher
     @GetMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getAllAssignmentGroups(): ResponseEntity<List<AssignmentGroupDto>> {
         val assignmentGroupDto = assignmentGroupService.getAll()
         return ResponseEntity.ok(assignmentGroupDto)
     }
 
-    @OnlyTeacher
+    @AnyTeacher
     @GetMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getAssignmentGroupById(
         @PathVariable id: Long,
@@ -36,7 +37,7 @@ class AssignmentGroupController(
         return ResponseEntity.ok(dto)
     }
 
-    @OnlyTeacher
+    @RWTeacher
     @PostMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
     fun createAssignmentGroup(
         @RequestBody assignmentGroupDto: AssignmentGroupDto,
@@ -45,7 +46,7 @@ class AssignmentGroupController(
         return ResponseEntity.status(HttpStatus.CREATED).body(created)
     }
 
-    @OnlyTeacher
+    @RWTeacher
     @PutMapping("/{id}", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun updateAssignmentGroup(
         @PathVariable id: Long,
@@ -55,7 +56,7 @@ class AssignmentGroupController(
         return ResponseEntity.ok(updated)
     }
 
-    @OnlyTeacher
+    @RWTeacher
     @DeleteMapping("/{id}")
     fun deleteAssignmentGroup(
         @PathVariable id: Long,

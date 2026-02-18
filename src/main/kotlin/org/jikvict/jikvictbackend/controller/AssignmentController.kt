@@ -1,6 +1,7 @@
 package org.jikvict.jikvictbackend.controller
 
-import org.jikvict.jikvictbackend.annotation.OnlyTeacher
+import org.jikvict.jikvictbackend.annotation.AnyTeacher
+import org.jikvict.jikvictbackend.annotation.RWTeacher
 import org.jikvict.jikvictbackend.model.domain.AssignmentInfo
 import org.jikvict.jikvictbackend.model.dto.AssignmentDto
 import org.jikvict.jikvictbackend.model.dto.CreateAssignmentDto
@@ -14,7 +15,6 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -77,7 +77,7 @@ class AssignmentController(
         return assignmentDtoPage
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @AnyTeacher
     @GetMapping("/all-admin", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getAllAdmin(): List<AssignmentDto> {
         val assignments = assignmentRepository.findAll().asSequence()
@@ -85,7 +85,7 @@ class AssignmentController(
         return assignmentDtoPage.toList()
     }
 
-    @OnlyTeacher
+    @AnyTeacher
     @GetMapping("/{assignmentGroup}/all")
     fun getAllForAssignmentGroup(
         @PathVariable assignmentGroup: Long,
@@ -95,7 +95,7 @@ class AssignmentController(
         return ResponseEntity.ok(assignmentDtos)
     }
 
-    @OnlyTeacher
+    @AnyTeacher
     @GetMapping("/all-for-groups")
     fun getAssignmentsForGroups(
         @RequestParam("groupIds") groupIds: List<Long>,
@@ -105,7 +105,7 @@ class AssignmentController(
         return ResponseEntity.ok(assignmentDtos)
     }
 
-    @OnlyTeacher
+    @RWTeacher
     @PostMapping
     fun createAssignment(
         @RequestBody assignmentDto: CreateAssignmentDto,
@@ -115,11 +115,11 @@ class AssignmentController(
         return ResponseEntity.ok(dto)
     }
 
-    @OnlyTeacher
+    @AnyTeacher
     @GetMapping("/available-tasks")
     fun availableTasks(): ResponseEntity<List<Long>> = ResponseEntity.ok(assignmentService.getAllAvailableTaskIds())
 
-    @OnlyTeacher
+    @RWTeacher
     @PutMapping("/{id}")
     fun updateAssignment(
         @PathVariable id: Long,
@@ -136,7 +136,7 @@ class AssignmentController(
         return ResponseEntity.ok(assignmentMapper.toDto(updatedAssignment))
     }
 
-    @OnlyTeacher
+    @AnyTeacher
     @PutMapping("/admin/{id}")
     fun getAssignmentAdmin(
         @PathVariable id: Long,
@@ -145,7 +145,7 @@ class AssignmentController(
         return ResponseEntity.ok(assignmentMapper.toDto(assignment))
     }
 
-    @OnlyTeacher
+    @RWTeacher
     @DeleteMapping("/{id}")
     fun deleteAssignment(
         @PathVariable id: Long,

@@ -1,6 +1,7 @@
 package org.jikvict.jikvictbackend.controller
 
-import org.jikvict.jikvictbackend.annotation.OnlyTeacher
+import org.jikvict.jikvictbackend.annotation.AnyTeacher
+import org.jikvict.jikvictbackend.annotation.RWTeacher
 import org.jikvict.jikvictbackend.model.dto.UserDto
 import org.jikvict.jikvictbackend.model.dto.UsersOfGroupsDto
 import org.jikvict.jikvictbackend.model.mapper.UserMapper
@@ -19,28 +20,28 @@ class UsersController(
     private val userService: UserService,
     private val userMapper: UserMapper,
 ) {
-    @OnlyTeacher
+    @AnyTeacher
     @GetMapping("/{id}")
     fun getUserById(
         @PathVariable id: Long,
     ): ResponseEntity<UserDto> = ResponseEntity.ok(userService.getUserById(id))
 
 
-    @OnlyTeacher
+    @AnyTeacher
     @PostMapping("/batch")
     fun getUsersByIds(
         @RequestBody ids: List<Long>,
     ): ResponseEntity<List<UserDto>> = ResponseEntity.ok(userService.getBatchByIds(ids))
 
-    @OnlyTeacher
+    @AnyTeacher
     @GetMapping
     fun getAllUsers(): ResponseEntity<List<UserDto>> = ResponseEntity.ok(userService.getAllUsers())
 
-    @OnlyTeacher
+    @AnyTeacher
     @PostMapping("/of-group")
     fun getUsersOfGroup(dto: UsersOfGroupsDto): ResponseEntity<List<UserDto>> = ResponseEntity.ok(userService.getUsersOfGroups(dto.groupIds))
 
-    @OnlyTeacher
+    @RWTeacher
     @PostMapping
     fun registerUsers(
         @RequestBody aisIds: List<String>,
