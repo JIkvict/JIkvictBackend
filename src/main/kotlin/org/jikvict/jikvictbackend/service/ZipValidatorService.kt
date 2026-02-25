@@ -7,7 +7,6 @@ import org.jikvict.jikvictbackend.exception.FileTypeNotAllowedException
 import org.jikvict.jikvictbackend.exception.InvalidZipStructureException
 import org.jikvict.jikvictbackend.exception.PathTraversalAttemptException
 import org.jikvict.jikvictbackend.exception.SuspiciousCompressionRatioException
-import org.jikvict.jikvictbackend.exception.SuspiciousFileExtensionException
 import org.jikvict.jikvictbackend.exception.ZipValidationException
 import org.jikvict.jikvictbackend.model.properties.SolutionsProperties
 import org.springframework.stereotype.Service

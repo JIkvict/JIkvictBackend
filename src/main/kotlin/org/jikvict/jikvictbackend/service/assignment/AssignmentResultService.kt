@@ -19,7 +19,7 @@ class AssignmentResultService(
     @Transactional
     fun handleAssignmentResult(
         assignmentId: Long,
-        result: TestSuiteResult,
+        result: TestSuiteResult?,
         user: User,
         solutionBytes: ByteArray,
     ): AssignmentResult {
@@ -29,7 +29,7 @@ class AssignmentResultService(
             }
         val resultEntity =
             AssignmentResult().apply {
-                this.points = result.totalEarnedPoints
+                this.points = result?.totalEarnedPoints ?: 0
                 this.testSuiteResult = result
                 this.user = user
                 this.assignment = assignment
@@ -59,7 +59,7 @@ class AssignmentResultService(
         user: User,
     ): Int {
         val submissions = getResults(assignmentId, user)
-        val attempts = submissions.size
+        val attempts = submissions.filter { it.testSuiteResult != null }.size
         return attempts
     }
 }

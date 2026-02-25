@@ -11,6 +11,7 @@ import org.jikvict.jikvictbackend.service.queue.SubmissionCheckerTaskQueueServic
 import org.jikvict.jikvictbackend.service.registry.TaskRegistry
 import org.jikvict.jikvictbackend.service.solution.SubmissionCheckerUserService
 import org.jikvict.problems.exception.contract.ServiceException
+import org.jikvict.testing.model.TestSuiteResult
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
@@ -61,20 +62,40 @@ class SubmissionCheckerTaskProcessor(
                     "User not found",
                 )
 
-            val result =
-                withContext(Dispatchers.IO) {
-                    userSolutionChecker.checkSubmission(
-                        assignmentEntity.id,
-                        message.additionalParams.solutionBytes,
-                        user,
-                    ) { !taskQueueService.isTaskCancelled(message.taskId) }
+            var result: TestSuiteResult? = null
+            var checkSubmissionFailed = false
+
+            try {
+                result =
+                    withContext(Dispatchers.IO) {
+                        userSolutionChecker.checkSubmission(
+                            assignmentEntity.id,
+                            message.additionalParams.solutionBytes,
+                            user,
+                        ) { !taskQueueService.isTaskCancelled(message.taskId) }
+                    }
+            } catch (e: Exception) {
+                log.error("Failed to check submission, but will attempt to save zip: ${e.message}", e)
+                checkSubmissionFailed = true
+                // Re-throw to be handled by outer catch block
+                throw e
+            } finally {
+                // Always try to save the zip, even if parsing failed
+                if (!taskQueueService.isTaskCancelled(message.taskId)) {
+                    try {
+                        withContext(Dispatchers.IO) {
+                            assignmentResultService.handleAssignmentResult(assignmentEntity.id, result, user, message.additionalParams.solutionBytes)
+                        }
+                    } catch (e: Exception) {
+                        log.error("Failed to save assignment result: ${e.message}", e)
+                        if (!checkSubmissionFailed) {
+                            throw e
+                        }
+                    }
                 }
+            }
 
             if (!taskQueueService.isTaskCancelled(message.taskId)) {
-                withContext(Dispatchers.IO) {
-                    assignmentResultService.handleAssignmentResult(assignmentEntity.id, result, user, message.additionalParams.solutionBytes)
-                }
-
                 taskQueueService.updateTaskStatus(
                     message.taskId,
                     PendingStatus.DONE,
