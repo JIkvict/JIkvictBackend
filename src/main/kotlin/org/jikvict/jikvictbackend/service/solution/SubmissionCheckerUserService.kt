@@ -34,7 +34,7 @@ class SubmissionCheckerUserService(
         solutionBytes: ByteArray,
         user: User,
         isActive: () -> Boolean,
-    ): TestSuiteResult {
+    ): Pair<TestSuiteResult, String> {
         val assignment =
             withContext(Dispatchers.IO) {
                 assignmentUserService.getAssignmentByIdForUser(assignmentId, user)

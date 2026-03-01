@@ -63,10 +63,11 @@ class SubmissionCheckerTaskProcessor(
                 )
 
             var result: TestSuiteResult? = null
+            var logs: String? = null
             var checkSubmissionFailed = false
 
             try {
-                result =
+                val checkResult =
                     withContext(Dispatchers.IO) {
                         userSolutionChecker.checkSubmission(
                             assignmentEntity.id,
@@ -74,6 +75,8 @@ class SubmissionCheckerTaskProcessor(
                             user,
                         ) { !taskQueueService.isTaskCancelled(message.taskId) }
                     }
+                result = checkResult.first
+                logs = checkResult.second
             } catch (e: Exception) {
                 log.error("Failed to check submission, but will attempt to save zip: ${e.message}", e)
                 checkSubmissionFailed = true
@@ -85,7 +88,7 @@ class SubmissionCheckerTaskProcessor(
                     try {
                         val resultEntity =
                             withContext(Dispatchers.IO) {
-                                assignmentResultService.handleAssignmentResult(assignmentEntity.id, result, user, message.additionalParams.solutionBytes)
+                                assignmentResultService.handleAssignmentResult(assignmentEntity.id, result, user, message.additionalParams.solutionBytes, logs)
                             }
                         taskQueueService.updateTaskResultId(message.taskId, resultEntity.id)
                     } catch (e: Exception) {

@@ -162,5 +162,6 @@ class TeacherStudentController(
             assignmentId = this.assignment.id,
             timeStamp = this.timeStamp,
             points = this.points,
+            logs = this.logs,
         )
 }

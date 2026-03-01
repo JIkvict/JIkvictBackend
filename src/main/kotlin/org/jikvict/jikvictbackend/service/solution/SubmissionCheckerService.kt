@@ -14,7 +14,7 @@ class SubmissionCheckerService(
         assignment: Assignment,
         solutionBytes: ByteArray,
         isActive: () -> Boolean,
-    ): TestSuiteResult {
+    ): Pair<TestSuiteResult, String> {
         val hiddenFiles = assignmentService.getHiddenFilesForTask(assignment.taskId)
         return solutionChecker.checkSolution(solutionBytes, hiddenFiles, assignment, isActive)
     }

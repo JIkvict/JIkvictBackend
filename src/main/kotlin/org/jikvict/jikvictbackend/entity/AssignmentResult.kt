@@ -35,6 +35,9 @@ class AssignmentResult {
     @Column(name = "execution_logs", columnDefinition = "jsonb")
     var testSuiteResult: TestSuiteResult? = null
 
+    @Column(name = "logs", columnDefinition = "TEXT")
+    var logs: String? = null
+
     @Lob
     @Basic(fetch = FetchType.LAZY)
     @Column(name = "zip_file")

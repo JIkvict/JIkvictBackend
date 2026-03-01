@@ -10,4 +10,5 @@ data class AssignmentResultAdminDto(
     val assignmentId: Long,
     val timeStamp: LocalDateTime,
     val points: Int,
+    val logs: String?,
 )

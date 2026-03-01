@@ -3,7 +3,6 @@ package org.jikvict.jikvictbackend.service.queue
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.slot
 import io.mockk.verify
 import org.apache.logging.log4j.Logger
 import org.jikvict.jikvictbackend.entity.Assignment
@@ -23,7 +22,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import java.time.LocalDateTime
-import java.util.*
+import java.util.Optional
 
 class SubmissionCheckerTaskQueueServiceTest {
     private lateinit var rabbitTemplate: RabbitTemplate
@@ -55,7 +54,7 @@ class SubmissionCheckerTaskQueueServiceTest {
             taskRegistry,
             log,
             objectMapper,
-            userDetailsService
+            userDetailsService,
         )
 
         val mockProcessor = mockk<TaskProcessor<*, *>>()
@@ -85,7 +84,7 @@ class SubmissionCheckerTaskQueueServiceTest {
         val task2_11_latest = createTaskStatus(6L, user2, 11L, PendingStatus.FAILED, LocalDateTime.now().minusHours(1))
 
         val allTasks = listOf(
-            task1_11_latest, task2_10_latest, task1_10_latest, task2_11_latest, task1_10_old, task2_11_old
+            task1_11_latest, task2_10_latest, task1_10_latest, task2_11_latest, task1_10_old, task2_11_old,
         ).sortedByDescending { it.createdAt }
 
         every { taskStatusRepository.findAllByTaskTypeOrderByCreatedAtDesc("SOLUTION_VERIFICATION") } returns allTasks
@@ -154,7 +153,7 @@ class SubmissionCheckerTaskQueueServiceTest {
         user: User,
         assignmentId: Long,
         status: PendingStatus,
-        createdAt: LocalDateTime
+        createdAt: LocalDateTime,
     ): TaskStatus = TaskStatus().apply {
         this.id = id
         this.user = user

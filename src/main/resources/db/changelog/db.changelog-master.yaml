@@ -7,6 +7,8 @@ databaseChangeLog:
       file: db/changelog/0002-changelog.yaml
   - include:
       file: db/changelog/0003-add-long-living-tokens.yaml
+  - include:
+      file: db/changelog/0004-add-logs-to-assignment-result.yaml
 
   - changeSet:
       id: recreate-zip-file-as-oid-2

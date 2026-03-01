@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0004-add-logs-to-assignment-result
+      author: jikvict
+      changes:
+        - addColumn:
+            tableName: assignment_result
+            columns:
+              - column:
+                  name: logs
+                  type: TEXT

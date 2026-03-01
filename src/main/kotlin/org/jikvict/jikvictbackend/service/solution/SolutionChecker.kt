@@ -32,14 +32,14 @@ class SolutionChecker(
         hiddenFiles: ByteArray,
         assignment: Assignment,
         isActive: () -> Boolean,
-    ): TestSuiteResult = execute(solution, hiddenFiles, assignment, isActive)
+    ): Pair<TestSuiteResult, String> = execute(solution, hiddenFiles, assignment, isActive)
 
     private suspend fun execute(
         solution: ByteArray,
         hiddenFiles: ByteArray,
         assignmentDto: Assignment,
         isActive: () -> Boolean,
-    ): TestSuiteResult {
+    ): Pair<TestSuiteResult, String> {
         val executionId = UUID.randomUUID().toString()
         val tempDir = Files.createTempDirectory("code-$executionId")
         logger.info("Created temporary directory: ${tempDir.toAbsolutePath()} for task: $executionId")
@@ -81,6 +81,7 @@ class SolutionChecker(
         logger.info("Task $executionId Memory Config: Total=${totalMemoryMB}MB. Allocating Gradle Xmx=${gradleHeapMB}MB, Wrapper Xmx=${wrapperHeapMB}MB")
 
         var resultsJson: String? = null
+        val containerLogs = StringBuilder()
         val runner =
             dockerRunner("jikvict-solution-runner") {
                 withNetwork(networkId)
@@ -141,7 +142,11 @@ class SolutionChecker(
                     { it.forEach(::cleanupDirectory) },
                 )
 
-                withLogsConsumers({ println(it.utf8String) })
+                withLogsConsumers({
+                    val logLine = it.utf8String
+                    print(logLine)
+                    containerLogs.append(logLine)
+                })
 
                 withCpuQuota(assignmentDto.cpuLimit)
                 withMemory(assignmentDto.memoryLimit)
@@ -170,7 +175,7 @@ class SolutionChecker(
                     )
                 }.getOrNull()!!
 
-            return results
+            return results to containerLogs.toString()
         } finally {
             try {
                 networkManager.cleanupTaskNetwork(executionId)
