@@ -1,6 +1,7 @@
 package org.jikvict.jikvictbackend.service.processor
 
 import org.apache.logging.log4j.Logger
+import org.jikvict.jikvictbackend.exception.SolutionCheckingException
 import org.jikvict.jikvictbackend.model.dto.VerificationTaskDto
 import org.jikvict.jikvictbackend.model.queue.VerificationTaskMessage
 import org.jikvict.jikvictbackend.model.response.PendingStatus
@@ -77,6 +78,10 @@ class SubmissionCheckerTaskProcessor(
                     }
                 result = checkResult.first
                 logs = checkResult.second
+            } catch (e: SolutionCheckingException) {
+                logs = e.logs
+                checkSubmissionFailed = true
+                throw e
             } catch (e: Exception) {
                 log.error("Failed to check submission, but will attempt to save zip: ${e.message}", e)
                 checkSubmissionFailed = true

@@ -9,9 +9,9 @@ import org.jikvict.docker.dockerRunner
 import org.jikvict.docker.env
 import org.jikvict.docker.util.grantAllPermissions
 import org.jikvict.jikvictbackend.entity.Assignment
+import org.jikvict.jikvictbackend.exception.SolutionCheckingException
 import org.jikvict.problems.exception.contract.ServiceException
 import org.jikvict.testing.model.TestSuiteResult
-import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.nio.file.Files
@@ -19,6 +19,7 @@ import java.nio.file.Path
 import java.util.UUID
 import kotlin.streams.asSequence
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.CancellationException
 
 @Service
 class SolutionChecker(
@@ -142,11 +143,13 @@ class SolutionChecker(
                     { it.forEach(::cleanupDirectory) },
                 )
 
-                withLogsConsumers({
-                    val logLine = it.utf8String
-                    print(logLine)
-                    containerLogs.append(logLine)
-                })
+                withLogsConsumers(
+                    {
+                        val logLine = it.utf8String
+                        print(logLine)
+                        containerLogs.append(logLine)
+                    },
+                )
 
                 withCpuQuota(assignmentDto.cpuLimit)
                 withMemory(assignmentDto.memoryLimit)
@@ -169,13 +172,31 @@ class SolutionChecker(
                     objectMapper.readValue(resultsJson, TestSuiteResult::class.java)
                 }.onFailure {
                     logger.error("Failed to parse results. Raw JSON content: ${resultsJson?.take(200)}...")
-                    throw ServiceException(
-                        HttpStatus.INTERNAL_SERVER_ERROR,
+                    throw SolutionCheckingException(
+                        containerLogs.toString(),
                         "Failed to parse test results. It's possible the solution crashed or timed out before generating a report.",
+                        it,
                     )
                 }.getOrNull()!!
 
             return results to containerLogs.toString()
+        } catch (e: SolutionCheckingException) {
+            throw e
+        } catch (e: ServiceException) {
+            throw SolutionCheckingException(
+                containerLogs.toString(),
+                e.message ?: "Service error during solution execution",
+                e,
+                e.status,
+            )
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            throw SolutionCheckingException(
+                containerLogs.toString(),
+                "An error occurred during solution execution: ${e.message}",
+                e,
+            )
         } finally {
             try {
                 networkManager.cleanupTaskNetwork(executionId)
