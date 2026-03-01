@@ -83,9 +83,11 @@ class SubmissionCheckerTaskProcessor(
                 // Always try to save the zip, even if parsing failed
                 if (!taskQueueService.isTaskCancelled(message.taskId)) {
                     try {
-                        withContext(Dispatchers.IO) {
-                            assignmentResultService.handleAssignmentResult(assignmentEntity.id, result, user, message.additionalParams.solutionBytes)
-                        }
+                        val resultEntity =
+                            withContext(Dispatchers.IO) {
+                                assignmentResultService.handleAssignmentResult(assignmentEntity.id, result, user, message.additionalParams.solutionBytes)
+                            }
+                        taskQueueService.updateTaskResultId(message.taskId, resultEntity.id)
                     } catch (e: Exception) {
                         log.error("Failed to save assignment result: ${e.message}", e)
                         if (!checkSubmissionFailed) {

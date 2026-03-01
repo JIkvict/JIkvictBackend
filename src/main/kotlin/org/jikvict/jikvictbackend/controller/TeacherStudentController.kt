@@ -13,6 +13,7 @@ import org.jikvict.jikvictbackend.repository.AssignmentResultRepository
 import org.jikvict.jikvictbackend.repository.TaskStatusRepository
 import org.jikvict.jikvictbackend.repository.UserRepository
 import org.jikvict.jikvictbackend.service.assignment.AssignmentInfoUserService
+import org.jikvict.jikvictbackend.service.queue.SubmissionCheckerTaskQueueService
 import org.jikvict.problems.exception.contract.ServiceException
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import kotlin.jvm.optionals.getOrNull
 
@@ -37,6 +39,7 @@ class TeacherStudentController(
     private val assignmentResultRepository: AssignmentResultRepository,
     private val objectMapper: ObjectMapper,
     private val assignmentInfoUserService: AssignmentInfoUserService,
+    private val submissionQueueService: SubmissionCheckerTaskQueueService,
 ) {
     data class UpdatePointsRequest(
         val points: Int,
@@ -103,6 +106,15 @@ class TeacherStudentController(
                 results = results,
             )
         return ResponseEntity.ok(payload)
+    }
+
+    @RWTeacher
+    @PostMapping("/admin/submissions/retry-failed")
+    fun retryFailedSubmissions(
+        @RequestParam(required = false) assignmentId: Long?,
+    ): ResponseEntity<Int> {
+        val count = submissionQueueService.retryFailedSubmissions(assignmentId)
+        return ResponseEntity.ok(count)
     }
 
     @RWTeacher

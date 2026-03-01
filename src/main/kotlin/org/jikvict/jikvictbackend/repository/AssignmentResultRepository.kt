@@ -11,5 +11,10 @@ interface AssignmentResultRepository : JpaRepository<AssignmentResult, Long> {
         assignment: Assignment,
     ): List<AssignmentResult>
 
+    fun findFirstByUserAndAssignmentOrderByTimeStampDesc(
+        user: User,
+        assignment: Assignment,
+    ): AssignmentResult?
+
     fun findAllByUser(user: User): List<AssignmentResult>
 }

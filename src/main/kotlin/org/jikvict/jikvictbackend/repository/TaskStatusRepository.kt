@@ -22,6 +22,8 @@ interface TaskStatusRepository : JpaRepository<TaskStatus, Long> {
 
     fun findByUser(user: User): List<TaskStatus>
 
+    fun findAllByTaskTypeOrderByCreatedAtDesc(taskType: String): List<TaskStatus>
+
     fun findAllByUserAndTaskTypeAndStatus(
         user: User,
         taskType: String,

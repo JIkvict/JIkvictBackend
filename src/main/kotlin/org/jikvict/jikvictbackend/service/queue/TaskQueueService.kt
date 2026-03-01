@@ -86,6 +86,22 @@ abstract class TaskQueueService(
         taskStatusRepository.save(taskStatus)
     }
 
+    /**
+     * Updates only the result ID of a task
+     */
+    fun updateTaskResultId(
+        taskId: Long,
+        resultId: Long,
+    ) {
+        val taskStatus =
+            taskStatusRepository
+                .findById(taskId)
+                .orElseThrow { IllegalArgumentException("Task with ID $taskId not found") }
+
+        taskStatus.resultId = resultId
+        taskStatusRepository.save(taskStatus)
+    }
+
     fun isTaskCancelled(taskId: Long): Boolean {
         val taskStatusRepository = taskStatusRepository.findById(taskId).orElseThrow { ServiceException(HttpStatus.NOT_FOUND, "Task with ID $taskId not found") }
         return taskStatusRepository.status == PendingStatus.CANCELLED
