@@ -4,6 +4,7 @@ import org.jikvict.jikvictbackend.entity.Assignment
 import org.jikvict.jikvictbackend.entity.User
 import org.jikvict.jikvictbackend.entity.isClosed
 import org.jikvict.jikvictbackend.model.domain.AssignmentInfo
+import org.jikvict.jikvictbackend.model.domain.AssignmentInfoAdmin
 import org.jikvict.jikvictbackend.model.domain.UnacceptedSubmission
 import org.jikvict.jikvictbackend.model.dto.withHiddenInfo
 import org.jikvict.jikvictbackend.model.mapper.AssignmentResultMapper
@@ -72,7 +73,7 @@ class AssignmentInfoUserService(
         assignmentId: Long,
         userIds: List<Long>,
         groupIds: List<Long>,
-    ): List<AssignmentInfo> {
+    ): List<AssignmentInfoAdmin> {
         val usersToSearch =
             if (userIds.isEmpty() && groupIds.isEmpty()) {
                 userRepository.findAll()
@@ -92,7 +93,7 @@ class AssignmentInfoUserService(
     fun getAssignmentInfoForTeacher(
         assignmentId: Long,
         user: User,
-    ): AssignmentInfo {
+    ): AssignmentInfoAdmin {
         val assignment = assignmentService.getAssignmentById(assignmentId)
         val attemptsUsed = assignmentResultService.getUsedAttempts(assignmentId, user)
         val results = assignmentResultService.getResults(assignmentId, user)
@@ -100,13 +101,13 @@ class AssignmentInfoUserService(
 
         val mappedResults =
             results.map {
-                assignmentResultMapper.toDto(it)
+                assignmentResultMapper.toAdminDto(it)
             }
 
         val unacceptedSubmission = taskStatusService.getUnsuccessfulSubmissionsForUser(user, assignmentId)
         val mappedUnacceptedSubmission: List<UnacceptedSubmission> = unacceptedSubmission.map(taskStatusMapper::toUnacceptedSubmission)
         val assignmentInfo =
-            AssignmentInfo(
+            AssignmentInfoAdmin(
                 assignmentId = assignment.id,
                 taskId = assignment.taskId,
                 maxAttempts = assignment.maximumAttempts,

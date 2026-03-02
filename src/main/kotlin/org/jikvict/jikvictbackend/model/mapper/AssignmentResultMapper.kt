@@ -1,6 +1,7 @@
 package org.jikvict.jikvictbackend.model.mapper
 
 import org.jikvict.jikvictbackend.entity.AssignmentResult
+import org.jikvict.jikvictbackend.model.dto.AssignmentResultAdminDto
 import org.jikvict.jikvictbackend.model.dto.AssignmentResultDto
 import org.mapstruct.Mapper
 import org.mapstruct.Mapping
@@ -14,4 +15,7 @@ import org.mapstruct.ReportingPolicy
 interface AssignmentResultMapper {
     @Mapping(source = "testSuiteResult", target = "result")
     fun toDto(assignmentResult: AssignmentResult): AssignmentResultDto
+
+    @Mapping(source = "testSuiteResult", target = "result")
+    fun toAdminDto(assignmentResult: AssignmentResult): AssignmentResultAdminDto
 }

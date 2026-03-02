@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.jikvict.jikvictbackend.annotation.AnyTeacher
 import org.jikvict.jikvictbackend.annotation.RWTeacher
 import org.jikvict.jikvictbackend.entity.AssignmentResult
-import org.jikvict.jikvictbackend.model.domain.AssignmentInfo
+import org.jikvict.jikvictbackend.model.domain.AssignmentInfoAdmin
 import org.jikvict.jikvictbackend.model.dto.AssignmentResultAdminDto
 import org.jikvict.jikvictbackend.model.dto.StatsRequestDto
 import org.jikvict.jikvictbackend.model.dto.StudentOverviewDto
@@ -66,7 +66,8 @@ class TeacherStudentController(
     fun getAssignmentInfo(
         @PathVariable assignmentId: Long,
         @RequestBody request: StatsRequestDto,
-    ): ResponseEntity<List<AssignmentInfo>> = ResponseEntity.ok(assignmentInfoUserService.getAssignmentInfoByUserGroupsAndUsers(assignmentId, request.userIds, request.groupIds))
+    ): ResponseEntity<List<AssignmentInfoAdmin>> =
+        ResponseEntity.ok(assignmentInfoUserService.getAssignmentInfoByUserGroupsAndUsers(assignmentId, request.userIds, request.groupIds))
 
     @Transactional
     @AnyTeacher
@@ -159,9 +160,9 @@ class TeacherStudentController(
     private fun AssignmentResult.toAdminDto(): AssignmentResultAdminDto =
         AssignmentResultAdminDto(
             id = this.id,
-            assignmentId = this.assignment.id,
             timeStamp = this.timeStamp,
             points = this.points,
             logs = this.logs,
+            result = this.testSuiteResult,
         )
 }

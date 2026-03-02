@@ -1,5 +1,6 @@
 package org.jikvict.jikvictbackend.model.dto
 
+import org.jikvict.testing.model.TestSuiteResult
 import java.time.LocalDateTime
 
 /**
@@ -7,8 +8,8 @@ import java.time.LocalDateTime
  */
 data class AssignmentResultAdminDto(
     val id: Long,
-    val assignmentId: Long,
     val timeStamp: LocalDateTime,
     val points: Int,
+    val result: TestSuiteResult?,
     val logs: String?,
 )
