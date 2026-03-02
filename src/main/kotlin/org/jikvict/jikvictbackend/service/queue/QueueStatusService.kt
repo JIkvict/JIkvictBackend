@@ -1,6 +1,7 @@
 package org.jikvict.jikvictbackend.service.queue
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.jikvict.jikvictbackend.configuration.RabbitMQProperties
 import org.jikvict.jikvictbackend.entity.TaskStatus
 import org.jikvict.jikvictbackend.entity.User
 import org.jikvict.jikvictbackend.model.response.PendingStatus
@@ -14,6 +15,7 @@ class QueueStatusService(
     private val taskStatusRepository: TaskStatusRepository,
     private val assignmentCacheService: AssignmentCacheService,
     private val objectMapper: ObjectMapper,
+    private val rabbitMQConfiguration: RabbitMQProperties,
 ) {
     fun getQueueStatus(user: User): QueueStatusDto {
         val pendingTasks =
@@ -111,6 +113,6 @@ class QueueStatusService(
 
         val timeoutSeconds = timeoutMap[userAssignmentId]?.timeOutSeconds ?: return null
 
-        return taskIndex * timeoutSeconds
+        return taskIndex * timeoutSeconds / rabbitMQConfiguration.maxDockerWorkers
     }
 }

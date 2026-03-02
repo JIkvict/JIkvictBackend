@@ -6,6 +6,7 @@ import io.mockk.mockk
 import org.jikvict.jikvictbackend.entity.TaskStatus
 import org.jikvict.jikvictbackend.entity.User
 import org.jikvict.jikvictbackend.model.response.PendingStatus
+import org.jikvict.jikvictbackend.configuration.RabbitMQProperties
 import org.jikvict.jikvictbackend.repository.AssignmentRepository
 import org.jikvict.jikvictbackend.repository.TaskStatusRepository
 import org.jikvict.jikvictbackend.service.assignment.AssignmentCacheService
@@ -20,6 +21,7 @@ class QueueStatusServiceTest {
     private lateinit var taskStatusRepository: TaskStatusRepository
     private lateinit var assignmentCacheService: AssignmentCacheService
     private lateinit var objectMapper: ObjectMapper
+    private lateinit var rabbitMQProperties: RabbitMQProperties
     private lateinit var queueStatusService: QueueStatusService
 
     @BeforeEach
@@ -27,11 +29,15 @@ class QueueStatusServiceTest {
         taskStatusRepository = mockk()
         assignmentCacheService = mockk()
         objectMapper = ObjectMapper()
+        rabbitMQProperties = mockk()
+        every { rabbitMQProperties.maxDockerWorkers } returns 1
+
         queueStatusService =
             QueueStatusService(
                 taskStatusRepository,
                 assignmentCacheService,
                 objectMapper,
+                rabbitMQProperties
             )
     }
 

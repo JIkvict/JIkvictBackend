@@ -8,7 +8,6 @@ import org.jikvict.jikvictbackend.exception.FileSizeExceededException
 import org.jikvict.jikvictbackend.exception.FileTypeNotAllowedException
 import org.jikvict.jikvictbackend.exception.InvalidZipStructureException
 import org.jikvict.jikvictbackend.exception.PathTraversalAttemptException
-import org.jikvict.jikvictbackend.exception.SuspiciousFileExtensionException
 import org.jikvict.jikvictbackend.model.properties.SolutionsProperties
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
@@ -70,12 +69,10 @@ class ZipValidatorServiceTest {
             )
 
         // When & Then
-        val exception =
-            assertThrows<FileSizeExceededException> {
-                zipValidatorService.validateZipArchive(file)
-            }
+        assertThrows<FileSizeExceededException> {
+            zipValidatorService.validateZipArchive(file)
+        }
 
-//        assert(exception.message.contains("exceeds maximum allowed size"))
     }
 
     @Test
@@ -187,6 +184,64 @@ class ZipValidatorServiceTest {
         assertDoesNotThrow {
             zipValidatorService.validateZipArchive(file)
         }
+    }
+
+    @Test
+    fun `validateZipArchive should throw InvalidZipStructureException for invalid folder structure`() {
+        // Given
+        every { solutionsProperties.maxFileSize } returns "5MB"
+        every { solutionsProperties.allowedFileTypes } returns listOf("zip")
+        every { solutionsProperties.maxEntrySize } returns 10_000_000L
+        every { solutionsProperties.suspiciousExtensions } returns listOf(".exe")
+        every { solutionsProperties.maxCompressionRatio } returns 10.0
+        every { solutionsProperties.maxUnknownCompressionEntrySize } returns 1000L
+
+        val taskId = 123
+        val zipBytes = createValidZipFile() // It has test.txt and folder/nested.txt, not task123/...
+        val file = MockMultipartFile("file", "test.zip", "application/zip", zipBytes)
+
+        // When & Then
+        val exception = assertThrows<InvalidZipStructureException> {
+            zipValidatorService.validateZipArchive(file, taskId)
+        }
+        assert(exception.message.contains("must start with 'task123/default-structure/'"))
+    }
+
+    @Test
+    fun `validateZipArchive should not throw exception for valid task structure`() {
+        // Given
+        every { solutionsProperties.maxFileSize } returns "5MB"
+        every { solutionsProperties.allowedFileTypes } returns listOf("zip")
+        every { solutionsProperties.maxEntrySize } returns 10_000_000L
+        every { solutionsProperties.suspiciousExtensions } returns listOf(".exe")
+        every { solutionsProperties.maxCompressionRatio } returns 10.0
+        every { solutionsProperties.maxUnknownCompressionEntrySize } returns 1000L
+
+        val taskId = 123
+        val zipBytes = createTaskStructureZipFile(taskId)
+        val file = MockMultipartFile("file", "test.zip", "application/zip", zipBytes)
+
+        // When & Then
+        assertDoesNotThrow {
+            zipValidatorService.validateZipArchive(file, taskId)
+        }
+    }
+
+    private fun createTaskStructureZipFile(taskId: Int): ByteArray {
+        val baos = ByteArrayOutputStream()
+        ZipOutputStream(baos).use { zipOut ->
+            // Add directories as well (optional but good for testing)
+            zipOut.putNextEntry(ZipEntry("task$taskId/"))
+            zipOut.closeEntry()
+            zipOut.putNextEntry(ZipEntry("task$taskId/default-structure/"))
+            zipOut.closeEntry()
+
+            val entry = ZipEntry("task$taskId/default-structure/test.txt")
+            zipOut.putNextEntry(entry)
+            zipOut.write("This is a test file content".toByteArray())
+            zipOut.closeEntry()
+        }
+        return baos.toByteArray()
     }
 
     private fun createZipFileWithSuspiciousExtension(): ByteArray {

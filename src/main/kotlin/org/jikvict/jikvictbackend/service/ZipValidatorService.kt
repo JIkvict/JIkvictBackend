@@ -26,11 +26,11 @@ class ZipValidatorService(
     private val solutionsProperties: SolutionsProperties,
     private val logger: Logger,
 ) {
-    fun validateZipArchive(file: MultipartFile) {
+    fun validateZipArchive(file: MultipartFile, taskId: Int? = null) {
         validateFileSize(file)
         validateFileType(file)
         val cleanedBytes = removeFilesWithSuspiciousExtensions(file.bytes)
-        validateZipStructure(cleanedBytes)
+        validateZipStructure(cleanedBytes, taskId)
         logger.info("ZIP validation completed successfully")
     }
 
@@ -123,7 +123,7 @@ class ZipValidatorService(
         return baos.toByteArray()
     }
 
-    private fun validateZipStructure(zipBytes: ByteArray) {
+    private fun validateZipStructure(zipBytes: ByteArray, taskId: Int? = null) {
         try {
             require(zipBytes.size >= 4 && isZipFileSignatureValid(zipBytes)) {
                 logger.warn("Invalid ZIP file signature detected")
@@ -137,7 +137,7 @@ class ZipValidatorService(
                 try {
                     while (zipStream.nextEntry.also { entry = it } != null) {
                         entriesCount++
-                        entry?.let { zipEntry -> validateZipEntry(zipEntry) }
+                        entry?.let { zipEntry -> validateZipEntry(zipEntry, taskId) }
                         logger.info("Validated ZIP entry: ${entry?.name}")
                         zipStream.closeEntry()
                     }
@@ -183,13 +183,25 @@ class ZipValidatorService(
             bytes[3] == 0x04.toByte()
     }
 
-    private fun validateZipEntry(zipEntry: ZipEntry) {
+    private fun validateZipEntry(zipEntry: ZipEntry, taskId: Int? = null) {
+        val entryName = zipEntry.name
+
+        if (taskId != null) {
+            val expectedPrefix = "task$taskId/default-structure/"
+            if (!entryName.startsWith(expectedPrefix) &&
+                entryName != "task$taskId/" &&
+                entryName != "task$taskId/default-structure/"
+            ) {
+                logger.warn("Invalid ZIP structure: entry '$entryName' does not match expected structure for task $taskId")
+                throw InvalidZipStructureException("Invalid ZIP structure: entry '$entryName' must start with '$expectedPrefix'")
+            }
+        }
+
         if (zipEntry.isDirectory) {
             logger.debug("Directory entry validation passed")
             return
         }
 
-        val entryName = zipEntry.name
         logger.debug("Processing ZIP entry: $entryName, size: ${zipEntry.size}, compressed: ${zipEntry.compressedSize}")
 
         require(!entryName.contains("..")) {
