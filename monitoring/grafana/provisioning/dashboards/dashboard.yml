@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: JIkvict
+    orgId: 1
+    folder: JIkvict
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /etc/grafana/provisioning/dashboards

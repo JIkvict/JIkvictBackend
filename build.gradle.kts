@@ -10,6 +10,7 @@ dependencies {
     implementation(projects.problemHandling.problemStarter)
     implementation(projects.dockerLib.dockerStarter)
     implementation(libs.spring.boot.starter.actuator)
+    runtimeOnly(libs.micrometer.prometheus)
     implementation(libs.spring.boot.starter.data.jpa)
     implementation(libs.spring.boot.starter.security)
     implementation(libs.spring.boot.starter.web)

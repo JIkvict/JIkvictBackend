@@ -104,6 +104,9 @@ axion-release = { module = "pl.allegro.tech.build:axion-release-plugin", version
 
 # Cache
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
+
+# Metrics
+micrometer-prometheus = { group = "io.micrometer", name = "micrometer-registry-prometheus" }
 [bundles]
 test = [
     "spring-boot-starter-test",

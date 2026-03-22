@@ -1,6 +1,8 @@
 package org.jikvict.jikvictbackend.service.queue
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.micrometer.core.instrument.Counter
+import io.micrometer.core.instrument.MeterRegistry
 import org.apache.logging.log4j.Logger
 import org.jikvict.jikvictbackend.entity.TaskStatus
 import org.jikvict.jikvictbackend.entity.User
@@ -29,7 +31,17 @@ class SubmissionCheckerTaskQueueService(
     log: Logger,
     private val objectMapper: ObjectMapper,
     private val userDetailsService: UserDetailsServiceImpl,
+    meterRegistry: MeterRegistry,
 ) : TaskQueueService(rabbitTemplate, taskStatusRepository, taskRegistry, log) {
+
+    private val submissionsEnqueuedCounter: Counter = Counter.builder("jikvict.submissions.enqueued")
+        .description("Number of solution verification tasks enqueued (including retries)")
+        .register(meterRegistry)
+
+    private val retriesEnqueuedCounter: Counter = Counter.builder("jikvict.submissions.retries")
+        .description("Number of solution verification tasks re-enqueued as retries")
+        .register(meterRegistry)
+
     fun enqueueSolutionVerificationTask(
         file: MultipartFile,
         assignmentId: Int,
@@ -38,6 +50,7 @@ class SubmissionCheckerTaskQueueService(
         if (isAlreadyQueuedForUser(user)) {
             throw IllegalStateException("You already have a pending task")
         }
+        submissionsEnqueuedCounter.increment()
         return enqueue(user, assignmentId, file.bytes, file.originalFilename)
     }
 
@@ -46,7 +59,11 @@ class SubmissionCheckerTaskQueueService(
         assignmentId: Int,
         solutionBytes: ByteArray,
         originalFilename: String?,
-    ): Long = enqueue(user, assignmentId, solutionBytes, originalFilename)
+    ): Long {
+        submissionsEnqueuedCounter.increment()
+        retriesEnqueuedCounter.increment()
+        return enqueue(user, assignmentId, solutionBytes, originalFilename)
+    }
 
     private fun enqueue(
         user: User,

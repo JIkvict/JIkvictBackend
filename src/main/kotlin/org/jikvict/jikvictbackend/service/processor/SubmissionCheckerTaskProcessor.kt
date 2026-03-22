@@ -1,5 +1,8 @@
 package org.jikvict.jikvictbackend.service.processor
 
+import io.micrometer.core.instrument.Counter
+import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.core.instrument.Timer
 import org.apache.logging.log4j.Logger
 import org.jikvict.jikvictbackend.exception.SolutionCheckingException
 import org.jikvict.jikvictbackend.model.dto.VerificationTaskDto
@@ -29,7 +32,42 @@ class SubmissionCheckerTaskProcessor(
     private val assignmentRepository: AssignmentRepository,
     private val userSolutionChecker: SubmissionCheckerUserService,
     private val taskRegistry: TaskRegistry,
+    private val meterRegistry: MeterRegistry,
 ) : TaskProcessor<VerificationTaskDto, VerificationTaskMessage> {
+
+    private val processingTimer: Timer by lazy {
+        Timer.builder("jikvict.task.processing.duration")
+            .description("Time taken to process a solution verification task")
+            .register(meterRegistry)
+    }
+
+    private val successCounter: Counter by lazy {
+        Counter.builder("jikvict.task.processing.result")
+            .tag("outcome", "success")
+            .description("Number of successfully verified solutions")
+            .register(meterRegistry)
+    }
+
+    private val failedCounter: Counter by lazy {
+        Counter.builder("jikvict.task.processing.result")
+            .tag("outcome", "failed")
+            .description("Number of failed solution verification tasks")
+            .register(meterRegistry)
+    }
+
+    private val rejectedCounter: Counter by lazy {
+        Counter.builder("jikvict.task.processing.result")
+            .tag("outcome", "rejected")
+            .description("Number of rejected solution submissions (4xx errors)")
+            .register(meterRegistry)
+    }
+
+    private val cancelledCounter: Counter by lazy {
+        Counter.builder("jikvict.task.processing.result")
+            .tag("outcome", "cancelled")
+            .description("Number of cancelled solution verification tasks")
+            .register(meterRegistry)
+    }
     override val taskType: String = "SOLUTION_VERIFICATION"
     override val queueName: String = "verification.queue"
     override val exchangeName: String = "verification.exchange"
@@ -38,8 +76,10 @@ class SubmissionCheckerTaskProcessor(
     @RabbitListener(queues = ["verification.queue"], containerFactory = "manualAckContainerFactory")
     suspend fun process(message: VerificationTaskMessage) {
         if (taskQueueService.isTaskCancelled(message.taskId)) {
+            cancelledCounter.increment()
             return
         }
+        val timerSample = Timer.start(meterRegistry)
         try {
             taskQueueService.updateTaskStatus(
                 message.taskId,
@@ -114,29 +154,40 @@ class SubmissionCheckerTaskProcessor(
 
                 log.info("Solution verification completed: ${message.taskId}")
                 log.info("Solution verification result: $result")
+                timerSample.stop(processingTimer)
+                successCounter.increment()
+            } else {
+                timerSample.stop(processingTimer)
+                cancelledCounter.increment()
             }
         } catch (e: Exception) {
+            timerSample.stop(processingTimer)
             log.error("Error verifying solution: ${e.message}", e)
 
             if (taskQueueService.isTaskCancelled(message.taskId)) {
+                cancelledCounter.increment()
                 return
             }
 
             if (e is ServiceException) {
                 when {
-                    e.status.is4xxClientError ->
+                    e.status.is4xxClientError -> {
                         taskQueueService.updateTaskStatus(
                             message.taskId,
                             PendingStatus.REJECTED,
                             "Submission rejected: ${e.message}",
                         )
+                        rejectedCounter.increment()
+                    }
 
-                    else ->
+                    else -> {
                         taskQueueService.updateTaskStatus(
                             message.taskId,
                             PendingStatus.FAILED,
                             "Error verifying solution: ${e.message}",
                         )
+                        failedCounter.increment()
+                    }
                 }
             } else {
                 taskQueueService.updateTaskStatus(
@@ -144,6 +195,7 @@ class SubmissionCheckerTaskProcessor(
                     PendingStatus.FAILED,
                     "Error verifying solution: ${e.message}",
                 )
+                failedCounter.increment()
             }
         }
     }

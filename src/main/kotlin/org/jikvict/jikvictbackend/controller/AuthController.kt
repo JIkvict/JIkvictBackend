@@ -1,5 +1,7 @@
 package org.jikvict.jikvictbackend.controller
 
+import io.micrometer.core.instrument.Counter
+import io.micrometer.core.instrument.MeterRegistry
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
@@ -13,6 +15,7 @@ import org.jikvict.jikvictbackend.service.token.RefreshTokenService
 import org.springframework.http.ProblemDetail
 import org.springframework.http.ResponseEntity
 import org.springframework.security.authentication.AuthenticationManager
+import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -29,7 +32,22 @@ class AuthController(
     private val jwtService: JwtService,
     private val userRepository: UserRepository,
     private val refreshTokenService: RefreshTokenService,
+    meterRegistry: MeterRegistry,
 ) {
+    private val loginSuccessCounter: Counter = Counter.builder("jikvict.auth.login")
+        .tag("result", "success")
+        .description("Number of successful login attempts")
+        .register(meterRegistry)
+
+    private val loginFailureCounter: Counter = Counter.builder("jikvict.auth.login")
+        .tag("result", "failure")
+        .description("Number of failed login attempts")
+        .register(meterRegistry)
+
+    private val tokenRefreshCounter: Counter = Counter.builder("jikvict.auth.token.refresh")
+        .description("Number of JWT token refresh operations")
+        .register(meterRegistry)
+
     @Operation(
         summary = "Log in",
         description = "Logs in a user and returns an access token and a refresh token.",
@@ -70,12 +88,18 @@ class AuthController(
         response: HttpServletResponse,
     ): ResponseEntity<TokenResponse> {
         val auth = UsernamePasswordAuthenticationToken(request.username, request.password)
-        authManager.authenticate(auth)
+        try {
+            authManager.authenticate(auth)
+        } catch (e: BadCredentialsException) {
+            loginFailureCounter.increment()
+            throw e
+        }
 
         val user = userRepository.findUserByUserNameField(request.username) ?: throw RuntimeException("Not found")
         val access = jwtService.generateToken(user, 15 * 60 * 1000)
         val refresh = refreshTokenService.createRefreshToken(user.id)
         addRefreshTokenCookie(response, refresh.token)
+        loginSuccessCounter.increment()
         return ResponseEntity.ok(TokenResponse(access))
     }
 
@@ -93,6 +117,7 @@ class AuthController(
 
         val access = jwtService.generateToken(user, 15 * 60 * 1000)
         addRefreshTokenCookie(response, refreshToken.token)
+        tokenRefreshCounter.increment()
         return ResponseEntity.ok(TokenResponse(access))
     }
 
