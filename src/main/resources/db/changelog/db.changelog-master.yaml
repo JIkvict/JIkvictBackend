@@ -9,6 +9,8 @@ databaseChangeLog:
       file: db/changelog/0003-add-long-living-tokens.yaml
   - include:
       file: db/changelog/0004-add-logs-to-assignment-result.yaml
+  - include:
+      file: db/changelog/0005-plagiarism-check.yaml
 
   - changeSet:
       id: recreate-zip-file-as-oid-2

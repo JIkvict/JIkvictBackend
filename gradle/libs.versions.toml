@@ -1,4 +1,5 @@
 [versions]
+jplag = "5.1.0"
 springdoc-openapi-ui = "2.0.4"
 jjwt = "0.12.6"
 wiremock = "3.13.1"
@@ -101,6 +102,10 @@ ldap = { module = "com.unboundid:unboundid-ldapsdk" }
 
 # Axion
 axion-release = { module = "pl.allegro.tech.build:axion-release-plugin", version.ref = "axion" }
+
+# JPlag
+jplag = { module = "de.jplag:jplag", version.ref = "jplag" }
+jplag-java = { module = "de.jplag:java", version.ref = "jplag" }
 
 # Cache
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }

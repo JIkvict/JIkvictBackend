@@ -1,5 +1,6 @@
 package org.jikvict.jikvictbackend.service.processor
 
+import io.micrometer.core.instrument.MeterRegistry
 import io.mockk.*
 import kotlinx.coroutines.runBlocking
 import org.apache.logging.log4j.Logger
@@ -25,6 +26,8 @@ class SubmissionCheckerTaskProcessorTest {
     private val userSolutionChecker = mockk<SubmissionCheckerUserService>()
     private val taskRegistry = mockk<TaskRegistry>(relaxed = true)
 
+    private val meterRegistry = mockk<MeterRegistry>(relaxed = true)
+
     private val processor = SubmissionCheckerTaskProcessor(
         taskQueueService,
         log,
@@ -32,7 +35,8 @@ class SubmissionCheckerTaskProcessorTest {
         assignmentResultService,
         assignmentRepository,
         userSolutionChecker,
-        taskRegistry
+        taskRegistry,
+        meterRegistry
     )
 
     @BeforeEach
@@ -76,7 +80,7 @@ class SubmissionCheckerTaskProcessorTest {
         // When
         try {
             processor.process(message)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             // Expected
         }
 

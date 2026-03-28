@@ -1,0 +1,30 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-plagiarism-check-results
+      author: antonhorobets
+      changes:
+        - createTable:
+            tableName: plagiarism_check_results
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_plagiarism_check_results
+                    nullable: false
+              - column:
+                  name: assignment_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_plagiarism_check_assignment
+                    references: assignments(id)
+              - column:
+                  name: result_zip
+                  type: oid
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false

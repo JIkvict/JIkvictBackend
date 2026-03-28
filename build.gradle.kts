@@ -31,6 +31,8 @@ dependencies {
     implementation(libs.bundles.ldap)
     implementation(libs.spring.liquibase)
     implementation(libs.caffeine)
+    implementation(libs.jplag)
+    implementation(libs.jplag.java)
     runtimeOnly(libs.jjwt.impl)
     runtimeOnly(libs.jjwt.jackson)
     runtimeOnly(libs.postgresql)
