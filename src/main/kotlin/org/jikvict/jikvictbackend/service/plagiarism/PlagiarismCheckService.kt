@@ -1,7 +1,9 @@
 package org.jikvict.jikvictbackend.service.plagiarism
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.apache.logging.log4j.Logger
 import org.jikvict.jikvictbackend.entity.TaskStatus
+import org.jikvict.jikvictbackend.model.request.PlagiarismCheckParameters
 import org.jikvict.jikvictbackend.model.response.PendingStatus
 import org.jikvict.jikvictbackend.model.response.PlagiarismCheckSummaryResponse
 import org.jikvict.jikvictbackend.repository.AssignmentRepository
@@ -22,26 +24,29 @@ class PlagiarismCheckService(
     private val taskStatusRepository: TaskStatusRepository,
     private val userDetailsService: UserDetailsServiceImpl,
     private val plagiarismCheckRunner: PlagiarismCheckRunner,
+    private val objectMapper: ObjectMapper,
 ) {
     companion object {
         const val TASK_TYPE = "PLAGIARISM_CHECK"
     }
 
-    fun startCheck(assignmentId: Long): Long {
+    fun startCheck(assignmentId: Long, parameters: PlagiarismCheckParameters?): Long {
         assignmentRepository.findById(assignmentId).orElseThrow {
             ServiceException(HttpStatus.NOT_FOUND, "Assignment with ID $assignmentId not found")
         }
         val currentUser = userDetailsService.getCurrentUser()
+        val configJson = parameters?.let { objectMapper.writeValueAsString(it) }
         val taskStatus = TaskStatus().apply {
             taskType = TASK_TYPE
             status = PendingStatus.PENDING
             user = currentUser
-            parameters = assignmentId.toString()
+            this.parameters = assignmentId.toString()
+            this.configuration = configJson
             createdAt = LocalDateTime.now()
         }
         val saved = taskStatusRepository.save(taskStatus)
-        log.info("Queued plagiarism check for assignment=$assignmentId taskId=${saved.id}")
-        plagiarismCheckRunner.run(assignmentId, saved.id)
+        log.info("Queued plagiarism check for assignment=$assignmentId taskId=${saved.id} config=$configJson")
+        plagiarismCheckRunner.run(assignmentId, saved.id, parameters)
         return saved.id
     }
 
@@ -64,6 +69,9 @@ class PlagiarismCheckService(
                     startedAt = it.createdAt,
                     initiatedBy = it.user.userNameField,
                     status = it.status,
+                    parameters = it.configuration?.let { json ->
+                        runCatching { objectMapper.readValue(json, PlagiarismCheckParameters::class.java) }.getOrNull()
+                    },
                 )
             }
     }

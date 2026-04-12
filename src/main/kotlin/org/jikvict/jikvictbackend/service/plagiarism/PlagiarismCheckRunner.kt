@@ -3,8 +3,10 @@ package org.jikvict.jikvictbackend.service.plagiarism
 import de.jplag.JPlag
 import de.jplag.java.JavaLanguage
 import de.jplag.options.JPlagOptions
+import de.jplag.options.SimilarityMetric
 import de.jplag.reporting.reportobject.ReportObjectFactory
 import org.apache.logging.log4j.Logger
+import org.jikvict.jikvictbackend.model.request.PlagiarismCheckParameters
 import org.jikvict.jikvictbackend.service.assignment.AssignmentService
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
@@ -20,7 +22,7 @@ class PlagiarismCheckRunner(
     private val assignmentService: AssignmentService,
 ) {
     @Async
-    fun run(assignmentId: Long, taskId: Long) {
+    fun run(assignmentId: Long, taskId: Long, parameters: PlagiarismCheckParameters? = null) {
         try {
             val submissions = dataService.loadSubmissions(assignmentId)
             if (submissions.isEmpty()) {
@@ -49,14 +51,14 @@ class PlagiarismCheckRunner(
                 val outputZipFile = tempDir.resolve("report.zip").toFile()
 
                 val language = JavaLanguage()
-                val options = JPlagOptions(language, setOf(submissionsDir.toFile()), emptySet())
-                    .let { opts ->
-                        if (baseCodeZip != null && baseCodeZip.isNotEmpty()) {
-                            opts.withBaseCodeSubmissionDirectory(baseCodeDir.toFile())
-                        } else {
-                            opts
-                        }
-                    }
+                var options = JPlagOptions(language, setOf(submissionsDir.toFile()), emptySet())
+                if (baseCodeZip != null && baseCodeZip.isNotEmpty()) {
+                    options = options.withBaseCodeSubmissionDirectory(baseCodeDir.toFile())
+                }
+                parameters?.minimumTokenMatch?.let { options = options.withMinimumTokenMatch(it) }
+                parameters?.similarityThreshold?.let { options = options.withSimilarityThreshold(it) }
+                parameters?.maxNumberOfComparisons?.let { options = options.withMaximumNumberOfComparisons(it) }
+                parameters?.similarityMetric?.let { options = options.withSimilarityMetric(SimilarityMetric.valueOf(it.name)) }
 
                 log.info("Running JPlag for assignment=$assignmentId taskId=$taskId submissions=${submissions.size}")
                 val result = JPlag.run(options)

@@ -44,4 +44,7 @@ class TaskStatus {
 
     @Column(columnDefinition = "TEXT")
     var parameters: String? = null
+
+    @Column(columnDefinition = "TEXT")
+    var configuration: String? = null
 }
