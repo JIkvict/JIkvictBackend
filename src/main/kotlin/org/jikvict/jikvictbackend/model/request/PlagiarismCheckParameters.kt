@@ -9,5 +9,5 @@ data class PlagiarismCheckParameters(
     val maxNumberOfComparisons: Int? = null,
     val similarityMetric: SimilarityMetricOption? = null,
 ) {
-    enum class SimilarityMetricOption { AVG, MAX, LONGEST_MATCH, OVERALL }
+    enum class SimilarityMetricOption { AVG, MIN, MAX, INTERSECTION }
 }
