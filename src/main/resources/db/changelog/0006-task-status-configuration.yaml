@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-task-status-configuration
+      author: antonhorobets
+      changes:
+        - addColumn:
+            tableName: task_statuses
+            columns:
+              - column:
+                  name: configuration
+                  type: TEXT

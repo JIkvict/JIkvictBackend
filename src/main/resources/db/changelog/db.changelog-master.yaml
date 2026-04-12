@@ -11,6 +11,8 @@ databaseChangeLog:
       file: db/changelog/0004-add-logs-to-assignment-result.yaml
   - include:
       file: db/changelog/0005-plagiarism-check.yaml
+  - include:
+      file: db/changelog/0006-task-status-configuration.yaml
 
   - changeSet:
       id: recreate-zip-file-as-oid-2
