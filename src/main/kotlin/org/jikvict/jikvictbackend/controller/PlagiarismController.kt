@@ -1,8 +1,10 @@
 package org.jikvict.jikvictbackend.controller
 
+import org.jikvict.jikvictbackend.annotation.AnyTeacher
 import org.jikvict.jikvictbackend.annotation.RWTeacher
 import org.jikvict.jikvictbackend.model.response.PendingStatus
 import org.jikvict.jikvictbackend.model.response.PendingStatusResponse
+import org.jikvict.jikvictbackend.model.response.PlagiarismCheckSummaryResponse
 import org.jikvict.jikvictbackend.model.response.ResponsePayload
 import org.jikvict.jikvictbackend.service.plagiarism.PlagiarismCheckService
 import org.jikvict.problems.exception.contract.ServiceException
@@ -19,10 +21,10 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/api/admin/plagiarism")
-@RWTeacher
 class PlagiarismController(
     private val plagiarismCheckService: PlagiarismCheckService,
 ) {
+    @RWTeacher
     @PostMapping("/check")
     fun startCheck(
         @RequestParam assignmentId: Long,
@@ -31,7 +33,15 @@ class PlagiarismController(
         return ResponseEntity.ok(mapOf("taskId" to taskId))
     }
 
+    @GetMapping("/checks")
+    @AnyTeacher
+    fun listChecks(
+        @RequestParam assignmentId: Long,
+    ): ResponseEntity<List<PlagiarismCheckSummaryResponse>> =
+        ResponseEntity.ok(plagiarismCheckService.listChecksForAssignment(assignmentId))
+
     @GetMapping("/check/{taskId}")
+    @AnyTeacher
     fun getStatus(
         @PathVariable taskId: Long,
     ): ResponseEntity<PendingStatusResponse<Long?>> {
@@ -49,6 +59,7 @@ class PlagiarismController(
     }
 
     @GetMapping("/check/{taskId}/report")
+    @AnyTeacher
     fun getReport(
         @PathVariable taskId: Long,
     ): ResponseEntity<ByteArray> {

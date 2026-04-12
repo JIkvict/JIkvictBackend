@@ -24,6 +24,11 @@ interface TaskStatusRepository : JpaRepository<TaskStatus, Long> {
 
     fun findAllByTaskTypeOrderByCreatedAtDesc(taskType: String): List<TaskStatus>
 
+    fun findAllByTaskTypeAndParametersOrderByCreatedAtDesc(
+        taskType: String,
+        parameters: String,
+    ): List<TaskStatus>
+
     fun findAllByUserAndTaskTypeAndStatus(
         user: User,
         taskType: String,

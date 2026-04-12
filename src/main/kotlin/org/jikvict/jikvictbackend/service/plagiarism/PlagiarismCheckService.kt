@@ -3,6 +3,7 @@ package org.jikvict.jikvictbackend.service.plagiarism
 import org.apache.logging.log4j.Logger
 import org.jikvict.jikvictbackend.entity.TaskStatus
 import org.jikvict.jikvictbackend.model.response.PendingStatus
+import org.jikvict.jikvictbackend.model.response.PlagiarismCheckSummaryResponse
 import org.jikvict.jikvictbackend.repository.AssignmentRepository
 import org.jikvict.jikvictbackend.repository.PlagiarismCheckResultRepository
 import org.jikvict.jikvictbackend.repository.TaskStatusRepository
@@ -48,6 +49,24 @@ class PlagiarismCheckService(
         taskStatusRepository.findById(taskId).orElseThrow {
             ServiceException(HttpStatus.NOT_FOUND, "Task $taskId not found")
         }
+
+    @Transactional(readOnly = true)
+    fun listChecksForAssignment(assignmentId: Long): List<PlagiarismCheckSummaryResponse> {
+        assignmentRepository.findById(assignmentId).orElseThrow {
+            ServiceException(HttpStatus.NOT_FOUND, "Assignment with ID $assignmentId not found")
+        }
+        return taskStatusRepository
+            .findAllByTaskTypeAndParametersOrderByCreatedAtDesc(TASK_TYPE, assignmentId.toString())
+            .map {
+                PlagiarismCheckSummaryResponse(
+                    taskId = it.id,
+                    assignmentId = assignmentId,
+                    startedAt = it.createdAt,
+                    initiatedBy = it.user.userNameField,
+                    status = it.status,
+                )
+            }
+    }
 
     @Transactional(readOnly = true)
     fun loadResultZip(resultId: Long): ByteArray {
